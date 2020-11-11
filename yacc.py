@@ -216,15 +216,17 @@ def p_arg_list(p):
 def p_error(p):
     print("Syntax error at '%s'" % p)
 
-if __name__  == '__main__':
+
+def makeAST(filepath):
 
     parser = yacc.yacc()
 
-    f = open('main.c', 'r')
+    f = open(filepath, 'r')
     data = f.read()
     f.close()
 
     ast = yacc.parse(data, lexer=lexer)
-    print(ast)
+
+    return ast;
 
 

@@ -31,9 +31,9 @@ def p_external_definition(p):
     '''
     if (len(p) == 4):
         #p[0] = "define var"
-        p[0] = ["globalvar", p[2], 0]
+        p[0] = ["globalvar", p[2], ['number', 0]]
     elif (len(p) == 5):
-        p[0] = ["func", p[3], p[4]]
+        p[0] = ["func", p[2], p[3], p[4]]
     else:
         p[0] = ["globalvar", p[2], p[4]]
 
@@ -92,15 +92,15 @@ def p_statement(p):
             p[0] = ['return', None]
         else:
             p[0] = ['return', p[2]]
-    elif (p[1] == 'IF'):
+    elif (p[1] == 'if'):
         if (len(p) == 6):
-            p[0] = ['IF', p[3], p[5]]
+            p[0] = ['if', p[3], p[5]]
         else:
-            p[0] = ['IFELSE', p[3], p[5], p[7]]
-    elif (p[1] == 'WHILE'):
-        p[0] = ['WHILE', p[3], p[5]]
+            p[0] = ['ifelse', p[3], p[5], p[7]]
+    elif (p[1] == 'while'):
+        p[0] = ['while', p[3], p[5]]
     elif (p[1] == 'for'):
-        p[0] = ['FOR', p[3], p[5], p[7], p[9]]
+        p[0] = ['for', p[3], p[5], p[7], p[9]]
     else:
         p[0] = p[1];
 
@@ -111,7 +111,7 @@ def p_local_vars(p):
     local_vars : VAR SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        p[0] = ["localvar", p[2], 0]
+        p[0] = ["localvar", p[2], ['number', 0]]
     else:
         p[0] = ["localvar", p[2], p[4]]
 
@@ -124,7 +124,7 @@ def p_expr(p):
     | expr UNIOP
     | expr BIOP expr
     | expr TERNARY expr COLON expr
-    | OUTPUT LPAREN STRING COMMA expr RPAREN
+    | OUTPUT LPAREN string COMMA expr RPAREN
     '''
     if (len(p) == 2):
         p[0] = p[1]
@@ -171,7 +171,7 @@ def p_primary_expr(p):
     | string
     | SYMBOL LPAREN arg_list RPAREN
     | SYMBOL LPAREN RPAREN
-    | INPUT LPAREN STRING RPAREN
+    | INPUT LPAREN string RPAREN
     '''
     if (len(p) == 2):
         p[0] = p[1]
@@ -179,9 +179,9 @@ def p_primary_expr(p):
         p[0] = ['input', p[3]]
     else:
         if (len(p) == 4):
-            p[0] = ['funcall', []]
+            p[0] = ['funccall', p[1], []]
         else:
-            p[0] = ['funcall', p[3]]
+            p[0] = ['funccall', p[1], p[3]]
 
 def p_symbol(p):
     '''

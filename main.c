@@ -14,5 +14,6 @@ func main() {
 	var result = calcsum(in);
 
 	output("output", result);
+	return;
 }
 

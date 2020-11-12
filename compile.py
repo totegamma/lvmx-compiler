@@ -82,7 +82,7 @@ def compile(ast):
         return code
     elif (f == 'input'):
         stringslot = compile(ast[1]) # TODO error check
-        return [['input', stringslot[0][1]]]
+        return [['INPUT', stringslot[0][1]]]
     elif (f == 'output'):
         stringslot = compile(ast[1]) # TODO error check
         code = (compile(ast[2]))
@@ -117,62 +117,62 @@ def compile(ast):
         return code
 
     elif (f == 'add'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['ADD', 0])
         return code
 
     elif (f == 'sub'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['SUB', 0])
         return code
 
     elif (f == 'mul'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['MUL', 0])
         return code
 
     elif (f == 'div'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['DIV', 0])
         return code
 
     elif (f == 'lt'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['LT', 0])
         return code
 
     elif (f == 'lte'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['LTE', 0])
         return code
 
     elif (f == 'gt'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['GT', 0])
         return code
 
     elif (f == 'gte'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['GTE', 0])
         return code
 
     elif (f == 'eq'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['EQ', 0])
         return code
 
     elif (f == 'neq'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
+        code = compile(ast[2])
+        code.extend(compile(ast[1]))
         code.append(['NEQ', 0])
         return code
 

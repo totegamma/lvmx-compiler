@@ -2,7 +2,7 @@ var i;
 
 func calcsum(arg) {
 	var buf = 0;
-	for (i = 0; i < arg; i++) {
+	for (i = 0; i < arg; i = i + 1) {
 		buf = buf + i + 1;
 	}
 	return buf;

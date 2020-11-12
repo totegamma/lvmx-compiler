@@ -2,7 +2,6 @@
 
 def lvm(stringregion, bytecode, codesize, env):
     pc = 0 # program counter
-    sp = codesize # stack pointer
     fp = 0 # function pointer
 
     stack = []
@@ -13,66 +12,178 @@ def lvm(stringregion, bytecode, codesize, env):
         codesize -= 1
 
     for i in range(codesize):
-        stack.append(['DUMMY', 0])
+        stack.append(['global', 0])
 
 
-    while true:
-        opc = stack[sp][0]
-        arg = stack[sp][1]
+    clock = 0;
+    while True:
+        opc = stack[pc][0]
+        arg = stack[pc][1]
+
+        clock += 1
+        print(f"#{clock=}: {opc=}, {arg=}")
 
         if opc == 'POP':
-            pass
+            stack.pop()
+            pc += 1
+
         elif opc == 'PUSH':
-            pass
+            stack.append(['push', arg])
+            pc += 1
+
         elif opc == 'ADD':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['add', a + b])
+            pc += 1
+
         elif opc == 'SUB':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['sub', a - b])
+            pc += 1
+
         elif opc == 'MUL':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['mul', a * b])
+            pc += 1
+
         elif opc == 'GT':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['gt', a > b])
+            pc += 1
+
         elif opc == 'GTE':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['gte', a >= b])
+            pc += 1
+
         elif opc == 'LT':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['lt', a < b])
+            pc += 1
+
         elif opc == 'LTE':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['lte', a <= b])
+            pc += 1
+
         elif opc == 'EQ':
-            pass
+            a = stack.pop()[1]
+            b = stack.pop()[1]
+            stack.append(['eq', a == b])
+            pc += 1
+
         elif opc == 'BEQ0':
-            pass
+            a = stack.pop()[1]
+            if (a == 0):
+                pc = arg
+            else:
+                pc += 1
+
         elif opc == 'LOADA':
-            pass
+            a = stack[fp - arg - 2]
+            stack.append(['loada', a[1]])
+            pc += 1
+
         elif opc == 'LOADL':
-            pass
+            a = stack[fp + arg + 1]
+            stack.append(['loadl', a[1]])
+            pc += 1
+
         elif opc == 'LOADG':
-            pass
+            a = stack[arg]
+            stack.append(['loadg', a[1]])
+            pc += 1
+
         elif opc == 'STOREA':
-            pass
+            a = stack.pop()
+            stack[fp - arg - 2][1] = a[1]
+            pc += 1
+
         elif opc == 'STOREL':
-            pass
+            a = stack.pop()
+            stack[fp + arg + 1][1] = a[1]
+            pc += 1
+
         elif opc == 'STOREG':
-            pass
+            a = stack.pop()
+            stack[arg][1] = a[1]
+            pc += 1
+
         elif opc == 'JUMP':
-            pass
+            pc = arg
+
         elif opc == 'CALL':
-            pass
+            stack.append(['call', pc+1])
+            pc = arg
+
         elif opc == 'RET':
-            pass
+            a = stack.pop()
+            rewind = len(stack) - fp -1
+            for i in range(rewind):
+                stack.pop()
+            fp = stack.pop()[1]
+            pc = stack.pop()[1]
+            stack.append(['ret', a[1]])
+
+            if (fp == 0):
+                break
+
         elif opc == 'POPR':
-            pass
+            a = stack.pop()
+            for i in range(arg):
+                stack.pop()
+            stack.append(['popr', a[1]])
+            pc += 1
+
         elif opc == 'FRAME':
-            pass
+            stack.append(['frame', fp])
+            fp = len(stack) -1
+            for i in range(arg):
+                stack.append(['frame', 0])
+            pc += 1
+
         elif opc == 'INPUT':
-            pass
+            key = stringregion[arg]
+            stack.append(['input', env[key]])
+            pc += 1
+
         elif opc == 'OUTPUT':
-            pass
+            a = stack.pop()
+            key = stringregion[arg]
+            env[key] = a[1]
+            pc += 1
+
+        else:
+            print("unknown opc!!!!!")
+            print(f"{opc=}")
+            break
+
+        print(f"{pc=}")
+        print(f"sp={len(stack)-1}")
+        print(f"{fp=}")
+        print("-----")
+        print(f"{stack=}")
+        print("-----")
+        #input("Press Enter to continue...")
 
 
     return env
 
 
+# LOCAL1
+# LOCAL0
+# FP <- FP
+# PC
+# ARG0
+# ARG1
+# ARG2
 
 
 if __name__ == '__main__':
@@ -104,7 +215,9 @@ if __name__ == '__main__':
             else:
                 stringregion.append(elem)
         elif readmode == 'bytecode':
-            bytecode.append(elem.split('.'))
+            op = elem.split('.')
+            op[1] = int(op[1])
+            bytecode.append(op)
 
     env = lvm(stringregion, bytecode, codesize, {'input': 10, 'output': 0})
 

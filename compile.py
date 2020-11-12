@@ -81,13 +81,12 @@ def compile(ast):
         code.append(['LABEL', l1])
         return code
     elif (f == 'input'):
-        code = compile(ast[1])
-        code.append(['INPUT', 0])
-        return code
+        stringslot = compile(ast[1]) # TODO error check
+        return [['input', stringslot[0][1]]]
     elif (f == 'output'):
-        code = compile(ast[1])
-        code.extend(compile(ast[2]))
-        code.append(['OUTPUT', 0])
+        stringslot = compile(ast[1]) # TODO error check
+        code = (compile(ast[2]))
+        code.append(['OUTPUT', stringslot[0][1]])
         return code
     elif (f == 'assign'):
         code = compile(ast[2])

@@ -1,3 +1,4 @@
+import time
 from yacc import makeAST
 
 
@@ -200,65 +201,64 @@ def compile(ast):
     return [['ERROR', f]]
 
 
-ast = makeAST('main.c')
-#print(ast)
+if __name__ == '__main__':
+    start = time.time()
 
-compile(ast)
+    ast = makeAST('main.c')
 
-#print(f'{globalvars=}')
-#print(f'{stringregion=}')
+    compile(ast)
 
-funcLocator = {}
-labelLocator = {}
+    funcLocator = {}
+    labelLocator = {}
 
-middlecode = []
-bytecode = []
+    middlecode = []
+    bytecode = []
 
 # search for main
-for elem in funcs:
-    if (elem[0] == 'main'):
-        for byte in elem[1]:
-            middlecode.append(byte)
+    for elem in funcs:
+        if (elem[0] == 'main'):
+            for byte in elem[1]:
+                middlecode.append(byte)
 
 # add others
-for elem in funcs:
-    if (elem[0] != 'main'):
-        for byte in elem[1]:
-            middlecode.append(byte)
+    for elem in funcs:
+        if (elem[0] != 'main'):
+            for byte in elem[1]:
+                middlecode.append(byte)
 
 # locate func & labels
-for elem in middlecode:
-    if (elem[0] == 'ENTRY'):
-        funcLocator[elem[1]] = len(bytecode)
-    elif (elem[0] == 'LABEL'):
-        labelLocator[elem[1]] = len(bytecode)
-    else:
-        bytecode.append(elem)
+    for elem in middlecode:
+        if (elem[0] == 'ENTRY'):
+            funcLocator[elem[1]] = len(bytecode)
+        elif (elem[0] == 'LABEL'):
+            labelLocator[elem[1]] = len(bytecode)
+        else:
+            bytecode.append(elem)
 
 # update funcall & jump & BEQ0
-for elem in bytecode:
-    if (elem[0] == 'CALL'):
-        elem[1] = funcLocator[elem[1]]
-    elif (elem[0] == 'JUMP' or elem[0] == 'BEQ0'):
-        elem[1] = labelLocator[elem[1]]
-    elif (elem[0] == 'LOADG' or elem[0] == 'STOREG'):
-        elem[1] = len(bytecode) + elem[1];
+    for elem in bytecode:
+        if (elem[0] == 'CALL'):
+            elem[1] = funcLocator[elem[1]]
+        elif (elem[0] == 'JUMP' or elem[0] == 'BEQ0'):
+            elem[1] = labelLocator[elem[1]]
+        elif (elem[0] == 'LOADG' or elem[0] == 'STOREG'):
+            elem[1] = len(bytecode) + elem[1];
 
-stream = ""
+    stream = ""
 
 # writeout
-stream += f".string {len(stringregion)}" + '\n'
-for elem in stringregion:
-    stream += elem
-    stream += '\n'
+    stream += f".string {len(stringregion)}" + '\n'
+    for elem in stringregion:
+        stream += elem
+        stream += '\n'
 
-stream += f".bytecode {len(bytecode) + len(globalvars)}" + '\n'
-for elem in bytecode:
-    stream += f"{elem[0]}.{elem[1]}" + '\n'
+    stream += f".bytecode {len(bytecode) + len(globalvars)}" + '\n'
+    for elem in bytecode:
+        stream += f"{elem[0]}.{elem[1]}" + '\n'
 
+    with open("bytecode.lve", mode='w') as f:
+        f.write(stream)
 
-print(stream)
-
-
-
+    elapsed = time.time() - start
+    print(f"done! ({elapsed*1000:.3f}ms)")
 

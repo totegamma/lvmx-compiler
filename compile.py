@@ -245,13 +245,17 @@ if __name__ == '__main__':
 
     stream = ""
 
+# append global variable space
+    for i in globalvars:
+        bytecode.append(['DUMMY', 0])
+
 # writeout
     stream += f".string {len(stringregion)}" + '\n'
     for elem in stringregion:
         stream += elem
         stream += '\n'
 
-    stream += f".bytecode {len(bytecode) + len(globalvars)}" + '\n'
+    stream += f".bytecode {len(bytecode)}" + '\n'
     for elem in bytecode:
         stream += f"{elem[0]}.{elem[1]}" + '\n'
 

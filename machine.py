@@ -11,9 +11,6 @@ def lvm(stringregion, bytecode, codesize, env):
         stack.append(elem)
         codesize -= 1
 
-    for i in range(codesize):
-        stack.append(['global', 0])
-
 
     clock = 0;
     while True:

@@ -79,7 +79,7 @@ def lvm(stringregion, bytecode, codesize, env):
             stack.append(['eq', a == b])
             pc += 1
 
-        elif opc == 'BEQ0':
+        elif opc == 'JIF0':
             a = stack.pop()[1]
             if (a == 0):
                 pc = arg

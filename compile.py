@@ -74,7 +74,7 @@ def compile(ast):
         labelitr += 1
         code.append(['LABEL', l0])
         code.extend(cond)
-        code.append(['BEQ0', l1])
+        code.append(['JIF0', l1])
         code.extend(blck)
         code.extend(cont)
         code.append(['JUMP', l0])
@@ -234,11 +234,11 @@ if __name__ == '__main__':
         else:
             bytecode.append(elem)
 
-# update funcall & jump & BEQ0
+# update funcall & jump & JIF0
     for elem in bytecode:
         if (elem[0] == 'CALL'):
             elem[1] = funcLocator[elem[1]]
-        elif (elem[0] == 'JUMP' or elem[0] == 'BEQ0'):
+        elif (elem[0] == 'JUMP' or elem[0] == 'JIF0'):
             elem[1] = labelLocator[elem[1]]
         elif (elem[0] == 'LOADG' or elem[0] == 'STOREG'):
             elem[1] = len(bytecode) + elem[1];

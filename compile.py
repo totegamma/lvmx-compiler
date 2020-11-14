@@ -277,10 +277,10 @@ def compile(ast):
     return [['ERROR', f]]
 
 
-if __name__ == '__main__':
+def dumpbytecode(code):
     start = time.time()
 
-    ast = makeAST('main.c')
+    ast = makeAST(code)
 
     compile(ast)
 

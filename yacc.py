@@ -217,15 +217,10 @@ def p_error(p):
     print("Syntax error at '%s'" % p)
 
 
-def makeAST(filepath):
+def makeAST(code):
 
     parser = yacc.yacc()
-
-    f = open(filepath, 'r')
-    data = f.read()
-    f.close()
-
-    ast = yacc.parse(data, lexer=lexer)
+    ast = yacc.parse(code, lexer=lexer)
 
     return ast;
 

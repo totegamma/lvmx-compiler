@@ -56,11 +56,65 @@ def compile(ast):
         return code
 
     elif (f == 'if'):
-        pass
+        cond = compile(ast[1])
+        blck = []
+        for elem in ast[2]:
+            blck.extend(compile(elem))
+
+        l0 = labelitr
+        labelitr += 1
+
+        code = cond
+        code.append(['JIF0', l0])
+        code.extend(blck)
+        code.append(['LABEL', l0])
+        return code
+
+
     elif (f == 'ifelse'):
-        pass
+        cond = compile(ast[1])
+        blck = []
+        for elem in ast[2]:
+            blck.extend(compile(elem))
+
+        blelse = []
+        for elem in ast[3]:
+            blelse.extend(compile(elem))
+
+        l0 = labelitr
+        labelitr += 1
+        l1 = labelitr
+        labelitr += 1
+
+        code = cond
+        code.append(['JIF0', l0])
+        code.extend(blck)
+        code.append(['JUMP', l1])
+        code.append(['LABEL', l0])
+        code.extend(blelse)
+        code.append(['LABEL', l1])
+        return code
+
     elif (f == 'while'):
-        pass
+        cond = compile(ast[1])
+        blck = []
+        for elem in ast[2]:
+            blck.extend(compile(elem))
+
+        l0 = labelitr
+        labelitr += 1
+        l1 = labelitr
+        labelitr += 1
+
+        code = [['LABEL', l0]]
+        code.extend(cond)
+        code.append(['JIF0', l1])
+        code.extend(blck)
+        code.append(['JUMP', l0])
+        code.append(['LABEL', l1])
+
+        return code
+
     elif (f == 'for'):
         init = compile(ast[1])
         cond = compile(ast[2])

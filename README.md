@@ -1,2 +1,2 @@
-# simpleSBVMCompiler
+# LogixVirtualMachineCompiler
  

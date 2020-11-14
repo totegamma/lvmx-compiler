@@ -336,8 +336,7 @@ def dumpbytecode(code):
     for elem in bytecode:
         stream += f"{mnemonic[elem[0]]:04x}{int(elem[1]):04x}" + '\n'
 
-    with open("bytecode.lve", mode='w') as f:
-        f.write(stream)
+    return stream
 
     elapsed = time.time() - start
     print(f"done! ({elapsed*1000:.3f}ms)")

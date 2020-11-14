@@ -159,11 +159,33 @@ def compile(ast):
     elif (f == 'inc'):
         code = compile(ast[1])
         code.extend([['PUSH', 1], ['ADD', 0]])
+        if (ast[1][1] in localvars):
+            code.append(['STOREL', localvars[ast[1][1]]])
+            return code
+        elif (ast[1][1] in arguments):
+            code.append(['STOREA', arguments[ast[1][1]]])
+            return code
+        elif (ast[1][1] in globalvars):
+            code.append(['STOREG', globalvars[ast[1][1]]])
+            return code
+        else:
+            print("variable not found")
         return code
 
     elif (f == 'dec'):
         code = compile(ast[1])
         code.extend([['PUSH', 1], ['SUB', 0]])
+        if (ast[1][1] in localvars):
+            code.append(['STOREL', localvars[ast[1][1]]])
+            return code
+        elif (ast[1][1] in arguments):
+            code.append(['STOREA', arguments[ast[1][1]]])
+            return code
+        elif (ast[1][1] in globalvars):
+            code.append(['STOREG', globalvars[ast[1][1]]])
+            return code
+        else:
+            print("variable not found")
         return code
 
     elif (f == 'inv'):

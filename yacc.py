@@ -219,7 +219,7 @@ def p_error(p):
 
 def makeAST(code):
 
-    parser = yacc.yacc()
+    parser = yacc.yacc(debug=False, write_tables=False)
     ast = yacc.parse(code, lexer=lexer)
 
     return ast;

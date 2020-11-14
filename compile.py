@@ -1,4 +1,5 @@
 import time
+from mnemonic import mnemonic
 from yacc import makeAST
 
 
@@ -257,7 +258,7 @@ if __name__ == '__main__':
 
     stream += f".bytecode {len(bytecode)}" + '\n'
     for elem in bytecode:
-        stream += f"{elem[0]}.{elem[1]}" + '\n'
+        stream += f"{mnemonic[elem[0]]:04x}{int(elem[1]):04x}" + '\n'
 
     with open("bytecode.lve", mode='w') as f:
         f.write(stream)

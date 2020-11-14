@@ -1,4 +1,4 @@
-
+from mnemonic import mnemonic
 
 def lvm(stringregion, bytecode, codesize, env):
     pc = 0 # program counter
@@ -174,14 +174,6 @@ def lvm(stringregion, bytecode, codesize, env):
     return env
 
 
-# LOCAL1
-# LOCAL0
-# FP <- FP
-# PC
-# ARG0
-# ARG1
-# ARG2
-
 
 if __name__ == '__main__':
 
@@ -197,10 +189,11 @@ if __name__ == '__main__':
     stringregion = []
     bytecode = []
 
+    revmnemonic = {v: k for k, v in mnemonic.items()}
+
     for elem in lvearr:
         if elem == '':
             continue
-        
         if readmode == 'undefined':
             if elem.startswith('.string'):
                 readmode = 'string'
@@ -212,9 +205,9 @@ if __name__ == '__main__':
             else:
                 stringregion.append(elem)
         elif readmode == 'bytecode':
-            op = elem.split('.')
-            op[1] = int(op[1])
-            bytecode.append(op)
+            opc = revmnemonic[int(elem[0:4], 16)]
+            arg = int(elem[4:8], 16)
+            bytecode.append([opc, arg])
 
     env = lvm(stringregion, bytecode, codesize, {'input': 10, 'output': 0})
 

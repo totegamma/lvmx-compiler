@@ -1,0 +1,35 @@
+mnemonic = {
+    "DUMMY": 0,
+    "PUSH": 1,
+    "POP": 2,
+    "JUMP": 3,
+    "JIF0": 4,
+    "FRAME": 5,
+    "POPR": 6,
+    "CALL": 7,
+    "RET": 8,
+
+    "LOADG": 16,
+    "LOADL": 17,
+    "LOADA": 18,
+    "LOADR": 19,
+    "INPUT": 20,
+    "STOREG": 24,
+    "STOREL": 25,
+    "STOREA": 26,
+    "STORER": 27,
+    "OUTPUT": 28,
+
+    "ADD": 32,
+    "SUB": 33,
+    "MUL": 34,
+    "DIV": 35,
+    "LT": 36,
+    "LTE": 37,
+    "GT": 38,
+    "GTE": 39,
+    "EQ": 40,
+    "NEQ": 41,
+    "TERNARY": 42
+
+}

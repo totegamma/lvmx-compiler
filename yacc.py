@@ -118,7 +118,7 @@ def p_expr(p):
     | expr BIOP expr
     | expr TERNARY expr COLON expr
     | OUTPUT LPAREN string COMMA expr RPAREN
-    | WRITEREG LPAREN number COMMA expr RPAREN
+    | WRITEREG LPAREN expr COMMA expr RPAREN
     '''
     if (len(p) == 2):
         p[0] = p[1]
@@ -167,14 +167,14 @@ def p_primary_expr(p):
     | SYMBOL LPAREN arg_list RPAREN
     | SYMBOL LPAREN RPAREN
     | INPUT LPAREN string RPAREN
-    | READREG LPAREN number RPAREN
+    | READREG LPAREN expr RPAREN
     '''
     if (len(p) == 2):
         p[0] = p[1]
     elif (p[1] == "input"):
         p[0] = ['input', p[3]]
     elif (p[1] == "readreg"):
-        p[0] = ['readreg', [3]]
+        p[0] = ['readreg', p[3]]
     else:
         if (len(p) == 4):
             p[0] = ['funccall', p[1], []]

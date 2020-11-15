@@ -26,19 +26,24 @@ def compile(ast):
         return
     elif (f == 'func'):
         frame = []
-        code = []
         arguments.clear()
         localvars.clear()
         for elem in ast[2]:
             arguments[elem] = len(arguments)
-        for elem in ast[3]: # code
-            code.extend(compile(elem))
         frame.append(['ENTRY', ast[1]])
         frame.append(['FRAME', len(localvars)])
+        code = compile(ast[3])
         frame.extend(code)
         frame.append(['RET', 0])
         funcs.append([ast[1], frame])
         return
+
+    elif (f == 'block'):
+        code = []
+        for elem in ast[1]:
+            print(elem)
+            code.extend(compile(elem))
+        return code
 
     elif (f == 'localvar'):
         localvars[ast[1]] = len(localvars)
@@ -55,18 +60,14 @@ def compile(ast):
             return [['RET', 0]]
 
     elif (f == 'funccall'):
-        code = []
-        for elem in ast[2]:
-            code.extend(compile(elem))
+        code = compile(ast[2])
         code.append(['CALL', ast[1]])
         code.append(['POPR', len(ast[2])])
         return code
 
     elif (f == 'if'):
         cond = compile(ast[1])
-        blck = []
-        for elem in ast[2]:
-            blck.extend(compile(elem))
+        blck = compile(ast[2])
 
         l0 = labelitr
         labelitr += 1
@@ -80,14 +81,8 @@ def compile(ast):
 
     elif (f == 'ifelse'):
         cond = compile(ast[1])
-        blck = []
-        for elem in ast[2]:
-            blck.extend(compile(elem))
-
-        blelse = []
-        for elem in ast[3]:
-            blelse.extend(compile(elem))
-
+        blck = compile(ast[2])
+        blelse = compile(ast[3])
         l0 = labelitr
         labelitr += 1
         l1 = labelitr
@@ -104,9 +99,7 @@ def compile(ast):
 
     elif (f == 'while'):
         cond = compile(ast[1])
-        blck = []
-        for elem in ast[2]:
-            blck.extend(compile(elem))
+        blck = compile(ast[2])
 
         l0 = labelitr
         labelitr += 1
@@ -125,9 +118,8 @@ def compile(ast):
         init = compile(ast[1])
         cond = compile(ast[2])
         cont = compile(ast[3])
-        blck = []
-        for elem in ast[4]:
-            blck.extend(compile(elem))
+        blck = compile(ast[4])
+
         code = init
         l0 = labelitr
         labelitr += 1
@@ -294,7 +286,7 @@ def compile(ast):
             stringregion[ast[1]] = len(stringregion)
         return [['PUSH', stringregion[ast[1]]]]
 
-    print(f)
+    print(f"no match... {f=}")
     return [['ERROR', f]]
 
 

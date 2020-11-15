@@ -30,9 +30,9 @@ def compile(ast):
         localvars.clear()
         for elem in ast[2]:
             arguments[elem] = len(arguments)
+        code = compile(ast[3]) # ここでlocalvarsが変わる
         frame.append(['ENTRY', ast[1]])
-        frame.append(['FRAME', len(localvars)])
-        code = compile(ast[3])
+        frame.append(['FRAME', len(localvars)]) # ここでlocalvasを使う
         frame.extend(code)
         frame.append(['RET', 0])
         funcs.append([ast[1], frame])

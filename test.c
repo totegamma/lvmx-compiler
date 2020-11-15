@@ -16,7 +16,6 @@ func main() {
 	var result = calcsum(in);
 
 	output("output", result);
-	/*
 
 	if (result == 55) {
 		output("iftest", 100);
@@ -36,7 +35,6 @@ func main() {
 	}
 
 	output("whiletest", j);
-	*/
 	return;
 }
 

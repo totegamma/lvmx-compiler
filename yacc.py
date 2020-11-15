@@ -5,6 +5,11 @@ from tokens import tokens
 
 start = 'program'
 
+precedence = (
+    ('left', 'ADD', 'SUB'),
+    ('left', 'MUL', 'DIV'),
+)
+
 def p_program(p):
     '''
     program : external_definitions
@@ -113,27 +118,30 @@ def p_local_vars(p):
 def p_expr(p):
     '''
     expr : primary_expr
+    | LPAREN expr RPAREN
     | SYMBOL ASSIGN expr
-    | expr UNIOP
+    | UNIOP expr
     | expr BIOP expr
+    | expr ADD expr
+    | expr SUB expr
+    | expr MUL expr
+    | expr DIV expr
     | expr TERNARY expr COLON expr
     | OUTPUT LPAREN string COMMA expr RPAREN
     | WRITEREG LPAREN expr COMMA expr RPAREN
     '''
     if (len(p) == 2):
         p[0] = p[1]
+    elif (p[1] == '('):
+        p[0] = p[2]
     elif (p[1] == 'output'):
         p[0] = ['output', p[3], p[5]]
     elif (p[1] == 'writereg'):
         p[0] = ['writereg', p[3], p[5]]
     elif (p[2] == '='):
         p[0] = ['assign', p[1], p[3]]
-    elif (p[2] == '++'):
-        p[0] = ['inc', p[1]]
-    elif (p[2] == '--'):
-        p[0] = ['dec', p[1]]
     elif (p[2] == '!'):
-        p[0] = ['inv', p[1]]
+        p[0] = ['inv', p[2]]
     elif (p[2] == '+'):
         p[0] = ['add', p[1], p[3]]
     elif (p[2] == '-'):
@@ -154,6 +162,10 @@ def p_expr(p):
         p[0] = ['eq', p[1], p[3]]
     elif (p[2] == '!='):
         p[0] = ['neq', p[1], p[3]]
+    elif (p[1] == '++'):
+        p[0] = ['inc', p[2]]
+    elif (p[1] == '--'):
+        p[0] = ['dec', p[2]]
     elif (p[2] == '?'):
         p[0] = ['ternary', p[1], p[3], p[5]]
     else:

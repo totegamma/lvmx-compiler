@@ -118,6 +118,7 @@ def p_local_vars(p):
 def p_expr(p):
     '''
     expr : primary_expr
+    | LPAREN expr RPAREN
     | SYMBOL ASSIGN expr
     | UNIOP expr
     | expr BIOP expr
@@ -131,6 +132,8 @@ def p_expr(p):
     '''
     if (len(p) == 2):
         p[0] = p[1]
+    elif (p[1] == '('):
+        p[0] = p[2]
     elif (p[1] == 'output'):
         p[0] = ['output', p[3], p[5]]
     elif (p[1] == 'writereg'):

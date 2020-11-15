@@ -21,7 +21,6 @@ states = (
         ('comment', 'exclusive')
 )
 
-t_ASSIGN = r'='
 t_COLON = r':'
 t_SEMICOLON = r';'
 t_LPAREN = r'\('
@@ -37,7 +36,11 @@ def t_UNIOP(t):
     return t
 
 def t_BIOP(t):
-    r'\+|-|\*|/|<|<=|>|>=|==|\!='
+    r'\*|/|\+|-|<=|>=|<|>|==|\!='
+    return t
+
+def t_ASSIGN(t):
+    r'='
     return t
 
 

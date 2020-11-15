@@ -41,7 +41,6 @@ def compile(ast):
     elif (f == 'block'):
         code = []
         for elem in ast[1]:
-            print(elem)
             code.extend(compile(elem))
         return code
 
@@ -60,7 +59,9 @@ def compile(ast):
             return [['RET', 0]]
 
     elif (f == 'funccall'):
-        code = compile(ast[2])
+        code = []
+        for elem in ast[2]:
+            code.extend(compile(elem))
         code.append(['CALL', ast[1]])
         code.append(['POPR', len(ast[2])])
         return code

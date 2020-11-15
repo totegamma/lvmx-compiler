@@ -232,8 +232,7 @@ def makeAST(code):
     parser = yacc.yacc(debug=False, write_tables=False)
     ast = yacc.parse(code, lexer=lexer)
 
-    print(ast)
-    print("-----")
+    #print(ast)
 
     return ast;
 

@@ -1,3 +1,4 @@
+import sys
 import time
 from mnemonic import mnemonic
 from yacc import makeAST
@@ -340,4 +341,20 @@ def dumpbytecode(code):
 
     elapsed = time.time() - start
     print(f"done! ({elapsed*1000:.3f}ms)")
+
+
+if __name__ == '__main__':
+    filename = ""
+    if (len(sys.argv) == 2):
+        filename = sys.argv[1]
+    else:
+        filename = "test.c"
+
+    data = ""
+    with open(filename, mode="r") as f:
+        data = f.read()
+
+    bytecode = dumpbytecode(data)
+
+    print(bytecode)
 

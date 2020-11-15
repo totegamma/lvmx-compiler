@@ -119,7 +119,7 @@ def p_expr(p):
     '''
     expr : primary_expr
     | SYMBOL ASSIGN expr
-    | expr UNIOP
+    | UNIOP expr
     | expr BIOP expr
     | expr ADD expr
     | expr SUB expr
@@ -137,12 +137,8 @@ def p_expr(p):
         p[0] = ['writereg', p[3], p[5]]
     elif (p[2] == '='):
         p[0] = ['assign', p[1], p[3]]
-    elif (p[2] == '++'):
-        p[0] = ['inc', p[1]]
-    elif (p[2] == '--'):
-        p[0] = ['dec', p[1]]
     elif (p[2] == '!'):
-        p[0] = ['inv', p[1]]
+        p[0] = ['inv', p[2]]
     elif (p[2] == '+'):
         p[0] = ['add', p[1], p[3]]
     elif (p[2] == '-'):
@@ -163,6 +159,10 @@ def p_expr(p):
         p[0] = ['eq', p[1], p[3]]
     elif (p[2] == '!='):
         p[0] = ['neq', p[1], p[3]]
+    elif (p[1] == '++'):
+        p[0] = ['inc', p[2]]
+    elif (p[1] == '--'):
+        p[0] = ['dec', p[2]]
     elif (p[2] == '?'):
         p[0] = ['ternary', p[1], p[3], p[5]]
     else:

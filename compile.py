@@ -20,8 +20,10 @@ def compile(ast):
     if (f == 'program'):
         for elem in ast[1]:
             compile(elem)
+        return
     elif (f == 'globalvar'):
         globalvars[ast[1]] = len(globalvars)
+        return
     elif (f == 'func'):
         frame = []
         code = []
@@ -36,6 +38,7 @@ def compile(ast):
         frame.extend(code)
         frame.append(['RET', 0])
         funcs.append([ast[1], frame])
+        return
 
     elif (f == 'localvar'):
         localvars[ast[1]] = len(localvars)
@@ -291,6 +294,7 @@ def compile(ast):
             stringregion[ast[1]] = len(stringregion)
         return [['PUSH', stringregion[ast[1]]]]
 
+    print(f)
     return [['ERROR', f]]
 
 

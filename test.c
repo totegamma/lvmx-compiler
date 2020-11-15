@@ -2,7 +2,7 @@ var i;
 
 func calcsum(arg) {
 	var buf = 0;
-	for (i = 0; i < arg; i++) {
+	for (i = 0; i < arg; ++i) {
 		buf = buf + i + 1;
 	}
 	return buf;
@@ -32,7 +32,7 @@ func main() {
 	var j = 0;
 	while (i > 0) {
 		j = j + 10;
-		i--;
+		--i;
 	}
 
 	output("whiletest", j);

@@ -20,7 +20,6 @@ reserved = {
 
 states = (
         ('string', 'exclusive'),
-        ('comment', 'exclusive')
 )
 
 t_COLON = r':'
@@ -32,6 +31,10 @@ t_RBRACE = r'\}'
 t_COMMA = r','
 
 t_NUMBER = r'[0-9]+(\.[0-9]+)?((e|E)(\+|-)?[0-9]+)?'
+
+def t_COMMENT(t):
+    '/\*[\s\S]*?\*/|//.*'
+    t.lexer.lineno += t.value.count('\n')
 
 def t_UNIOP(t):
     r'\+\+|--|\!'
@@ -63,21 +66,8 @@ def t_string_end(t):
     r'"'
     t.lexer.pop_state()
 
-def t_begin_comment(t):
-    r'/\*'
-    t.lexer.push_state('comment')
-
-def t_comment_COMMENT(t):
-    r'[^\*/]+'
-    pass
-
-def t_comment_end(t):
-    r'\*/'
-    t.lexer.pop_state()
-
 t_ignore = '\t| '
-t_string_ignore = '\t'
-t_comment_ignore = '\t'
+t_string_ignore = ''
 
 def t_newline(t):
     r'\n+'
@@ -91,17 +81,13 @@ def t_string_error(t):
     print("string: Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
-def t_comment_error(t):
-    print("comment: Illegal character '%s'" % t.value[0])
-    t.lexer.skip(1)
 
 
 lexer = lex.lex()
 
-def lex_test():
-    f = open('main.c', 'r')
-    data = f.read()
-    f.close()
+if __name__ == '__main__':
+    with open('test.c', 'r') as f:
+        data = f.read()
 
     lexer.input(data)
 
@@ -111,5 +97,3 @@ def lex_test():
             break
         print(tok)
 
-if __name__ == '__main__':
-    lex_test()

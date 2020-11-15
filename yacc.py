@@ -5,6 +5,11 @@ from tokens import tokens
 
 start = 'program'
 
+precedence = (
+    ('left', 'ADD', 'SUB'),
+    ('left', 'MUL', 'DIV'),
+)
+
 def p_program(p):
     '''
     program : external_definitions
@@ -116,6 +121,10 @@ def p_expr(p):
     | SYMBOL ASSIGN expr
     | expr UNIOP
     | expr BIOP expr
+    | expr ADD expr
+    | expr SUB expr
+    | expr MUL expr
+    | expr DIV expr
     | expr TERNARY expr COLON expr
     | OUTPUT LPAREN string COMMA expr RPAREN
     | WRITEREG LPAREN number COMMA expr RPAREN

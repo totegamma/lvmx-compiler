@@ -41,7 +41,23 @@ def t_UNIOP(t):
     return t
 
 def t_BIOP(t):
-    r'\*|/|\+|-|<=|>=|<|>|==|\!='
+    r'<=|>=|==|\!=|<|>'
+    return t
+
+def t_ADD(t):
+    r'\+'
+    return t
+
+def t_SUB(t):
+    r'-'
+    return t
+
+def t_MUL(t):
+    r'\*'
+    return t
+
+def t_DIV(t):
+    r'/'
     return t
 
 def t_ASSIGN(t):

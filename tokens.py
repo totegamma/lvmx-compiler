@@ -22,5 +22,6 @@ tokens = (
         'FOR',
         'INPUT',
         'OUTPUT',
-        'COMMENT'
+        'READREG',
+        'WRITEREG'
 )

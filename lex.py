@@ -13,6 +13,8 @@ reserved = {
         'for': 'FOR',
         'input': 'INPUT',
         'output': 'OUTPUT',
+        'readreg': 'READREG',
+        'writereg': 'WRITEREG',
         'return': 'RETURN'
 }
 

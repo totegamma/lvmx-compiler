@@ -21,8 +21,6 @@ def p_external_definitions(p):
     else:
         p[0] = p[1] + [p[2]]
 
-
-
 def p_external_definition(p):
     '''
     external_definition : VAR SYMBOL SEMICOLON
@@ -63,7 +61,6 @@ def p_block(p):
     '''
     p[0] = p[2]
 
-
 def p_statements(p):
     '''
     statements : statement
@@ -73,7 +70,6 @@ def p_statements(p):
         p[0] = [p[1]]
     else:
         p[0] = p[1] + [p[2]]
-
 
 def p_statement(p):
     '''
@@ -104,7 +100,6 @@ def p_statement(p):
     else:
         p[0] = p[1];
 
-
 def p_local_vars(p):
     '''
     local_vars : VAR SYMBOL SEMICOLON
@@ -115,8 +110,6 @@ def p_local_vars(p):
     else:
         p[0] = ["localvar", p[2], p[4]]
 
-
-
 def p_expr(p):
     '''
     expr : primary_expr
@@ -125,11 +118,14 @@ def p_expr(p):
     | expr BIOP expr
     | expr TERNARY expr COLON expr
     | OUTPUT LPAREN string COMMA expr RPAREN
+    | WRITEREG LPAREN number COMMA expr RPAREN
     '''
     if (len(p) == 2):
         p[0] = p[1]
     elif (p[1] == 'output'):
         p[0] = ['output', p[3], p[5]]
+    elif (p[1] == 'writereg'):
+        p[0] = ['writereg', p[3], p[5]]
     elif (p[2] == '='):
         p[0] = ['assign', p[1], p[3]]
     elif (p[2] == '++'):
@@ -163,7 +159,6 @@ def p_expr(p):
     else:
         p[0] = p[1]
 
-
 def p_primary_expr(p):
     '''
     primary_expr : symbol
@@ -172,11 +167,14 @@ def p_primary_expr(p):
     | SYMBOL LPAREN arg_list RPAREN
     | SYMBOL LPAREN RPAREN
     | INPUT LPAREN string RPAREN
+    | READREG LPAREN number RPAREN
     '''
     if (len(p) == 2):
         p[0] = p[1]
     elif (p[1] == "input"):
         p[0] = ['input', p[3]]
+    elif (p[1] == "readreg"):
+        p[0] = ['readreg', [3]]
     else:
         if (len(p) == 4):
             p[0] = ['funccall', p[1], []]

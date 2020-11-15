@@ -36,11 +36,13 @@ def compile(ast):
         frame.extend(code)
         frame.append(['RET', 0])
         funcs.append([ast[1], frame])
+
     elif (f == 'localvar'):
         localvars[ast[1]] = len(localvars)
         code = compile(ast[2])
         code.append(['STOREL', localvars[ast[1]]])
         return code
+
     elif (f == 'return'):
         if (ast[1] != None):
             code = compile(ast[1])
@@ -48,6 +50,7 @@ def compile(ast):
             return code
         else:
             return [['RET', 0]]
+
     elif (f == 'funccall'):
         code = []
         for elem in ast[2]:
@@ -113,7 +116,6 @@ def compile(ast):
         code.extend(blck)
         code.append(['JUMP', l0])
         code.append(['LABEL', l1])
-
         return code
 
     elif (f == 'for'):
@@ -136,14 +138,27 @@ def compile(ast):
         code.append(['JUMP', l0])
         code.append(['LABEL', l1])
         return code
+
     elif (f == 'input'):
         stringslot = compile(ast[1]) # TODO error check
         return [['INPUT', stringslot[0][1]]]
+
     elif (f == 'output'):
         stringslot = compile(ast[1]) # TODO error check
         code = (compile(ast[2]))
         code.append(['OUTPUT', stringslot[0][1]])
         return code
+
+    elif (f == 'readreg'):
+        addr = compile(ast[1])
+        return [['LOADR', addr[0][1]]]
+
+    elif (f == 'writereg'):
+        addr = compile(ast[1])
+        code = (compile(ast[2]))
+        code.append(['STORER', addr[0][1]])
+        return code
+
     elif (f == 'assign'):
         code = compile(ast[2])
         if (ast[1] in localvars):
@@ -157,6 +172,7 @@ def compile(ast):
             return code
         else:
             print("variable not found")
+
     elif (f == 'inc'):
         code = compile(ast[1])
         code.extend([['PUSH', 1], ['ADD', 0]])
@@ -266,6 +282,7 @@ def compile(ast):
             return [['LOADG', globalvars[ast[1]]]]
         else:
             print("variable not found")
+
     elif (f == 'number'):
         return [['PUSH', ast[1]]]
 
@@ -273,7 +290,6 @@ def compile(ast):
         if (ast[1] not in stringregion):
             stringregion[ast[1]] = len(stringregion)
         return [['PUSH', stringregion[ast[1]]]]
-
 
     return [['ERROR', f]]
 

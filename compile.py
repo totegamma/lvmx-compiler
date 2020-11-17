@@ -13,6 +13,14 @@ localvars = {}
 
 labelitr = 0;
 
+def preparecompile():
+    globalvars.clear();
+    stringregion.clear();
+    funcs.clear();
+    arguments.clear();
+    localvars.clear();
+    labelitr.clear();
+
 def compile(ast):
     global labelitr
     f = ast[0]

@@ -19,7 +19,7 @@ def preparecompile():
     funcs.clear();
     arguments.clear();
     localvars.clear();
-    labelitr.clear();
+    labelitr = 0;
 
 def compile(ast):
     global labelitr

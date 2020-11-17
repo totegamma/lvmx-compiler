@@ -64,7 +64,7 @@ def p_block(p):
     '''
     block : LBRACE statements RBRACE
     '''
-    p[0] = p[2]
+    p[0] = ['block', p[2]]
 
 def p_statements(p):
     '''
@@ -231,6 +231,8 @@ def makeAST(code):
 
     parser = yacc.yacc(debug=False, write_tables=False)
     ast = yacc.parse(code, lexer=lexer)
+
+    #print(ast)
 
     return ast;
 

@@ -28,7 +28,7 @@ int main() {
 	}
 
 	i = 10;
-	int j = 0;
+	float j = 0;
 	while (i > 0) {
 		j = j + 10;
 		--i;

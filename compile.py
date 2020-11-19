@@ -30,20 +30,20 @@ def compile(ast):
             compile(elem)
         return
     elif (f == 'globalvar'):
-        globalvars[ast[1]] = len(globalvars)
+        globalvars[ast[2]] = [ast[1], len(globalvars)]
         return
     elif (f == 'func'):
         frame = []
         arguments.clear()
         localvars.clear()
-        for elem in ast[2]:
+        for elem in ast[3]:
             arguments[elem] = len(arguments)
-        code = compile(ast[3]) # ここでlocalvarsが変わる
-        frame.append(['ENTRY', ast[1]])
+        code = compile(ast[4]) # ここでlocalvarsが変わる
+        frame.append(['ENTRY', ast[2]])
         frame.append(['FRAME', len(localvars)]) # ここでlocalvasを使う
         frame.extend(code)
         frame.append(['RET', 0])
-        funcs.append([ast[1], frame])
+        funcs.append([ast[2], ast[1], frame])
         return
 
     elif (f == 'block'):
@@ -53,9 +53,9 @@ def compile(ast):
         return code
 
     elif (f == 'localvar'):
-        localvars[ast[1]] = len(localvars)
-        code = compile(ast[2])
-        code.append(['STOREL', localvars[ast[1]]])
+        localvars[ast[2]] = [ast[1], len(localvars)]
+        code = compile(ast[3])
+        code.append(['STOREL', localvars[ast[2]][1]])
         return code
 
     elif (f == 'return'):
@@ -323,6 +323,8 @@ def dumpbytecode(code):
         if (elem[0] != 'main'):
             for byte in elem[1]:
                 middlecode.append(byte)
+
+    return middlecode ## NOTE DEBUGCODE
 
 # locate func & labels
     for elem in middlecode:

@@ -14,7 +14,10 @@ def p_program(p):
     '''
     program : external_definitions
     '''
-    p[0] = ['program', p[1]]
+    p[0] = {
+            'op': 'program',
+            'body': p[1]
+            }
 
 def p_external_definitions(p):
     '''
@@ -33,11 +36,31 @@ def p_external_definition(p):
     | TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        p[0] = ["globalvar", p[1], p[2], ['number', p[1], 0]]
+        p[0] = {
+                'op': 'globalvar',
+                'type': p[1],
+                'symbol': p[2],
+                'body': {
+                    'op': 'number',
+                    'type': p[1],
+                    'body': 0
+                    }
+                }
     elif (len(p) == 5):
-        p[0] = ["func", p[1], p[2], p[3], p[4]]
+        p[0] = {
+                'op': 'func',
+                'type': p[1],
+                'symbol': p[2],
+                'arg': p[3],
+                'body': p[4]
+                }
     else:
-        p[0] = ["globalvar", p[1], p[2], p[4]]
+        p[0] = {
+                'op': 'globalvar',
+                'type': p[1],
+                'symbol': p[2],
+                'body': p[4]
+                }
 
 def p_arguments(p):
     '''
@@ -55,7 +78,7 @@ def p_definition_list(p):
     | definition_list COMMA TYPE SYMBOL
     '''
     if (len(p) == 3):
-        p[0] = [[p[1], p[2]]]
+        p[0] = [p[1], p[2]]
     if (len(p) == 5):
         p[0] = [p[1], [p[3], p[4]]]
 
@@ -63,7 +86,10 @@ def p_block(p):
     '''
     block : LBRACE statements RBRACE
     '''
-    p[0] = ['block', p[2]]
+    p[0] = {
+            'op': 'block',
+            'body': p[2]
+            }
 
 def p_statements(p):
     '''
@@ -89,18 +115,44 @@ def p_statement(p):
     '''
     if (p[1] == 'return'):
         if (len(p) == 3):
-            p[0] = ['return', None]
+            p[0] = {
+                    'op': 'return',
+                    'body': None
+                    }
         else:
-            p[0] = ['return', p[2]]
+            p[0] = {
+                    'op': 'return',
+                    'body': p[2]
+                    }
     elif (p[1] == 'if'):
         if (len(p) == 6):
-            p[0] = ['if', p[3], p[5]]
+            p[0] = {
+                    'op': 'if',
+                    'cond': p[3],
+                    'then': p[5]
+                    }
         else:
-            p[0] = ['ifelse', p[3], p[5], p[7]]
+            p[0] = {
+                    'op': 'ifelse', 
+                    'cond': p[3],
+                    'then': p[5],
+                    'else': p[7]
+                    }
+
     elif (p[1] == 'while'):
-        p[0] = ['while', p[3], p[5]]
+        p[0] = {
+                'op': 'while',
+                'cond': p[3],
+                'body': p[5]
+                }
     elif (p[1] == 'for'):
-        p[0] = ['for', p[3], p[5], p[7], p[9]]
+        p[0] = {
+                'op': 'for',
+                'init': p[3],
+                'cond': p[5],
+                'loop': p[7],
+                'body': p[9]
+                }
     else:
         p[0] = p[1];
 
@@ -110,9 +162,23 @@ def p_local_vars(p):
     local_vars : TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        p[0] = ["localvar", p[1], p[2], ['number', p[1], 0]]
+        p[0] = {
+                'op': 'localvar',
+                'type': p[1],
+                'symbol': p[2],
+                'body': {
+                    'op': 'number',
+                    'type': p[1],
+                    'body': 0
+                    }
+                }
     else:
-        p[0] = ["localvar", p[1], p[2], p[4]]
+        p[0] = {
+                'op': 'localvar',
+                'type': p[1],
+                'symbol': p[2],
+                'body': p[4]
+                }
 
 def p_expr(p):
     '''
@@ -134,39 +200,105 @@ def p_expr(p):
     elif (p[1] == '('):
         p[0] = p[2]
     elif (p[1] == 'output'):
-        p[0] = ['output', p[3], p[5]]
+        p[0] = {
+                'op': 'output',
+                'key': p[3],
+                'value': p[5]
+                }
     elif (p[1] == 'writereg'):
-        p[0] = ['writereg', p[3], p[5]]
+        p[0] = {
+                'op': 'writereg',
+                'key': p[3],
+                'value': p[5]
+                }
     elif (p[2] == '='):
-        p[0] = ['assign', p[1], p[3]]
+        p[0] = {
+                'op': 'assign',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '!'):
-        p[0] = ['inv', p[2]]
+        p[0] = {
+                'op': 'inv',
+                'right': p[2]
+                }
     elif (p[2] == '+'):
-        p[0] = ['add', p[1], p[3]]
+        p[0] = {
+                'op': 'add',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '-'):
-        p[0] = ['sub', p[1], p[3]]
+        p[0] = {
+                'op': 'sub',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '*'):
-        p[0] = ['mul', p[1], p[3]]
+        p[0] = {
+                'op': 'mul',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '/'):
-        p[0] = ['div', p[1], p[3]]
+        p[0] = {
+                'op': 'div',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '<'):
-        p[0] = ['lt', p[1], p[3]]
+        p[0] = {
+                'op': 'lt',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '<='):
-        p[0] = ['lte', p[1], p[3]]
+        p[0] = {
+                'op': 'lte',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '>'):
-        p[0] = ['gt', p[1], p[3]]
+        p[0] = {
+                'op': 'gt',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '>='):
-        p[0] = ['gte', p[1], p[3]]
+        p[0] = {
+                'op': 'gte',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '=='):
-        p[0] = ['eq', p[1], p[3]]
+        p[0] = {
+                'op': 'eq',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[2] == '!='):
-        p[0] = ['neq', p[1], p[3]]
+        p[0] = {
+                'op': 'neq',
+                'left': p[1],
+                'right': p[3]
+                }
     elif (p[1] == '++'):
-        p[0] = ['inc', p[2]]
+        p[0] = {
+                'op': 'inc',
+                'right': p[2]
+                }
     elif (p[1] == '--'):
-        p[0] = ['dec', p[2]]
+        p[0] = {
+                'op': 'dec',
+                'left': p[2]
+                }
     elif (p[2] == '?'):
-        p[0] = ['ternary', p[1], p[3], p[5]]
+        p[0] = {
+                'op': 'ternary',
+                'cond': p[1],
+                'true': p[3],
+                'false': p[5]
+                }
     else:
         p[0] = p[1]
 
@@ -183,32 +315,55 @@ def p_primary_expr(p):
     if (len(p) == 2):
         p[0] = p[1]
     elif (p[1] == "input"):
-        p[0] = ['input', p[3]]
+        p[0] = {
+                'op': 'input',
+                'key': p[3]
+                }
     elif (p[1] == "readreg"):
-        p[0] = ['readreg', [3]]
+        p[0] = {
+                'op': 'readreg',
+                'key': p[3]
+                }
     else:
         if (len(p) == 4):
-            p[0] = ['funccall', p[1], []]
+            p[0] = {
+                    'op': 'funccall',
+                    'name': p[1],
+                    'arg': []
+                    }
         else:
-            p[0] = ['funccall', p[1], p[3]]
+            p[0] = {
+                    'op': 'funccall',
+                    'name': p[1],
+                    'arg': p[3]
+                    }
 
 def p_symbol(p):
     '''
     symbol : SYMBOL
     '''
-    p[0] = ['symbol', p[1]]
+    p[0] = {
+            'op': 'symbol',
+            'body': p[1]
+            }
 
 def p_number(p):
     '''
     number : NUMBER
     '''
-    p[0] = ['number', p[1]]
+    p[0] = {
+            'op': 'number',
+            'body': p[1]
+            }
 
 def p_string(p):
     '''
     string : STRING
     '''
-    p[0] = ['string', p[1]]
+    p[0] = {
+            'op': 'string',
+            'body': p[1]
+            }
 
 
 def p_arg_list(p):

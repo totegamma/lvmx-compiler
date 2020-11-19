@@ -1,7 +1,7 @@
-var i;
+int i;
 
-func calcsum(arg) {
-	var buf = 0;
+int calcsum(int arg, int bias) {
+	int buf = 0;
 	for (i = 0; i < arg; ++i) {
 		buf = buf + i + 1;
 	}
@@ -10,10 +10,10 @@ func calcsum(arg) {
 
 // this is comment
 
-func main() {
-	var in = input("input");
+int main() {
+	int in = input("input");
 
-	var result = calcsum(in);
+	int result = calcsum(in);
 
 	output("output", result);
 
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	i = 10;
-	var j = 0;
+	int j = 0;
 	while (i > 0) {
 		j = j + 10;
 		--i;

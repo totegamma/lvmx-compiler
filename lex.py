@@ -4,8 +4,8 @@ from tokens import tokens
 
 
 reserved = {
-        'func': 'FUNC',
-        'var': 'VAR',
+        'int': 'TYPE',
+        'float': 'TYPE',
         'if': 'IF',
         'then': 'THEN',
         'else': 'ELSE',

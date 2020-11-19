@@ -28,37 +28,36 @@ def p_external_definitions(p):
 
 def p_external_definition(p):
     '''
-    external_definition : VAR SYMBOL SEMICOLON
-    | FUNC SYMBOL parameter_list block
-    | VAR SYMBOL ASSIGN expr SEMICOLON
+    external_definition : TYPE SYMBOL SEMICOLON
+    | TYPE SYMBOL arguments block
+    | TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        #p[0] = "define var"
-        p[0] = ["globalvar", p[2], ['number', 0]]
+        p[0] = ["globalvar", p[1], p[2], ['number', p[1], 0]]
     elif (len(p) == 5):
-        p[0] = ["func", p[2], p[3], p[4]]
+        p[0] = ["func", p[1], p[2], p[3], p[4]]
     else:
-        p[0] = ["globalvar", p[2], p[4]]
+        p[0] = ["globalvar", p[1], p[2], p[4]]
 
-def p_parameter_list(p):
+def p_arguments(p):
     '''
-    parameter_list : LPAREN RPAREN
-    | LPAREN symbol_list RPAREN
+    arguments : LPAREN RPAREN
+    | LPAREN definition_list RPAREN
     '''
     if (len(p) == 3):
         p[0] = []
     if (len(p) == 4):
         p[0] = p[2]
 
-def p_symbol_list(p):
+def p_definition_list(p):
     '''
-    symbol_list : SYMBOL
-    | symbol_list COMMA SYMBOL
+    definition_list : TYPE SYMBOL
+    | definition_list COMMA TYPE SYMBOL
     '''
-    if (len(p) == 2):
-        p[0] = [p[1]]
-    if (len(p) == 4):
-        p[0] = p[1] + [p[3]]
+    if (len(p) == 3):
+        p[0] = [[p[1], p[2]]]
+    if (len(p) == 5):
+        p[0] = [p[1], [p[3], p[4]]]
 
 def p_block(p):
     '''
@@ -107,13 +106,13 @@ def p_statement(p):
 
 def p_local_vars(p):
     '''
-    local_vars : VAR SYMBOL SEMICOLON
-    local_vars : VAR SYMBOL ASSIGN expr SEMICOLON
+    local_vars : TYPE SYMBOL SEMICOLON
+    local_vars : TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        p[0] = ["localvar", p[2], ['number', 0]]
+        p[0] = ["localvar", p[1], p[2], ['number', p[1], 0]]
     else:
-        p[0] = ["localvar", p[2], p[4]]
+        p[0] = ["localvar", p[1], p[2], p[4]]
 
 def p_expr(p):
     '''
@@ -235,5 +234,14 @@ def makeAST(code):
     #print(ast)
 
     return ast;
+
+if __name__ == '__main__':
+    with open('test.c', 'r') as f:
+        data = f.read()
+
+    parser = yacc.yacc(debug=True, write_tables=False)
+    ast = yacc.parse(data, lexer=lexer)
+
+    print(ast)
 
 

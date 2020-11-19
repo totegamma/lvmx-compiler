@@ -1,5 +1,5 @@
 tokens = (
-        'FUNC',
+        'TYPE',
         'UNIOP',
         'BIOP',
         'ADD',
@@ -18,7 +18,6 @@ tokens = (
         'NUMBER',
         'SYMBOL',
         'STRING',
-        'VAR',
         'IF',
         'ELSE',
         'RETURN',

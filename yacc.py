@@ -290,7 +290,7 @@ def p_expr(p):
     elif (p[1] == '--'):
         p[0] = {
                 'op': 'dec',
-                'left': p[2]
+                'right': p[2]
                 }
     elif (p[2] == '?'):
         p[0] = {
@@ -347,12 +347,21 @@ def p_symbol(p):
             'body': p[1]
             }
 
-def p_number(p):
+def p_numberi(p):
     '''
-    number : NUMBER
+    number : NUMBERI
     '''
     p[0] = {
-            'op': 'number',
+            'op': 'numberi',
+            'body': p[1]
+            }
+
+def p_numberf(p):
+    '''
+    number : NUMBERF
+    '''
+    p[0] = {
+            'op': 'numberf',
             'body': p[1]
             }
 

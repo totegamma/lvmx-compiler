@@ -1,44 +1,41 @@
 
-int i;
+int writeCircle(float segment, float size) {
 
-int calcsum(int arg) {
+	float inc = 3.14/size;
 
-	int buf = 0;
+	writereg(1, cos(0) * size);
+	writereg(3, sin(0) * size);
 
-	for (i = 0; i < arg; ++i) {
-		buf = buf + i + 1;
+	writereg(16, 1);
+
+	float i;
+	for (i = 1f; i <= segment; i = i + 1f) {
+		writereg(1, cos(inc * i) * size);
+		writereg(3, sin(inc * i) * size);
 	}
 
-	return buf;
+	writereg(16, 0);
+
+	return;
 }
 
-// this is comment
 
 int main() {
-	int in = input("input");
 
-	int result = calcsum(in);
+	float base = 1f;
+	float height = 1f;
 
-	output("output", result);
+	float coneseg = 5f;
+	float circleseg = 10f;
 
-	if (result == 55) {
-		output("iftest", 100);
-	} else {
-		output("iftest", 200);
+	float heightinc = height/coneseg;
+	float circledec = base/coneseg;
+
+	float j;
+	for (j = 0f; j <= coneseg; j = j + 1f) {
+		writereg(2, heightinc * j);
+		writeCircle(circleseg, base - circledec * j);
 	}
-
-	if (result == 55) {
-		output("test2", 100);
-	}
-
-	i = 10;
-	int j = 0;
-	while (i > 0) {
-		j = j + 10;
-		--i;
-	}
-
-	output("whiletest", j);
 
 	return;
 }

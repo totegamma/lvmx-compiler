@@ -28,5 +28,15 @@ tokens = (
         'INPUT',
         'OUTPUT',
         'READREG',
-        'WRITEREG'
+        'WRITEREG',
+        'SIN',
+        'COS',
+        'TAN',
+        'ASIN',
+        'ACOS',
+        'ATAN',
+        'ATAN2',
+        'ROOT',
+        'POW',
+        'LOG'
 )

@@ -41,7 +41,7 @@ def p_external_definition(p):
                 'type': p[1],
                 'symbol': p[2],
                 'body': {
-                    'op': 'number',
+                    'op': 'numberu',
                     'type': p[1],
                     'body': 0
                     }
@@ -169,7 +169,7 @@ def p_local_vars(p):
                 'type': p[1],
                 'symbol': p[2],
                 'body': {
-                    'op': 'number',
+                    'op': 'numberu',
                     'type': p[1],
                     'body': 0
                     }
@@ -194,6 +194,16 @@ def p_expr(p):
     | expr MUL expr
     | expr DIV expr
     | expr TERNARY expr COLON expr
+    | SIN LPAREN expr RPAREN
+    | COS LPAREN expr RPAREN
+    | TAN LPAREN expr RPAREN
+    | ASIN LPAREN expr RPAREN
+    | ACOS LPAREN expr RPAREN
+    | ATAN LPAREN expr RPAREN
+    | ATAN2 LPAREN expr COMMA expr RPAREN
+    | ROOT LPAREN expr COMMA expr RPAREN
+    | POW LPAREN expr COMMA expr RPAREN
+    | LOG LPAREN expr COMMA expr RPAREN
     | OUTPUT LPAREN string COMMA expr RPAREN
     | WRITEREG LPAREN number COMMA expr RPAREN
     '''
@@ -301,6 +311,71 @@ def p_expr(p):
                 'true': p[3],
                 'false': p[5]
                 }
+
+    elif (p[1] == 'sin'):
+        p[0] = {
+                'op': 'sin',
+                'body': p[3]
+                }
+
+    elif (p[1] == 'cos'):
+        p[0] = {
+                'op': 'cos',
+                'body': p[3]
+                }
+
+    elif (p[1] == 'tan'):
+        p[0] = {
+                'op': 'tan',
+                'body': p[3]
+                }
+
+    elif (p[1] == 'asin'):
+        p[0] = {
+                'op': 'asin',
+                'body': p[3]
+                }
+
+    elif (p[1] == 'acos'):
+        p[0] = {
+                'op': 'acos',
+                'body': p[3]
+                }
+
+    elif (p[1] == 'atan'):
+        p[0] = {
+                'op': 'atan',
+                'body': p[3]
+                }
+
+    elif (p[1] == 'atan2'):
+        p[0] = {
+                'op': 'atan2',
+                'body1': p[3],
+                'body2': p[5]
+                }
+
+    elif (p[1] == 'root'):
+        p[0] = {
+                'op': 'root',
+                'body1': p[3],
+                'body2': p[5]
+                }
+
+    elif (p[1] == 'pow'):
+        p[0] = {
+                'op': 'pow',
+                'body1': p[3],
+                'body2': p[5]
+                }
+
+    elif (p[1] == 'log'):
+        p[0] = {
+                'op': 'log',
+                'body1': p[3],
+                'body2': p[5]
+                }
+
     else:
         p[0] = p[1]
 

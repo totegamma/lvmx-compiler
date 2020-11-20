@@ -1,8 +1,10 @@
 import sys
 import time
+import struct
 from mnemonic import mnemonic
 from yacc import makeAST
 
+nullarg = '00000000'
 
 globalvars = {}
 stringregion = {}
@@ -12,6 +14,17 @@ arguments = {}
 localvars = {}
 
 labelitr = 0;
+
+def float2hex(f):
+    n = float(f.replace('f', ''))
+    return format(struct.unpack('>I', struct.pack('>f', n))[0], "08x")
+
+def int2hex(f):
+    n = int(f.replace('u', ''))
+    return format(struct.unpack('>I', struct.pack('>i', n))[0], "08x")
+
+def uint2hex(f):
+    return format(f, "08x")
 
 def preparecompile():
     globalvars.clear();
@@ -71,9 +84,9 @@ def compile(ast):
                     }
         code = compile(ast['body'])['code'] # ここでlocalvarsが変わる
         frame.append(['ENTRY', ast['symbol']])
-        frame.append(['FRAME', len(localvars)]) # ここでlocalvasを使う
+        frame.append(['FRAME', f"{len(localvars):08x}"]) # ここでlocalvasを使う
         frame.extend(code)
-        frame.append(['RET', 0])
+        frame.append(['RET', nullarg])
         funcs[ast['symbol']] = {
             'type': ast['type'],
             'code': frame
@@ -95,7 +108,7 @@ def compile(ast):
             'id': len(localvars)
             }
         code = compile(ast['body'])['code'] #TODO 評価した型とのassert
-        code.append(['STOREL', localvars[ast['symbol']]['id']])
+        code.append(['STOREL', f"{localvars[ast['symbol']]['id']:08x}"])
         return {
             'type': ast['type'],
             'code': code
@@ -106,7 +119,7 @@ def compile(ast):
             dump = compile(ast['body'])
             mype = dump['type']
             code = dump['code'] # TODO 自関数との型チェック
-            code.append(['RET', 0])
+            code.append(['RET', nullarg])
             return {
                 'type': mype,
                 'code': code
@@ -114,7 +127,7 @@ def compile(ast):
         else:
             return {
                 'type': 'void',
-                'code': [['RET', 0]]
+                'code': [['RET', nullarg]]
                 }
 
     elif (ast['op'] == 'funccall'):
@@ -123,7 +136,7 @@ def compile(ast):
         for elem in reversed(ast['arg']):
             code.extend(compile(elem)['code'])
         code.append(['CALL', ast['name']])
-        code.append(['POPR', len(ast['arg'])])
+        code.append(['POPR', uint2hex(len(ast['arg']))])
         return {
             'type': mype,
             'code': code
@@ -215,13 +228,13 @@ def compile(ast):
         stringslot = compile(ast['key'])['code'][0][1] # TODO error check
         return {
                 'type': 'any',
-                'code': [['INPUT', stringslot]]
+                'code': [['INPUT', f"{stringslot:08x}"]]
                 }
 
     elif (ast['op'] == 'output'):
         stringslot = compile(ast['key'])['code'][0][1] # TODO error check
         code = (compile(ast['value']))['code']
-        code.append(['OUTPUT', stringslot])
+        code.append(['OUTPUT', f"{stringslot:08x}"])
         return {
                 'type': 'void',
                 'code': code
@@ -231,13 +244,13 @@ def compile(ast):
         addr = compile(ast['key'])['code'][0][1]
         return {
                 'type': 'float',
-                'code': [['LOADR', addr]]
+                'code': [['LOADR', f"{addr:08x}"]]
                 }
 
     elif (ast['op'] == 'writereg'):
         addr = compile(ast['key'])['code'][0][1]
         code = compile(ast['value'])['code']
-        code.append(['STORER', addr])
+        code.append(['STORER', f"{int(addr):08x}"])
         return {
                 'type': 'void',
                 'code': code
@@ -246,11 +259,11 @@ def compile(ast):
     elif (ast['op'] == 'assign'): # TODO: 型チェック
         code = compile(ast['right'])['code']
         if (ast['left'] in localvars):
-            code.append(['STOREL', localvars[ast['left']]['id']])
+            code.append(['STOREL', f"{localvars[ast['left']]['id']:08x}"])
         elif (ast['left'] in arguments):
-            code.append(['STOREA', arguments[ast['left']]['id']])
+            code.append(['STOREA', f"{arguments[ast['left']]['id']:08x}"])
         elif (ast['left'] in globalvars):
-            code.append(['STOREG', globalvars[ast['left']]['id']])
+            code.append(['STOREG', f"{globalvars[ast['left']]['id']:08x}"])
         else:
             print("variable not found")
 
@@ -264,20 +277,20 @@ def compile(ast):
         mype = dump['type']
         code = dump['code']
         if (mype == 'uint'):
-            code.extend([['PUSH', 1], ['ADDU', 0]])
+            code.extend([['PUSH', '00000001'], ['ADDU', nullarg]])
         elif (mype == 'int'):
-            code.extend([['PUSH', 1], ['ADDI', 0]])
+            code.extend([['PUSH', '00000001'], ['ADDI', nullarg]])
         else:
             print('ERROR: [compile] type error in inc')
 
         symbol = ast['right']['body']
 
         if (symbol in localvars):
-            code.append(['STOREL', localvars[symbol]['id']])
+            code.append(['STOREL', f"{localvars[symbol]['id']:08x}"])
         elif (symbol in arguments):
-            code.append(['STOREA', localvars[symbol]['id']])
+            code.append(['STOREA', f"{localvars[symbol]['id']:08x}"])
         elif (symbol in globalvars):
-            code.append(['STOREG', globalvars[symbol]['id']])
+            code.append(['STOREG', f"{globalvars[symbol]['id']:08x}"])
         else:
             print("variable not found")
         return {
@@ -291,20 +304,20 @@ def compile(ast):
         mype = dump['type']
         code = dump['code']
         if (mype == 'uint'):
-            code.extend([['PUSH', 1], ['SUBU', 0]])
+            code.extend([['PUSH', '00000001'], ['SUBU', nullarg]])
         elif (mype == 'int'):
-            code.extend([['PUSH', 1], ['SUBI', 0]])
+            code.extend([['PUSH', '00000001'], ['SUBI', nullarg]])
         else:
             print('ERROR: [compile] type error in dec')
 
         symbol = ast['right']['body']
 
         if (symbol in localvars):
-            code.append(['STOREL', localvars[symbol]['id']])
+            code.append(['STOREL', f"{localvars[symbol]['id']:08x}"])
         elif (symbol in arguments):
-            code.append(['STOREA', localvars[symbol]['id']])
+            code.append(['STOREA', f"{localvars[symbol]['id']:08x}"])
         elif (symbol in globalvars):
-            code.append(['STOREG', globalvars[symbol]['id']])
+            code.append(['STOREG', f"{globalvars[symbol]['id']:08x}"])
         else:
             print("variable not found")
         return {
@@ -314,7 +327,7 @@ def compile(ast):
 
     elif (ast['op'] == 'inv'): #TODO 違うよ
         code = compile(ast['right'])['code']
-        code.extend([['PUSH', -1], ['MULU', 0]])
+        code.extend([['PUSH', 'FFFFFFFF'], ['MULU', nullarg]])
         return {
                 'type': 'uint',
                 'code': code
@@ -327,11 +340,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['ADDU', 0])
+            code.append(['ADDU', nullarg])
         elif (mype == 'int'):
-            code.append(['ADDI', 0])
+            code.append(['ADDI', nullarg])
         elif (mype == 'float'):
-            code.append(['ADDF', 0])
+            code.append(['ADDF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -344,11 +357,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['SUBU', 0])
+            code.append(['SUBU', nullarg])
         elif (mype == 'int'):
-            code.append(['SUBI', 0])
+            code.append(['SUBI', nullarg])
         elif (mype == 'float'):
-            code.append(['SUBF', 0])
+            code.append(['SUBF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -362,11 +375,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['MULU', 0])
+            code.append(['MULU', nullarg])
         elif (mype == 'int'):
-            code.append(['MULI', 0])
+            code.append(['MULI', nullarg])
         elif (mype == 'float'):
-            code.append(['MULF', 0])
+            code.append(['MULF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -379,11 +392,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['DIVU', 0])
+            code.append(['DIVU', nullarg])
         elif (mype == 'int'):
-            code.append(['DIVI', 0])
+            code.append(['DIVI', nullarg])
         elif (mype == 'float'):
-            code.append(['DIVF', 0])
+            code.append(['DIVF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -397,11 +410,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['LTU', 0])
+            code.append(['LTU', nullarg])
         elif (mype == 'int'):
-            code.append(['LTI', 0])
+            code.append(['LTI', nullarg])
         elif (mype == 'float'):
-            code.append(['LTF', 0])
+            code.append(['LTF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -415,11 +428,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['LTEU', 0])
+            code.append(['LTEU', nullarg])
         elif (mype == 'int'):
-            code.append(['LTEI', 0])
+            code.append(['LTEI', nullarg])
         elif (mype == 'float'):
-            code.append(['LTEF', 0])
+            code.append(['LTEF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -433,11 +446,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['GTU', 0])
+            code.append(['GTU', nullarg])
         elif (mype == 'int'):
-            code.append(['GTI', 0])
+            code.append(['GTI', nullarg])
         elif (mype == 'float'):
-            code.append(['GTF', 0])
+            code.append(['GTF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -451,11 +464,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['GTEU', 0])
+            code.append(['GTEU', nullarg])
         elif (mype == 'int'):
-            code.append(['GTEI', 0])
+            code.append(['GTEI', nullarg])
         elif (mype == 'float'):
-            code.append(['GTEF', 0])
+            code.append(['GTEF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -469,11 +482,11 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['EQU', 0])
+            code.append(['EQU', nullarg])
         elif (mype == 'int'):
-            code.append(['EQI', 0])
+            code.append(['EQI', nullarg])
         elif (mype == 'float'):
-            code.append(['EQF', 0])
+            code.append(['EQF', nullarg])
         return {
                 'type': mype,
                 'code': code
@@ -487,13 +500,29 @@ def compile(ast):
         code = left['code']
         code.extend(right['code'])
         if (mype == 'uint'):
-            code.append(['NEQU', 0])
+            code.append(['NEQU', nullarg])
         elif (mype == 'int'):
-            code.append(['NEQI', 0])
+            code.append(['NEQI', nullarg])
         elif (mype == 'float'):
-            code.append(['NEQF', 0])
+            code.append(['NEQF', nullarg])
         return {
                 'type': mype,
+                'code': code
+                }
+
+    elif (ast['op'] == 'sin'):
+        code = compile(ast['body'])['code']
+        code.append(['COS', nullarg])
+        return {
+                'type': 'float',
+                'code': code
+                }
+
+    elif (ast['op'] == 'cos'):
+        code = compile(ast['body'])['code']
+        code.append(['COS', nullarg])
+        return {
+                'type': 'float',
                 'code': code
                 }
 
@@ -506,19 +535,19 @@ def compile(ast):
             var = localvars[ast['body']]
             return {
                     'type': var['type'],
-                    'code': [['LOADL', var['id']]]
+                    'code': [['LOADL', uint2hex(var['id'])]]
                     }
         elif (ast['body'] in arguments):
             var = arguments[ast['body']]
             return {
                     'type': var['type'],
-                    'code': [['LOADA', var['id']]]
+                    'code': [['LOADA', uint2hex(var['id'])]]
                     }
         elif (ast['body'] in globalvars):
             var = globalvars[ast['body']]
             return {
                     'type': var['type'],
-                    'code': [['LOADG', var['id']]]
+                    'code': [['LOADG', uint2hex(var['id'])]]
                     }
         else:
             print(arguments)
@@ -527,14 +556,21 @@ def compile(ast):
     elif (ast['op'] == 'numberi'):
         return {
                 'type': 'int',
-                'code': [['PUSH', ast['body']]]
+                'code': [['PUSH', int2hex(ast['body'])]]
                 }
 
     elif (ast['op'] == 'numberf'):
         return {
                 'type': 'float',
-                'code': [['PUSH', ast['body']]]
+                'code': [['PUSH', float2hex(ast['body'])]]
                 }
+
+    elif (ast['op'] == 'numberu'):
+        return {
+                'type': 'uint',
+                'code': [['PUSH', uint2hex(ast['body'])]]
+                }
+
 
     elif (ast['op'] == 'string'):
         if (ast['body'] not in stringregion):
@@ -561,7 +597,6 @@ def dumpbytecode(code):
     middlecode = []
     bytecode = []
 
-    #print(funcs)
 
 # search for main
     for key, value in funcs.items():
@@ -587,17 +622,17 @@ def dumpbytecode(code):
 # update funcall & jump & JIF0
     for elem in bytecode:
         if (elem[0] == 'CALL'):
-            elem[1] = funcLocator[elem[1]]
+            elem[1] = f"{funcLocator[elem[1]]:08x}"
         elif (elem[0] == 'JUMP' or elem[0] == 'JIF0'):
-            elem[1] = labelLocator[elem[1]]
+            elem[1] = f"{labelLocator[elem[1]]:08x}"
         elif (elem[0] == 'LOADG' or elem[0] == 'STOREG'):
-            elem[1] = len(bytecode) + elem[1];
+            elem[1] = f"{len(bytecode) + elem[1]:08x}"
 
     stream = ""
 
 # append global variable space
     for i in globalvars:
-        bytecode.append(['DUMMY', 0])
+        bytecode.append(['DUMMY', nullarg])
 
 # writeout
     stream += f".string {len(stringregion)}" + '\n'
@@ -607,7 +642,7 @@ def dumpbytecode(code):
 
     stream += f".bytecode {len(bytecode)}" + '\n'
     for elem in bytecode:
-        stream += f"{mnemonic[elem[0]]:04x}{int(elem[1]):04x}" + '\n'
+        stream += f"{mnemonic[elem[0]]:08x}{elem[1]}" + '\n'
 
     return stream
 

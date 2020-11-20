@@ -521,7 +521,8 @@ def compile(ast):
                     'code': [['LOADG', var['id']]]
                     }
         else:
-            print("variable not found")
+            print(arguments)
+            print(f"variable not found: {ast['body']}")
 
     elif (ast['op'] == 'numberi'):
         return {
@@ -560,7 +561,7 @@ def dumpbytecode(code):
     middlecode = []
     bytecode = []
 
-    print(funcs)
+    #print(funcs)
 
 # search for main
     for key, value in funcs.items():
@@ -573,8 +574,6 @@ def dumpbytecode(code):
         if (key != 'main'):
             for byte in value['code']:
                 middlecode.append(byte)
-
-    return middlecode ## NOTE DEBUGCODE
 
 # locate func & labels
     for elem in middlecode:

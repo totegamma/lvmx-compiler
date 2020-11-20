@@ -1,10 +1,14 @@
+
 int i;
 
-int calcsum(int arg, int bias) {
+int calcsum(int arg) {
+
 	int buf = 0;
+
 	for (i = 0; i < arg; ++i) {
 		buf = buf + i + 1;
 	}
+
 	return buf;
 }
 
@@ -35,6 +39,7 @@ int main() {
 	}
 
 	output("whiletest", j);
+
 	return;
 }
 

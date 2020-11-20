@@ -30,8 +30,19 @@ t_LBRACE = r'\{'
 t_RBRACE = r'\}'
 t_COMMA = r','
 
-t_NUMBERI = r'[0-9]+((e|E)(\+|-)?[0-9]+)?'
-t_NUMBERF = r'[0-9]+(\.[0-9]+)?((e|E)(\+|-)?[0-9]+)?'
+
+def t_NUMBERI(t):
+    r'[0-9]+((e|E)(\+|-)?[0-9]+)?'
+    return t
+
+def t_NUMBERU(t):
+    r'[0-9]+((e|E)(\+|-)?[0-9]+)?u'
+    return t
+
+def t_NUMBERF(t):
+    r'[0-9]+(\.[0-9]+)?((e|E)(\+|-)?[0-9]+)?(f)?'
+    return t
+
 
 def t_COMMENT(t):
     '/\*[\s\S]*?\*/|//.*'

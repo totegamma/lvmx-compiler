@@ -17,6 +17,7 @@ tokens = (
         'TERNARY',
         'NUMBERI',
         'NUMBERF',
+        'NUMBERU',
         'SYMBOL',
         'STRING',
         'IF',

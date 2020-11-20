@@ -78,9 +78,11 @@ def p_definition_list(p):
     | definition_list COMMA TYPE SYMBOL
     '''
     if (len(p) == 3):
-        p[0] = [p[1], p[2]]
+        p[0] = [[p[1], p[2]]]
     if (len(p) == 5):
-        p[0] = [p[1], [p[3], p[4]]]
+        tmp = p[1]
+        tmp.append([p[3], p[4]])
+        p[0] = tmp
 
 def p_block(p):
     '''
@@ -364,6 +366,16 @@ def p_numberf(p):
             'op': 'numberf',
             'body': p[1]
             }
+
+def p_numberu(p):
+    '''
+    number : NUMBERU
+    '''
+    p[0] = {
+            'op': 'numberu',
+            'body': p[1]
+            }
+
 
 def p_string(p):
     '''

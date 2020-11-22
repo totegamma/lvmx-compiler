@@ -1,10 +1,11 @@
 
 int writeCircle(float segment, float size) {
 
-	float inc = 3.14/size;
+	float inc = 6.28/segment;
 
 	writereg(1, cos(0) * size);
 	writereg(3, sin(0) * size);
+	writereg(7, 1);
 
 	writereg(16, 1);
 
@@ -12,6 +13,7 @@ int writeCircle(float segment, float size) {
 	for (i = 1f; i <= segment; i = i + 1f) {
 		writereg(1, cos(inc * i) * size);
 		writereg(3, sin(inc * i) * size);
+		writereg(7, 1);
 	}
 
 	writereg(16, 0);
@@ -26,10 +28,16 @@ int main() {
 	float height = 1f;
 
 	float coneseg = 5f;
-	float circleseg = 10f;
+	float circleseg = 16f;
 
 	float heightinc = height/coneseg;
 	float circledec = base/coneseg;
+
+	//0, 1, 1.6, 1
+	writereg(17, 0f);
+	writereg(18, 1f);
+	writereg(19, 1.6f);
+	writereg(20, 1f);
 
 	float j;
 	for (j = 0f; j <= coneseg; j = j + 1f) {

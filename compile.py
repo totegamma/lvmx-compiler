@@ -250,7 +250,7 @@ def compile(ast):
     elif (ast['op'] == 'writereg'):
         addr = compile(ast['key'])['code'][0][1]
         code = compile(ast['value'])['code']
-        code.append(['STORER', f"{int(addr):08x}"])
+        code.append(['STORER', addr])
         return {
                 'type': 'void',
                 'code': code
@@ -512,7 +512,7 @@ def compile(ast):
 
     elif (ast['op'] == 'sin'):
         code = compile(ast['body'])['code']
-        code.append(['COS', nullarg])
+        code.append(['SIN', nullarg])
         return {
                 'type': 'float',
                 'code': code

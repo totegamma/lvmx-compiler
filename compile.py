@@ -337,8 +337,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['ADDU', nullarg])
         elif (mype == 'int'):
@@ -354,8 +354,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['SUBU', nullarg])
         elif (mype == 'int'):
@@ -372,8 +372,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['MULU', nullarg])
         elif (mype == 'int'):
@@ -389,8 +389,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['DIVU', nullarg])
         elif (mype == 'int'):
@@ -407,8 +407,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['LTU', nullarg])
         elif (mype == 'int'):
@@ -425,8 +425,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['LTEU', nullarg])
         elif (mype == 'int'):
@@ -443,8 +443,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['GTU', nullarg])
         elif (mype == 'int'):
@@ -461,8 +461,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['GTEU', nullarg])
         elif (mype == 'int'):
@@ -479,8 +479,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['EQU', nullarg])
         elif (mype == 'int'):
@@ -497,8 +497,8 @@ def compile(ast):
         left = compile(ast['left'])
         right = compile(ast['right'])
         mype = decideType(left['type'], right['type'])
-        code = left['code']
-        code.extend(right['code'])
+        code = right['code']
+        code.extend(left['code'])
         if (mype == 'uint'):
             code.append(['NEQU', nullarg])
         elif (mype == 'int'):

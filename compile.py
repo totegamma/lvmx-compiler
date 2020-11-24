@@ -244,7 +244,7 @@ def compile(ast):
         addr = compile(ast['key'])['code'][0][1]
         return {
                 'type': 'float',
-                'code': [['LOADR', f"{addr:08x}"]]
+                'code': [['LOADR', addr]]
                 }
 
     elif (ast['op'] == 'writereg'):

@@ -2,6 +2,7 @@ import sys
 import time
 import struct
 import MODEL as m
+from mnemonic import mnemonic as opc
 from mnemonic import mnemonic
 from yacc import makeAST
 
@@ -67,9 +68,7 @@ def dumpbytecode(code):
     ast = makeAST(code)
 
     env = m.Env()
-    return ast.gencode(env)
-
-    compile(ast)
+    ast.gencode(env)
 
     funcLocator = {}
     labelLocator = {}
@@ -77,57 +76,56 @@ def dumpbytecode(code):
     middlecode = []
     bytecode = []
 
-
 # search for main
-    for key, value in funcs.items():
-        if (key == 'main'):
-            for byte in value['code']:
-                middlecode.append(byte)
+    for elem in env.functions:
+        if (elem.symbolname == 'main'):
+            #middlecode.append(list(map(lambda x:x.serialize(), elem.insts)))
+            middlecode.extend(elem.insts)
 
 # add others
-    for key, value in funcs.items():
-        if (key != 'main'):
-            for byte in value['code']:
-                middlecode.append(byte)
+    for elem in env.functions:
+        if (elem.symbolname != 'main'):
+            middlecode.extend(elem.insts)
 
 # locate func & labels
     for elem in middlecode:
-        if (elem[0] == 'ENTRY'):
-            funcLocator[elem[1]] = len(bytecode)
-        elif (elem[0] == 'LABEL'):
-            labelLocator[elem[1]] = len(bytecode)
+        if (elem.opc == opc.ENTRY):
+            funcLocator[elem.arg] = len(bytecode)
+        elif (elem.opc == opc.LABEL):
+            labelLocator[elem.arg] = len(bytecode)
         else:
             bytecode.append(elem)
 
 # update funcall & jump & JIF0
     for elem in bytecode:
-        if (elem[0] == 'CALL'):
-            elem[1] = f"{funcLocator[elem[1]]:08x}"
-        elif (elem[0] == 'JUMP' or elem[0] == 'JIF0'):
-            elem[1] = f"{labelLocator[elem[1]]:08x}"
-        elif (elem[0] == 'LOADG' or elem[0] == 'STOREG'):
-            elem[1] = f"{len(bytecode) + elem[1]:08x}"
-
-    stream = ""
+        if (elem.opc == opc.CALL):
+            elem.arg = funcLocator[elem.arg]
+        elif (elem.opc == opc.JUMP or elem.opc == opc.JIF0):
+            elem.arg = labelLocator[elem.arg]
+        elif (elem.opc == opc.LOADG or elem.opc == opc.STOREG):
+            elem.arg = len(bytecode) + elem.arg
 
 # append global variable space
-    for i in globalvars:
-        bytecode.append(['DUMMY', nullarg])
+    for elem in globalvars:
+        bytecode.append(m.Inst(opc.DUMMY, elem.initvalue))
 
 # writeout
-    stream += f".string {len(stringregion)}" + '\n'
-    for elem in stringregion:
+    stream = ""
+    stream += f".string {len(env.strings)}" + '\n'
+    for elem in env.strings:
         stream += elem
         stream += '\n'
 
     stream += f".bytecode {len(bytecode)}" + '\n'
     for elem in bytecode:
-        stream += f"{mnemonic[elem[0]]:08x}{elem[1]}" + '\n'
+        stream += elem.serialize() + '\n'
+        #stream += elem.debugserial() + '\n'
 
     return stream
 
     elapsed = time.time() - start
     print(f"done! ({elapsed*1000:.3f}ms)")
+
 
 
 if __name__ == '__main__':

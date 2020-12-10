@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-class mnemonic:
+class mnemonic (IntEnum):
 
     LABEL = -1
     ENTRY = -2

@@ -1,3 +1,4 @@
+import struct
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
 
@@ -31,6 +32,25 @@ class Inst:
     def __init__(self, opc, arg):
         self.opc = opc
         self.arg = arg
+
+    def serialize(self):
+        if isinstance(self.arg, int):
+            if self.arg > 2147483647: # uint
+                arg = format(self.arg, "08x")
+            else:
+                arg = format(struct.unpack('>I', struct.pack('>i', self.arg))[0], "08x")
+
+        elif isinstance(self.arg, float):
+            arg = format(struct.unpack('>I', struct.pack('>f', self.arg))[0], "08x")
+
+        else:
+            print(f"serialize arg unkown type error: {self.arg=}")
+            return "0000000000000000"
+
+        return f'{self.opc.value:08x}{arg}'
+
+    def debugserial(self):
+        return f'{self.opc.name} {self.arg}'
 
 class Insts:
     def __init__(self, typename, bytecodes):
@@ -135,6 +155,7 @@ class Env:
         self.locals.pop()
 
     def resetFrame(self):
+        self.localcount = 0
         self.args.clear()
         self.locals.clear()
 

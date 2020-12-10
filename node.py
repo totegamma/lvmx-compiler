@@ -143,7 +143,7 @@ class Func (AST):
 
         insts = []
         insts.append(m.Inst(opc.ENTRY, self.symbolname))
-        insts.append(m.Inst(opc.FRAME, env.getLocalCount))
+        insts.append(m.Inst(opc.FRAME, env.getLocalCount()))
         insts.extend(codes)
         insts.append(m.Inst(opc.RET, self.nullarg)) # TODO codesの末尾にRETがないときだけ挿入するように
 
@@ -164,7 +164,7 @@ class Block (AST):
         for elem in self.body:
             insts.extend(elem.gencode(env).bytecodes)
 
-        env.popLocal()
+        #env.popLocal()
         return m.Insts(m.Types.Void, insts)
 
 class LocalVar (AST):
@@ -436,6 +436,8 @@ class Symbol (AST):
 
 class NumberU (AST):
     def __init__(self, value):
+        if isinstance(value, str):
+            value = int(value.replace('u', ''))
         self.value = value
 
     def gencode(self, env):
@@ -446,6 +448,8 @@ class NumberU (AST):
 
 class NumberI (AST):
     def __init__(self, value):
+        if isinstance(value, str):
+            value = int(value)
         self.value = value
 
     def gencode(self, env):
@@ -456,6 +460,8 @@ class NumberI (AST):
 
 class NumberF (AST):
     def __init__(self, value):
+        if isinstance(value, str):
+            value = float(value.replace('f', ''))
         self.value = value
 
     def gencode(self, env):

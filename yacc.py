@@ -1,7 +1,7 @@
 import ply.yacc as yacc
+import ast
 from lex import lexer
 from tokens import tokens
-
 
 start = 'program'
 
@@ -14,10 +14,7 @@ def p_program(p):
     '''
     program : external_definitions
     '''
-    p[0] = {
-            'op': 'program',
-            'body': p[1]
-            }
+    p[0] = ast.Program(p[1])
 
 def p_external_definitions(p):
     '''
@@ -36,31 +33,28 @@ def p_external_definition(p):
     | TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        p[0] = {
-                'op': 'globalvar',
-                'type': p[1],
-                'symbol': p[2],
-                'body': {
-                    'op': 'numberu',
-                    'type': p[1],
-                    'body': 0
-                    }
-                }
+        if p[1] == 'uint':
+            p[0] = ast.GlobalVar(p[2], m.Types.Uint, ast.NumberU(0))
+        elif p[1] == 'int'
+            p[0] = ast.GlobalVar(p[2], m.Types.Int, ast.NumberI(0))
+        elif p[1] == 'float'
+            p[0] = ast.GlobalVar(p[2], m.Types.Float, ast.NumberF(0))
+        else
+            print("yacc-external_definition: Unknown Type!!")
+
     elif (len(p) == 5):
-        p[0] = {
-                'op': 'func',
-                'type': p[1],
-                'symbol': p[2],
-                'arg': p[3],
-                'body': p[4]
-                }
+        p[0] = ast.Func(p[2], p[1], p[3], p[4])
+
     else:
-        p[0] = {
-                'op': 'globalvar',
-                'type': p[1],
-                'symbol': p[2],
-                'body': p[4]
-                }
+        if p[1] == 'uint':
+            p[0] = ast.GlobalVar(p[2], m.Types.Uint, p[4])
+        elif p[1] == 'int'
+            p[0] = ast.GlobalVar(p[2], m.Types.Int, p[4])
+        elif p[1] == 'float'
+            p[0] = ast.GlobalVar(p[2], m.Types.Float, p[4])
+        else
+            print("yacc-external_definition: Unknown Type!!")
+
 
 def p_arguments(p):
     '''
@@ -88,10 +82,7 @@ def p_block(p):
     '''
     block : LBRACE statements RBRACE
     '''
-    p[0] = {
-            'op': 'block',
-            'body': p[2]
-            }
+    p[0] = ast.Block(p[2])
 
 def p_statements(p):
     '''
@@ -117,44 +108,24 @@ def p_statement(p):
     '''
     if (p[1] == 'return'):
         if (len(p) == 3):
-            p[0] = {
-                    'op': 'return',
-                    'body': None
-                    }
+            p[0] = ast.Return(None)
+
         else:
-            p[0] = {
-                    'op': 'return',
-                    'body': p[2]
-                    }
+            p[0] = ast.Return(p[2])
+
     elif (p[1] == 'if'):
         if (len(p) == 6):
-            p[0] = {
-                    'op': 'if',
-                    'cond': p[3],
-                    'then': p[5]
-                    }
+            p[0] = ast.If(p[3], p[5])
+
         else:
-            p[0] = {
-                    'op': 'ifelse', 
-                    'cond': p[3],
-                    'then': p[5],
-                    'else': p[7]
-                    }
+            p[0] = ast.Ifelse(p[3], p[5], p[7])
 
     elif (p[1] == 'while'):
-        p[0] = {
-                'op': 'while',
-                'cond': p[3],
-                'body': p[5]
-                }
+        p[0] = ast.While(p[3], p[5])
+
     elif (p[1] == 'for'):
-        p[0] = {
-                'op': 'for',
-                'init': p[3],
-                'cond': p[5],
-                'loop': p[7],
-                'body': p[9]
-                }
+        p[0] = ast.For(p[3], p[5], p[7], p[9])
+
     else:
         p[0] = p[1];
 
@@ -164,23 +135,23 @@ def p_local_vars(p):
     local_vars : TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        p[0] = {
-                'op': 'localvar',
-                'type': p[1],
-                'symbol': p[2],
-                'body': {
-                    'op': 'numberu',
-                    'type': p[1],
-                    'body': 0
-                    }
-                }
+        if p[1] == 'uint':
+            p[0] = ast.LocalVar(p[2], m.Types.Uint, ast.NumberU(0))
+        elif p[1] == 'int'
+            p[0] = ast.LocalVar(p[2], m.Types.Int, ast.NumberI(0))
+        elif p[1] == 'float'
+            p[0] = ast.LocalVar(p[2], m.Types.Float, ast.NumberF(0))
+        else
+            print("yacc-local-vars: Unknown Type!!")
     else:
-        p[0] = {
-                'op': 'localvar',
-                'type': p[1],
-                'symbol': p[2],
-                'body': p[4]
-                }
+        if p[1] == 'uint':
+            p[0] = ast.LocalVar(p[2], m.Types.Uint, p[4])
+        elif p[1] == 'int'
+            p[0] = ast.LocalVar(p[2], m.Types.Int, p[4])
+        elif p[1] == 'float'
+            p[0] = ast.LocalVar(p[2], m.Types.Float, p[4])
+        else
+            print("yacc-local-vars: Unknown Type!!")
 
 def p_expr(p):
     '''
@@ -212,170 +183,59 @@ def p_expr(p):
     elif (p[1] == '('):
         p[0] = p[2]
     elif (p[1] == 'output'):
-        p[0] = {
-                'op': 'output',
-                'key': p[3],
-                'value': p[5]
-                }
+        p[0] = ast.Output(p[3], p[5])
     elif (p[1] == 'writereg'):
-        p[0] = {
-                'op': 'writereg',
-                'key': p[3],
-                'value': p[5]
-                }
+        p[0] = ast.Writereg(p[3], p[5])
     elif (p[2] == '='):
-        p[0] = {
-                'op': 'assign',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Assign(p[1], p[3])
     elif (p[2] == '!'):
-        p[0] = {
-                'op': 'inv',
-                'right': p[2]
-                }
+        p[0] = ast.Inv(p[2])
     elif (p[2] == '+'):
-        p[0] = {
-                'op': 'add',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Add(p[1], p[3])
     elif (p[2] == '-'):
-        p[0] = {
-                'op': 'sub',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Sub(p[1], p[3])
     elif (p[2] == '*'):
-        p[0] = {
-                'op': 'mul',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Mul(p[1], p[3])
     elif (p[2] == '/'):
-        p[0] = {
-                'op': 'div',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Div(p[1], p[3])
     elif (p[2] == '<'):
-        p[0] = {
-                'op': 'lt',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Lt(p[1], p[3])
     elif (p[2] == '<='):
-        p[0] = {
-                'op': 'lte',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Lte(p[1], p[3])
     elif (p[2] == '>'):
-        p[0] = {
-                'op': 'gt',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Gt(p[1], p[3])
     elif (p[2] == '>='):
-        p[0] = {
-                'op': 'gte',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Gte(p[1], p[3])
     elif (p[2] == '=='):
-        p[0] = {
-                'op': 'eq',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Eq(p[1], p[3])
     elif (p[2] == '!='):
-        p[0] = {
-                'op': 'neq',
-                'left': p[1],
-                'right': p[3]
-                }
+        p[0] = ast.Neq(p[1], p[3])
     elif (p[1] == '++'):
-        p[0] = {
-                'op': 'inc',
-                'right': p[2]
-                }
+        p[0] = ast.Inc(p[2])
     elif (p[1] == '--'):
-        p[0] = {
-                'op': 'dec',
-                'right': p[2]
-                }
+        p[0] = ast.Dec(p[2])
     elif (p[2] == '?'):
-        p[0] = {
-                'op': 'ternary',
-                'cond': p[1],
-                'true': p[3],
-                'false': p[5]
-                }
-
+        p[0] = ast.Ternary(p[1], p[3], p[5])
     elif (p[1] == 'sin'):
-        p[0] = {
-                'op': 'sin',
-                'body': p[3]
-                }
-
+        p[0] = ast.Sin(p[3])
     elif (p[1] == 'cos'):
-        p[0] = {
-                'op': 'cos',
-                'body': p[3]
-                }
-
+        p[0] = ast.Cos(p[3])
     elif (p[1] == 'tan'):
-        p[0] = {
-                'op': 'tan',
-                'body': p[3]
-                }
-
+        p[0] = ast.Tan(p[3])
     elif (p[1] == 'asin'):
-        p[0] = {
-                'op': 'asin',
-                'body': p[3]
-                }
-
+        p[0] = ast.Asin(p[3])
     elif (p[1] == 'acos'):
-        p[0] = {
-                'op': 'acos',
-                'body': p[3]
-                }
-
+        p[0] = ast.Acos(p[3])
     elif (p[1] == 'atan'):
-        p[0] = {
-                'op': 'atan',
-                'body': p[3]
-                }
-
+        p[0] = ast.Atan(p[3])
     elif (p[1] == 'atan2'):
-        p[0] = {
-                'op': 'atan2',
-                'body1': p[3],
-                'body2': p[5]
-                }
-
+        p[0] = ast.Atan2(p[3], p[5])
     elif (p[1] == 'root'):
-        p[0] = {
-                'op': 'root',
-                'body1': p[3],
-                'body2': p[5]
-                }
-
+        p[0] = ast.Root(p[3], p[5])
     elif (p[1] == 'pow'):
-        p[0] = {
-                'op': 'pow',
-                'body1': p[3],
-                'body2': p[5]
-                }
-
+        p[0] = ast.Pow(p[3], p[5])
     elif (p[1] == 'log'):
-        p[0] = {
-                'op': 'log',
-                'body1': p[3],
-                'body2': p[5]
-                }
-
+        p[0] = ast.Log(p[3], p[5])
     else:
         p[0] = p[1]
 
@@ -392,75 +252,45 @@ def p_primary_expr(p):
     if (len(p) == 2):
         p[0] = p[1]
     elif (p[1] == "input"):
-        p[0] = {
-                'op': 'input',
-                'key': p[3]
-                }
+        p[0] = ast.Input(p[3])
     elif (p[1] == "readreg"):
-        p[0] = {
-                'op': 'readreg',
-                'key': p[3]
-                }
+        p[0] = ast.Readreg(p[3])
+
     else:
         if (len(p) == 4):
-            p[0] = {
-                    'op': 'funccall',
-                    'name': p[1],
-                    'arg': []
-                    }
+            p[0] = ast.Funcall(p[1], [])
         else:
-            p[0] = {
-                    'op': 'funccall',
-                    'name': p[1],
-                    'arg': p[3]
-                    }
+            p[0] = ast.Funcall(p[1], p[3])
 
 def p_symbol(p):
     '''
     symbol : SYMBOL
     '''
-    p[0] = {
-            'op': 'symbol',
-            'body': p[1]
-            }
+    p[0] = ast.Symbol(p[1])
 
 def p_numberi(p):
     '''
     number : NUMBERI
     '''
-    p[0] = {
-            'op': 'numberi',
-            'body': p[1]
-            }
+    p[0] = ast.NumberI(p[1])
 
 def p_numberf(p):
     '''
     number : NUMBERF
     '''
-    p[0] = {
-            'op': 'numberf',
-            'body': p[1]
-            }
+    p[0] = ast.NumerF(p[1])
 
 def p_numberu(p):
     '''
     number : NUMBERU
     '''
-    p[0] = {
-            'op': 'numberu',
-            'body': p[1]
-            }
-
+    p[0] = ast.NumberU(p[1])
 
 def p_string(p):
     '''
     string : STRING
     '''
-    p[0] = {
-            'op': 'string',
-            'body': p[1]
-            }
-
+    p[0] = ast.String(p[1])
 
 def p_arg_list(p):
     '''

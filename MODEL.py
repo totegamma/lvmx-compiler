@@ -51,21 +51,21 @@ class Symbol:
 
     def genStoreCode(self):
         if (self.region == VarRegion.GLOBAL):
-            return m.Inst(opc.STOREG, self.id)
+            return Inst(opc.STOREG, self.id)
         elif (self.region == VarRegion.ARGUMENT):
-            return m.Inst(opc.STOREA, self.id)
+            return Inst(opc.STOREA, self.id)
         elif (self.region == VarRegion.LOCAL):
-            return m.Inst(opc.STOREL, self.id)
+            return Inst(opc.STOREL, self.id)
         else:
             print("PROGRAM ERROR GENSTORECODE")
 
     def genLoadCode(self):
         if (self.region == VarRegion.GLOBAL):
-            return m.Inst(opc.LOADG, self.id)
+            return Inst(opc.LOADG, self.id)
         elif (self.region == VarRegion.ARGUMENT):
-            return m.Inst(opc.LOADA, self.id)
+            return Inst(opc.LOADA, self.id)
         elif (self.region == VarRegion.LOCAL):
-            return m.Inst(opc.LOADL, self.id)
+            return Inst(opc.LOADL, self.id)
         else:
             print("PROGRAM ERROR GENLOADCODE")
 
@@ -98,6 +98,7 @@ class Env:
         for elem in self.globals:
             if (elem.name == name):
                 return elem
+        print(f"{name=}")
         print("ERROR: VAR NOT FOUND")
 
 
@@ -110,17 +111,17 @@ class Env:
         self.functions.append(function)
 
     def addGlobal(self, symbol):
-        symbol.setRegion(VARREGION.GLOBAL)
+        symbol.setRegion(VarRegion.GLOBAL)
         symbol.setID(len(self.globals))
         self.globals.append(symbol)
 
     def addArg(self, symbol):
-        symbol.setRegion(VARREGION.ARG)
+        symbol.setRegion(VarRegion.ARGUMENT)
         symbol.setID(len(self.args))
         self.args.append(symbol)
 
     def addLocal(self, symbol):
-        symbol.setRegion(VARREGION.LOCAL)
+        symbol.setRegion(VarRegion.LOCAL)
         newid = self.localcount
         symbol.setID(newid)
         self.localcount += 1
@@ -148,6 +149,6 @@ class Env:
 
     def issueLabel(self):
         newlabel = self.labelitr
-        labelitr += 1
+        self.labelitr += 1
         return newlabel
 

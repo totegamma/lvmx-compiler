@@ -16,7 +16,7 @@ class AST:
         return None
 
 
-    def decideType(a, b):
+    def decideType(self, a, b):
         if (m.Types.Void in [a, b]):
             print('eval void error')
             return MODEL.Types.Void
@@ -31,11 +31,13 @@ class AST:
         elif (a == m.Types.Int and b == m.Types.Int):
             return m.Types.Int
         elif (a == m.Types.Float and b == m.Types.Float):
-            return m.Types.FLoat
+            return m.Types.Float
         #elif ('uint' in [a, b] and 'float' in [a, b]):
         #    return 'float'
         #elif ('int' in [a, b] and 'float' in [a, b]):
         #    return 'float'
+        print(f"{a=}")
+        print(f"{b=}")
 
 
 # -= :: Inherited MODEL :: =-
@@ -51,26 +53,28 @@ class BIOP (AST):
         self.right = right
 
     def gencode(self, env):
-        left = gencode(self.left)
-        right = gencode(self.right)
 
-        typename = decideType(left.typename, right.typename)
+        left = self.left.gencode(env)
+        right = self.right.gencode(env)
 
-        code = right.code
-        code.extend(left.code)
+        typename = self.decideType(left.typename, right.typename)
 
-        if (mytype == m.Types.Uint):
-            code.append(m.Inst(opU, nullarg))
-        elif (mytype == m.Types.Int):
-            code.append(m.Inst(opI, nullarg))
-        elif (mytype == m.Types.Float):
-            code.append(m.Inst(opF, nullarg))
+        code = right.bytecodes
+        code.extend(left.bytecodes)
+
+        if (typename == m.Types.Uint):
+            code.append(m.Inst(self.opU, self.nullarg))
+        elif (typename == m.Types.Int):
+            code.append(m.Inst(self.opI, self.nullarg))
+        elif (typename == m.Types.Float):
+            code.append(m.Inst(self.opF, self.nullarg))
         else:
-             print("ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT")
+            print(f"{typename=}")
+            print("ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT")
 
         return m.Insts(typename, code)
 
-class UNIOP:
+class UNIOP (AST):
 
     opU = None
     opI = None
@@ -88,12 +92,11 @@ class UNIOP:
 
         code= m.Inst(opc.PUSH, 1)
         if (typename == m.Types.Uint):
-            code.append(m.Inst(opU, nullarg))
+            code.append(m.Inst(opU, self.nullarg))
         elif (typename == m.Types.Int):
-            code.append(m.Inst(opI, nullarg))
+            code.append(m.Inst(opI, self.nullarg))
         else:
             print("ERROR UNIOP ONLY SUPPORTS UINT OR INT")
-
         code.append(env.variableLookup(symbolname).genStoreCode())
 
         return m.Insts(typename, code)
@@ -102,18 +105,17 @@ class UNIOP:
 
 # -- Lv0 modules --
 
-class Program:
+class Program (AST):
     def __init__(self, body):
         self.body = body
         pass
 
     def gencode(self, env):
-        program = m.Program()
         for elem in self.body:
             dumps = elem.gencode(env)
         return env
 
-class GlobalVar:
+class GlobalVar (AST):
     def __init__(self, symbolname, typename, body):
         self.typename = typename
         self.symbol = symbol
@@ -123,7 +125,7 @@ class GlobalVar:
         env.addGlobal(m.Symbol(self.symbolname, self.typename, self.body.eval(env)))
         return env
 
-class Func:
+class Func (AST):
     def __init__(self, symbolname, typename, args, body):
         self.symbolname = symbolname
         self.typename = typename
@@ -134,16 +136,16 @@ class Func:
 
         env.resetFrame()
 
-        for elem in args:
+        for elem in self.args:
             env.addArg(elem)
 
         codes = self.body.gencode(env).bytecodes
 
         insts = []
-        insts.append(m.Inst(opc.ENTRY, self.symbol))
+        insts.append(m.Inst(opc.ENTRY, self.symbolname))
         insts.append(m.Inst(opc.FRAME, env.getLocalCount))
         insts.extend(codes)
-        insts.append(m.Inst(opc.RET, nullarg)) # TODO codesの末尾にRETがないときだけ挿入するように
+        insts.append(m.Inst(opc.RET, self.nullarg)) # TODO codesの末尾にRETがないときだけ挿入するように
 
         env.addFunction(m.Function(self.symbolname, self.typename, self.args, insts))
 
@@ -151,7 +153,7 @@ class Func:
 
 # -- Lv1 modules --
 
-class Block:
+class Block (AST):
     def __init__(self, body):
         self.body = body
 
@@ -165,7 +167,7 @@ class Block:
         env.popLocal()
         return m.Insts(m.Types.Void, insts)
 
-class LocalVar:
+class LocalVar (AST):
     def __init__(self, symbolname, typename, body):
         self.symbolname = symbolname
         self.typename = typename
@@ -177,30 +179,30 @@ class LocalVar:
         codes.append(m.Inst(opc.STOREL, newid))
         return m.Insts(m.Types.Void, codes)
 
-class Return: #TODO 自分の型とのチェック
+class Return (AST): #TODO 自分の型とのチェック
     def __init__(self, body):
         self.body = body
 
     def gencode(self, env):
         codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.RET, nullarg))
+        codes.append(m.Inst(opc.RET, self.nullarg))
         return m.Insts(m.Types.Void, codes)
 
-class Funccall:
+class Funccall (AST):
     def __init__(self, name, args):
         self.name = name
         self.args = args
 
     def gencode(self, env):
-        mytype = env.lookupFunction(self.name).typename
+        mytype = env.functionLookup(self.name).typename
         codes = []
-        for elem in reversed(self.arg):
+        for elem in reversed(self.args):
             codes.extend(elem.gencode(env).bytecodes) # TODO 型チェック
         codes.append(m.Inst(opc.CALL, self.name))
-        codes.append(m.Inst(opc.POPR, len(self.arg)))
+        codes.append(m.Inst(opc.POPR, len(self.args)))
         return m.Insts(mytype, codes)
 
-class If:
+class If (AST):
     def __init__(self, cond, then):
         self.cond = cond
         self.then = then
@@ -216,7 +218,7 @@ class If:
         codes.append(m.Inst(opc.LABEL, l0))
         return m.Insts(m.Types.Void, codes)
 
-class Ifelse:
+class Ifelse (AST):
     def __init__(self, cond, then, elst):
         self.cond = cond
         self.then = then
@@ -239,7 +241,7 @@ class Ifelse:
         codes.append(m.Inst(opc.LABEL, l1))
         return m.Insts(m.Types.Void, codes)
 
-class While:
+class While (AST):
     def __init__(self, cond, body):
         self.cond = cond
         self.body = body
@@ -261,7 +263,7 @@ class While:
 
 
 
-class For:
+class For (AST):
     def __init__(self, init, cond, loop, body):
         self.init = init
         self.cond = cond
@@ -290,7 +292,7 @@ class For:
 
 # -- Lv.2 modules --
 
-class Input:
+class Input (AST):
     def __init__(self, key):
         self.key = key
 
@@ -298,7 +300,7 @@ class Input:
         stringslot = self.key.eval(env)
         return m.Insts(m.Types.Any, [m.Inst(opc.INPUT, stringslot)])
 
-class Output:
+class Output (AST):
     def __init__(self, key, body):
         self.key = key
         self.body = body
@@ -309,34 +311,34 @@ class Output:
         codes.append(m.Inst(opc.OUTPUT, stringslot))
         return m.Insts(m.Types.Void, codes)
 
-class Readreg:
+class Readreg (AST):
     def __init__(self, key):
         self.key = key
 
     def gencode(self, env):
-        addr = self.key.eval(env)
+        addr = self.key.eval()
         return m.Insts(m.Types.Any, [m.Inst(opc.LOADR, addr)])
 
-class Writereg:
+class Writereg (AST):
     def __init__(self, key, body):
         self.key = key
         self.body = body
 
     def gencode(self, env):
-        addr = self.key.eval(env)
+        addr = self.key.eval()
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.STORER, addr))
         return m.Insts(m.Types.Void, codes)
 
-class Assign:
+class Assign (AST):
     def __init__(self, left, right):
         self.left = left
         self.right = right
 
     def gencode(self, env):
-        var = env.variableLookUp(self.left)
+        var = env.variableLookup(self.left)
 
-        right = self.right.gencode(env).bytecodes
+        right = self.right.gencode(env)
         codes = right.bytecodes
         codes.append(var.genStoreCode())
 
@@ -404,71 +406,71 @@ class Neq (BIOP):
     opI = opc.NEQI
     opF = opc.NEQF
 
-class Sin:
+class Sin (AST):
     def __init__(self, body):
         self.body = body
 
     def gencode(self, env):
         codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.SIN, nullarg))
+        codes.append(m.Inst(opc.SIN, self.nullarg))
         return m.Insts(m.Types.Float, codes)
 
 
-class Cos:
+class Cos (AST):
     def __init__(self, body):
         self.body = body
 
     def gencode(self, env):
         codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.SIN, nullarg))
+        codes.append(m.Inst(opc.SIN, self.nullarg))
         return m.Insts(m.Types.Float, codes)
 
-class Symbol:
+class Symbol (AST):
     def __init__(self, symbolname):
         self.symbolname = symbolname
 
     def gencode(self, env):
         var = env.variableLookup(self.symbolname)
-        codes = var.genLoadCode()
+        codes = [var.genLoadCode()]
         return m.Insts(var.typename, codes)
 
-class NumberU:
+class NumberU (AST):
     def __init__(self, value):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, value)])
+        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
 
-class NumberI:
+class NumberI (AST):
     def __init__(self, value):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Int, [m.Inst(opc.PUSH, value)])
+        return m.Insts(m.Types.Int, [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
 
-class NumberF:
+class NumberF (AST):
     def __init__(self, value):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Float, [m.Inst(opc.PUSH, value)])
+        return m.Insts(m.Types.Float, [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
 
-class String:
+class String (AST):
     def __init__(self, value):
         self.value = value
 
     def gencode(self, env):
         strid = issueString(self.value)
-        return m.Insts(m.Types.UInt, [m.Inst(opc.PUSH, strid)])
+        return m.Insts(m.Types.UInt, [m.Inst(opc.PUSH, self.strid)])
 
     def eval(self):
         return self.value

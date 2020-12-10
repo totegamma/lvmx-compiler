@@ -11,6 +11,17 @@ precedence = (
     ('left', 'MUL', 'DIV'),
 )
 
+def parseType(typestring):
+    if typestring == 'uint':
+        return m.Types.Uint
+    elif typestring == 'int':
+        return m.Types.Int
+    elif typestring == 'float':
+        return m.Types.Float
+    else:
+        print('f"{typestring=}')
+        print('parse Type failed')
+
 def p_program(p):
     '''
     program : external_definitions
@@ -73,10 +84,12 @@ def p_definition_list(p):
     | definition_list COMMA TYPE SYMBOL
     '''
     if (len(p) == 3):
-        p[0] = [[p[1], p[2]]]
+        #p[0] = [[p[1], p[2]]]
+        p[0] = [m.Symbol(p[2], parseType(p[1]))]
     if (len(p) == 5):
         tmp = p[1]
-        tmp.append([p[3], p[4]])
+        #tmp.append([p[3], p[4]])
+        tmp.append(m.Symbol(p[4], parseType(p[3])))
         p[0] = tmp
 
 def p_block(p):
@@ -109,7 +122,7 @@ def p_statement(p):
     '''
     if (p[1] == 'return'):
         if (len(p) == 3):
-            p[0] = node.Return(None)
+            p[0] = node.Return(node.NumberU(0))
 
         else:
             p[0] = node.Return(p[2])
@@ -308,12 +321,10 @@ def p_error(p):
     print("Syntax error at '%s'" % p)
 
 
-def makenode(code):
+def makeAST(code):
 
     parser = yacc.yacc(debug=False, write_tables=False)
     node = yacc.parse(code, lexer=lexer)
-
-    #print(node)
 
     return node;
 

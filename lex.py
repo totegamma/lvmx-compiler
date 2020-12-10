@@ -4,8 +4,8 @@ from tokens import tokens
 
 
 reserved = {
-        'func': 'FUNC',
-        'var': 'VAR',
+        'int': 'TYPE',
+        'float': 'TYPE',
         'if': 'IF',
         'then': 'THEN',
         'else': 'ELSE',
@@ -15,6 +15,16 @@ reserved = {
         'output': 'OUTPUT',
         'readreg': 'READREG',
         'writereg': 'WRITEREG',
+        'sin': 'SIN',
+        'cos': 'COS',
+        'tan': 'TAN',
+        'asin': 'ASIN',
+        'acos': 'ACOS',
+        'atan': 'ATAN',
+        'atan2': 'ATAN2',
+        'root': 'ROOT',
+        'pow': 'POW',
+        'log': 'LOG',
         'return': 'RETURN'
 }
 
@@ -30,7 +40,18 @@ t_LBRACE = r'\{'
 t_RBRACE = r'\}'
 t_COMMA = r','
 
-t_NUMBER = r'[0-9]+(\.[0-9]+)?((e|E)(\+|-)?[0-9]+)?'
+def t_NUMBERF(t):
+    r'[0-9]+(([.][0-9]+)(f)?|f)'
+    return t
+
+def t_NUMBERU(t):
+    r'[0-9]+((e|E)(\+|-)?[0-9]+)?u'
+    return t
+
+def t_NUMBERI(t):
+    r'[0-9]+((e|E)(\+|-)?[0-9]+)?'
+    return t
+
 
 def t_COMMENT(t):
     '/\*[\s\S]*?\*/|//.*'

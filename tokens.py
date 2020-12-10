@@ -1,5 +1,5 @@
 tokens = (
-        'FUNC',
+        'TYPE',
         'UNIOP',
         'BIOP',
         'ADD',
@@ -15,10 +15,11 @@ tokens = (
         'LBRACE',
         'RBRACE',
         'TERNARY',
-        'NUMBER',
+        'NUMBERI',
+        'NUMBERF',
+        'NUMBERU',
         'SYMBOL',
         'STRING',
-        'VAR',
         'IF',
         'ELSE',
         'RETURN',
@@ -27,5 +28,15 @@ tokens = (
         'INPUT',
         'OUTPUT',
         'READREG',
-        'WRITEREG'
+        'WRITEREG',
+        'SIN',
+        'COS',
+        'TAN',
+        'ASIN',
+        'ACOS',
+        'ATAN',
+        'ATAN2',
+        'ROOT',
+        'POW',
+        'LOG'
 )

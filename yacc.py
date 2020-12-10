@@ -1,7 +1,8 @@
 import ply.yacc as yacc
+import MODEL as m
+import node
 from lex import lexer
 from tokens import tokens
-
 
 start = 'program'
 
@@ -10,11 +11,22 @@ precedence = (
     ('left', 'MUL', 'DIV'),
 )
 
+def parseType(typestring):
+    if typestring == 'uint':
+        return m.Types.Uint
+    elif typestring == 'int':
+        return m.Types.Int
+    elif typestring == 'float':
+        return m.Types.Float
+    else:
+        print('f"{typestring=}')
+        print('parse Type failed')
+
 def p_program(p):
     '''
     program : external_definitions
     '''
-    p[0] = ['program', p[1]]
+    p[0] = node.Program(p[1])
 
 def p_external_definitions(p):
     '''
@@ -28,43 +40,63 @@ def p_external_definitions(p):
 
 def p_external_definition(p):
     '''
-    external_definition : VAR SYMBOL SEMICOLON
-    | FUNC SYMBOL parameter_list block
-    | VAR SYMBOL ASSIGN expr SEMICOLON
+    external_definition : TYPE SYMBOL SEMICOLON
+    | TYPE SYMBOL arguments block
+    | TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        #p[0] = "define var"
-        p[0] = ["globalvar", p[2], ['number', 0]]
-    elif (len(p) == 5):
-        p[0] = ["func", p[2], p[3], p[4]]
-    else:
-        p[0] = ["globalvar", p[2], p[4]]
+        if p[1] == 'uint':
+            p[0] = node.GlobalVar(p[2], m.Types.Uint, node.NumberU(0))
+        elif p[1] == 'int':
+            p[0] = node.GlobalVar(p[2], m.Types.Int, node.NumberI(0))
+        elif p[1] == 'float':
+            p[0] = node.GlobalVar(p[2], m.Types.Float, node.NumberF(0))
+        else:
+            print("yacc-external_definition: Unknown Type!!")
 
-def p_parameter_list(p):
+    elif (len(p) == 5):
+        p[0] = node.Func(p[2], p[1], p[3], p[4])
+
+    else:
+        if p[1] == 'uint':
+            p[0] = node.GlobalVar(p[2], m.Types.Uint, p[4])
+        elif p[1] == 'int':
+            p[0] = node.GlobalVar(p[2], m.Types.Int, p[4])
+        elif p[1] == 'float':
+            p[0] = node.GlobalVar(p[2], m.Types.Float, p[4])
+        else:
+            print("yacc-external_definition: Unknown Type!!")
+
+
+def p_arguments(p):
     '''
-    parameter_list : LPAREN RPAREN
-    | LPAREN symbol_list RPAREN
+    arguments : LPAREN RPAREN
+    | LPAREN definition_list RPAREN
     '''
     if (len(p) == 3):
         p[0] = []
     if (len(p) == 4):
         p[0] = p[2]
 
-def p_symbol_list(p):
+def p_definition_list(p):
     '''
-    symbol_list : SYMBOL
-    | symbol_list COMMA SYMBOL
+    definition_list : TYPE SYMBOL
+    | definition_list COMMA TYPE SYMBOL
     '''
-    if (len(p) == 2):
-        p[0] = [p[1]]
-    if (len(p) == 4):
-        p[0] = p[1] + [p[3]]
+    if (len(p) == 3):
+        #p[0] = [[p[1], p[2]]]
+        p[0] = [m.Symbol(p[2], parseType(p[1]))]
+    if (len(p) == 5):
+        tmp = p[1]
+        #tmp.append([p[3], p[4]])
+        tmp.append(m.Symbol(p[4], parseType(p[3])))
+        p[0] = tmp
 
 def p_block(p):
     '''
     block : LBRACE statements RBRACE
     '''
-    p[0] = ['block', p[2]]
+    p[0] = node.Block(p[2])
 
 def p_statements(p):
     '''
@@ -90,30 +122,50 @@ def p_statement(p):
     '''
     if (p[1] == 'return'):
         if (len(p) == 3):
-            p[0] = ['return', None]
+            p[0] = node.Return(node.NumberU(0))
+
         else:
-            p[0] = ['return', p[2]]
+            p[0] = node.Return(p[2])
+
     elif (p[1] == 'if'):
         if (len(p) == 6):
-            p[0] = ['if', p[3], p[5]]
+            p[0] = node.If(p[3], p[5])
+
         else:
-            p[0] = ['ifelse', p[3], p[5], p[7]]
+            p[0] = node.Ifelse(p[3], p[5], p[7])
+
     elif (p[1] == 'while'):
-        p[0] = ['while', p[3], p[5]]
+        p[0] = node.While(p[3], p[5])
+
     elif (p[1] == 'for'):
-        p[0] = ['for', p[3], p[5], p[7], p[9]]
+        p[0] = node.For(p[3], p[5], p[7], p[9])
+
     else:
         p[0] = p[1];
 
 def p_local_vars(p):
     '''
-    local_vars : VAR SYMBOL SEMICOLON
-    local_vars : VAR SYMBOL ASSIGN expr SEMICOLON
+    local_vars : TYPE SYMBOL SEMICOLON
+    local_vars : TYPE SYMBOL ASSIGN expr SEMICOLON
     '''
     if (len(p) == 4):
-        p[0] = ["localvar", p[2], ['number', 0]]
+        if p[1] == 'uint':
+            p[0] = node.LocalVar(p[2], m.Types.Uint, node.NumberU(0))
+        elif p[1] == 'int':
+            p[0] = node.LocalVar(p[2], m.Types.Int, node.NumberI(0))
+        elif p[1] == 'float':
+            p[0] = node.LocalVar(p[2], m.Types.Float, node.NumberF(0))
+        else:
+            print("yacc-local-vars: Unknown Type!!")
     else:
-        p[0] = ["localvar", p[2], p[4]]
+        if p[1] == 'uint':
+            p[0] = node.LocalVar(p[2], m.Types.Uint, p[4])
+        elif p[1] == 'int':
+            p[0] = node.LocalVar(p[2], m.Types.Int, p[4])
+        elif p[1] == 'float':
+            p[0] = node.LocalVar(p[2], m.Types.Float, p[4])
+        else:
+            print("yacc-local-vars: Unknown Type!!")
 
 def p_expr(p):
     '''
@@ -127,6 +179,16 @@ def p_expr(p):
     | expr MUL expr
     | expr DIV expr
     | expr TERNARY expr COLON expr
+    | SIN LPAREN expr RPAREN
+    | COS LPAREN expr RPAREN
+    | TAN LPAREN expr RPAREN
+    | ASIN LPAREN expr RPAREN
+    | ACOS LPAREN expr RPAREN
+    | ATAN LPAREN expr RPAREN
+    | ATAN2 LPAREN expr COMMA expr RPAREN
+    | ROOT LPAREN expr COMMA expr RPAREN
+    | POW LPAREN expr COMMA expr RPAREN
+    | LOG LPAREN expr COMMA expr RPAREN
     | OUTPUT LPAREN string COMMA expr RPAREN
     | WRITEREG LPAREN expr COMMA expr RPAREN
     '''
@@ -135,39 +197,59 @@ def p_expr(p):
     elif (p[1] == '('):
         p[0] = p[2]
     elif (p[1] == 'output'):
-        p[0] = ['output', p[3], p[5]]
+        p[0] = node.Output(p[3], p[5])
     elif (p[1] == 'writereg'):
-        p[0] = ['writereg', p[3], p[5]]
+        p[0] = node.Writereg(p[3], p[5])
     elif (p[2] == '='):
-        p[0] = ['assign', p[1], p[3]]
+        p[0] = node.Assign(p[1], p[3])
     elif (p[2] == '!'):
-        p[0] = ['inv', p[2]]
+        p[0] = node.Inv(p[2])
     elif (p[2] == '+'):
-        p[0] = ['add', p[1], p[3]]
+        p[0] = node.Add(p[1], p[3])
     elif (p[2] == '-'):
-        p[0] = ['sub', p[1], p[3]]
+        p[0] = node.Sub(p[1], p[3])
     elif (p[2] == '*'):
-        p[0] = ['mul', p[1], p[3]]
+        p[0] = node.Mul(p[1], p[3])
     elif (p[2] == '/'):
-        p[0] = ['div', p[1], p[3]]
+        p[0] = node.Div(p[1], p[3])
     elif (p[2] == '<'):
-        p[0] = ['lt', p[1], p[3]]
+        p[0] = node.Lt(p[1], p[3])
     elif (p[2] == '<='):
-        p[0] = ['lte', p[1], p[3]]
+        p[0] = node.Lte(p[1], p[3])
     elif (p[2] == '>'):
-        p[0] = ['gt', p[1], p[3]]
+        p[0] = node.Gt(p[1], p[3])
     elif (p[2] == '>='):
-        p[0] = ['gte', p[1], p[3]]
+        p[0] = node.Gte(p[1], p[3])
     elif (p[2] == '=='):
-        p[0] = ['eq', p[1], p[3]]
+        p[0] = node.Eq(p[1], p[3])
     elif (p[2] == '!='):
-        p[0] = ['neq', p[1], p[3]]
+        p[0] = node.Neq(p[1], p[3])
     elif (p[1] == '++'):
-        p[0] = ['inc', p[2]]
+        p[0] = node.Inc(p[2])
     elif (p[1] == '--'):
-        p[0] = ['dec', p[2]]
+        p[0] = node.Dec(p[2])
     elif (p[2] == '?'):
-        p[0] = ['ternary', p[1], p[3], p[5]]
+        p[0] = node.Ternary(p[1], p[3], p[5])
+    elif (p[1] == 'sin'):
+        p[0] = node.Sin(p[3])
+    elif (p[1] == 'cos'):
+        p[0] = node.Cos(p[3])
+    elif (p[1] == 'tan'):
+        p[0] = node.Tan(p[3])
+    elif (p[1] == 'asin'):
+        p[0] = node.Asin(p[3])
+    elif (p[1] == 'acos'):
+        p[0] = node.Acos(p[3])
+    elif (p[1] == 'atan'):
+        p[0] = node.Atan(p[3])
+    elif (p[1] == 'atan2'):
+        p[0] = node.Atan2(p[3], p[5])
+    elif (p[1] == 'root'):
+        p[0] = node.Root(p[3], p[5])
+    elif (p[1] == 'pow'):
+        p[0] = node.Pow(p[3], p[5])
+    elif (p[1] == 'log'):
+        p[0] = node.Log(p[3], p[5])
     else:
         p[0] = p[1]
 
@@ -184,33 +266,44 @@ def p_primary_expr(p):
     if (len(p) == 2):
         p[0] = p[1]
     elif (p[1] == "input"):
-        p[0] = ['input', p[3]]
+        p[0] = node.Input(p[3])
     elif (p[1] == "readreg"):
-        p[0] = ['readreg', p[3]]
+        p[0] = node.Readreg(p[3])
     else:
         if (len(p) == 4):
-            p[0] = ['funccall', p[1], []]
+            p[0] = node.Funccall(p[1], [])
         else:
-            p[0] = ['funccall', p[1], p[3]]
+            p[0] = node.Funccall(p[1], p[3])
 
 def p_symbol(p):
     '''
     symbol : SYMBOL
     '''
-    p[0] = ['symbol', p[1]]
+    p[0] = node.Symbol(p[1])
 
-def p_number(p):
+def p_numberi(p):
     '''
-    number : NUMBER
+    number : NUMBERI
     '''
-    p[0] = ['number', p[1]]
+    p[0] = node.NumberI(p[1])
+
+def p_numberf(p):
+    '''
+    number : NUMBERF
+    '''
+    p[0] = node.NumberF(p[1])
+
+def p_numberu(p):
+    '''
+    number : NUMBERU
+    '''
+    p[0] = node.NumberU(p[1])
 
 def p_string(p):
     '''
     string : STRING
     '''
-    p[0] = ['string', p[1]]
-
+    p[0] = node.String(p[1])
 
 def p_arg_list(p):
     '''
@@ -230,10 +323,17 @@ def p_error(p):
 def makeAST(code):
 
     parser = yacc.yacc(debug=False, write_tables=False)
-    ast = yacc.parse(code, lexer=lexer)
+    node = yacc.parse(code, lexer=lexer)
 
-    #print(ast)
+    return node;
 
-    return ast;
+if __name__ == '__main__':
+    with open('test.c', 'r') as f:
+        data = f.read()
+
+    parser = yacc.yacc(debug=True, write_tables=False)
+    node = yacc.parse(data, lexer=lexer)
+
+    print(node)
 
 

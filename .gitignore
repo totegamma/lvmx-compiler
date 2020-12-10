@@ -3,3 +3,4 @@ parser.out
 parsetab.py
 *.lve
 .DS_Store
+*.pyc

@@ -12,6 +12,9 @@ class AST:
     def gencode(self, env):
         pass
 
+    def eval(self):
+        return None
+
 
     def decideType(a, b):
         if (m.Types.Void in [a, b]):
@@ -434,21 +437,30 @@ class NumberU:
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, value)]
+        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, value)])
+
+    def eval(self):
+        return self.value
 
 class NumberI:
     def __init__(self, value):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Int, [m.Inst(opc.PUSH, value)]
+        return m.Insts(m.Types.Int, [m.Inst(opc.PUSH, value)])
+
+    def eval(self):
+        return self.value
 
 class NumberF:
     def __init__(self, value):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Float, [m.Inst(opc.PUSH, value)]
+        return m.Insts(m.Types.Float, [m.Inst(opc.PUSH, value)])
+
+    def eval(self):
+        return self.value
 
 class String:
     def __init__(self, value):
@@ -456,5 +468,9 @@ class String:
 
     def gencode(self, env):
         strid = issueString(self.value)
-        return m.Insts(m.Types.UInt, [m.Inst(opc.PUSH, strid)]
+        return m.Insts(m.Types.UInt, [m.Inst(opc.PUSH, strid)])
+
+    def eval(self):
+        return self.value
+
 

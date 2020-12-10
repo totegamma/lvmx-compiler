@@ -6,61 +6,6 @@ from mnemonic import mnemonic as opc
 from mnemonic import mnemonic
 from yacc import makeAST
 
-nullarg = '00000000'
-
-globalvars = {}
-stringregion = {}
-funcs = {}
-
-arguments = {}
-localvars = {}
-
-labelitr = 0;
-
-def float2hex(f):
-    n = float(f.replace('f', ''))
-    return format(struct.unpack('>I', struct.pack('>f', n))[0], "08x")
-
-def int2hex(f):
-    n = int(f.replace('u', ''))
-    return format(struct.unpack('>I', struct.pack('>i', n))[0], "08x")
-
-def uint2hex(f):
-    return format(f, "08x")
-
-def preparecompile():
-    globalvars.clear();
-    stringregion.clear();
-    funcs.clear();
-    arguments.clear();
-    localvars.clear();
-    labelitr = 0;
-
-def decideType(a, b):
-    if ('void' in [a, b]):
-        print('eval void error')
-        return 'error'
-    #elif (a == 'any' and b == 'any'):
-    #    return 'any'
-    #elif (a == 'any'):
-    #    return b
-    #elif (b == 'any'):
-    #    return a
-    elif (a == 'uint' and b == 'uint'):
-        return 'uint'
-    elif (a == 'int' and b == 'int'):
-        return 'int'
-    elif (a == 'float' and b == 'float'):
-        return 'float'
-    #elif ('uint' in [a, b] and 'float' in [a, b]):
-    #    return 'float'
-    #elif ('int' in [a, b] and 'float' in [a, b]):
-    #    return 'float'
-
-    print(f'eval type error! {a} and {b}')
-
-    return 'error'
-
 
 def dumpbytecode(code):
     start = time.time()
@@ -79,7 +24,6 @@ def dumpbytecode(code):
 # search for main
     for elem in env.functions:
         if (elem.symbolname == 'main'):
-            #middlecode.append(list(map(lambda x:x.serialize(), elem.insts)))
             middlecode.extend(elem.insts)
 
 # add others
@@ -106,7 +50,7 @@ def dumpbytecode(code):
             elem.arg = len(bytecode) + elem.arg
 
 # append global variable space
-    for elem in globalvars:
+    for elem in env.globals:
         bytecode.append(m.Inst(opc.DUMMY, elem.initvalue))
 
 # writeout

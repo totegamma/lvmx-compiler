@@ -1,8 +1,6 @@
-from compile import preparecompile, dumpbytecode
+from compile import dumpbytecode
 import json
 def lambda_handler(event, context):
-
-    preparecompile()
 
     code = dumpbytecode(event['body'])
 

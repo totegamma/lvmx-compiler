@@ -121,7 +121,6 @@ class Env:
         print(f"{name=}")
         print("ERROR: VAR NOT FOUND")
 
-
     def issueString(self, string):
         if (string not in self.strings):
             strings[string] = len(stringregion)

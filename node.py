@@ -80,7 +80,7 @@ class UNIOP:
 
     def gencode(self, env):
 
-        if (!isinstance(self.right, Symbol)):
+        if (not isinstance(self.right, Symbol)):
             print("inc: not a symbol!")
             return
         symbolname = self.right.symbolname
@@ -165,7 +165,7 @@ class Block:
         env.popLocal()
         return m.Insts(m.Types.Void, insts)
 
-class Localvar:
+class LocalVar:
     def __init__(self, symbolname, typename, body):
         self.symbolname = symbolname
         self.typename = typename
@@ -369,37 +369,37 @@ class Mul (BIOP):
     opI = opc.MULI
     opF = opc.MULF
 
-class Div:
+class Div (BIOP):
     opU = opc.DIVU
     opI = opc.DIVI
     opF = opc.DIVF
 
-class Lt:
+class Lt (BIOP):
     opU = opc.LTU
     opI = opc.LTI
     opF = opc.LTF
 
-class Lte:
+class Lte (BIOP):
     opU = opc.LTEU
     opI = opc.LTEI
     opF = opc.LTEF
 
-class Gt:
+class Gt (BIOP):
     opU = opc.GTU
     opI = opc.GTI
     opF = opc.GTF
 
-class Gte:
+class Gte (BIOP):
     opU = opc.GTEU
     opI = opc.GTEI
-    opF = opc.GETF
+    opF = opc.GTEF
 
-class Eq:
+class Eq (BIOP):
     opU = opc.EQU
     opI = opc.EQI
     opF = opc.EQF
 
-class Neq:
+class Neq (BIOP):
     opU = opc.NEQU
     opI = opc.NEQI
     opF = opc.NEQF

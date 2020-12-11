@@ -1,5 +1,6 @@
 import sys
 import time
+import glob
 import struct
 import MODEL as m
 from mnemonic import mnemonic as opc
@@ -8,9 +9,12 @@ from yacc import makeAST
 
 
 def dumpbytecode(code):
+
     start = time.time()
 
     ast = makeAST(code)
+    if (glob.lexerrors != '' or glob.yaccerrors != ''):
+        return glob.lexerrors + glob.yaccerrors
 
     env = m.Env()
     ast.gencode(env)
@@ -83,7 +87,11 @@ if __name__ == '__main__':
     with open(filename, mode="r") as f:
         data = f.read()
 
+    glob.init()
     bytecode = dumpbytecode(data)
 
     print(bytecode)
+
+    if (glob.lexerrors != '' or glob.yaccerrors != ''):
+        exit(-1)
 

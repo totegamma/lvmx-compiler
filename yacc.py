@@ -1,6 +1,7 @@
-import ply.yacc as yacc
-import MODEL as m
 import node
+import glob
+import MODEL as m
+import ply.yacc as yacc
 from lex import lexer
 from tokens import tokens
 
@@ -317,7 +318,7 @@ def p_arg_list(p):
 
 
 def p_error(p):
-    print("Syntax error at '%s'" % p)
+    glob.yaccerrors += f"line: {p.lineno}. Syntax error at or near '{p.value}'"
 
 
 def makeAST(code):

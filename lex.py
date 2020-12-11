@@ -1,5 +1,5 @@
+import glob
 import ply.lex as lex
-
 from tokens import tokens
 
 
@@ -111,14 +111,12 @@ def t_newline(t):
     t.lexer.lineno += len(t.value)
 
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    glob.lexerrors += f"illegal character '{t.value[0]}'" + '\n'
     t.lexer.skip(1)
 
 def t_string_error(t):
-    print("string: Illegal character '%s'" % t.value[0])
+    glob.lexerrors += f"illegal character '{t.value[0]}'" + '\n'
     t.lexer.skip(1)
-
-
 
 lexer = lex.lex()
 

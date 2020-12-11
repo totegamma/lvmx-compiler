@@ -1,4 +1,3 @@
-
 func square(size) {
 	writereg(1, 0);
 	writereg(16, 1);

@@ -297,7 +297,8 @@ class Input (AST):
         self.key = key
 
     def gencode(self, env):
-        stringslot = self.key.eval(env)
+        self.key.gencode(env)
+        stringslot = env.stringLookup(self.key.eval())
         return m.Insts(m.Types.Any, [m.Inst(opc.INPUT, stringslot)])
 
 class Output (AST):
@@ -306,7 +307,8 @@ class Output (AST):
         self.body = body
 
     def gencode(self, env):
-        stringslot = self.key.eval(env)
+        self.key.gencode(env)
+        stringslot = env.stringLookup(self.key.eval(env))
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.OUTPUT, stringslot))
         return m.Insts(m.Types.Void, codes)
@@ -475,8 +477,8 @@ class String (AST):
         self.value = value
 
     def gencode(self, env):
-        strid = issueString(self.value)
-        return m.Insts(m.Types.UInt, [m.Inst(opc.PUSH, self.strid)])
+        strid = env.issueString(self.value)
+        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, strid)])
 
     def eval(self):
         return self.value

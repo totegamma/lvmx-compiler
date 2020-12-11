@@ -92,7 +92,7 @@ class Symbol:
 class Env:
     def __init__(self):
         self.functions = []
-        self.strings = []
+        self.strings = {}
         self.globals = []
         self.args = []
         self.locals = []
@@ -121,10 +121,13 @@ class Env:
         print(f"{name=}")
         print("ERROR: VAR NOT FOUND")
 
+    def stringLookup(self, string):
+        return self.strings[string]
+
     def issueString(self, string):
         if (string not in self.strings):
-            strings[string] = len(stringregion)
-        return strings[string]
+            self.strings[string] = len(self.strings)
+        return self.strings[string]
 
     def addFunction(self, function):
         self.functions.append(function)

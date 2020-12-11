@@ -107,7 +107,7 @@ t_ignore = '\t| '
 t_string_ignore = ''
 
 def t_newline(t):
-    r'\n+'
+    r'\r?\n+'
     t.lexer.lineno += len(t.value)
 
 def t_error(t):

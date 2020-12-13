@@ -428,7 +428,7 @@ class Cos (AST):
 
     def gencode(self, env):
         codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.SIN, self.nullarg))
+        codes.append(m.Inst(opc.COS, self.nullarg))
         return m.Insts(m.Types.Float, codes)
 
 class Symbol (AST):

@@ -91,13 +91,16 @@ class UNIOP (AST):
         typename = var.typename
 
         if (typename == m.Types.Uint):
-            code= [m.Inst(opc.PUSH, 1)]
+            code = [m.Inst(opc.PUSH, 1)]
+            code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opU, self.nullarg))
         elif (typename == m.Types.Int):
-            code= [m.Inst(opc.PUSH, 1)]
+            code = [m.Inst(opc.PUSH, 1)]
+            code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opI, self.nullarg))
         elif (typename == m.Types.Float):
-            code= [m.Inst(opc.PUSH, 1.0)]
+            code = [m.Inst(opc.PUSH, 1.0)]
+            code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opF, self.nullarg))
         else:
             print("ERROR UNIOP ONLY SUPPORTS UINT OR INT")

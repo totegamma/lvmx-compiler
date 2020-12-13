@@ -66,8 +66,6 @@ def dumpbytecode(code):
             elem.arg = funcLocator[elem.arg]
         elif (elem.opc == opc.JUMP or elem.opc == opc.JIF0):
             elem.arg = labelLocator[elem.arg]
-        elif (elem.opc == opc.LOADG or elem.opc == opc.STOREG):
-            elem.arg = len(bytecode) + elem.arg
 
 # writeout
     stream = ""

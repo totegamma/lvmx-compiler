@@ -78,23 +78,25 @@ class UNIOP (AST):
 
     opU = None
     opI = None
+    opF = None
 
     def __init__(self, right):
         self.right = right
 
     def gencode(self, env):
 
-        if (not isinstance(self.right, Symbol)):
-            print("inc: not a symbol!")
-            return
-        symbolname = self.right.symbolname
-        typename = self.right.typename
+        var = env.variableLookup(self.right)
 
-        code= m.Inst(opc.PUSH, 1)
+        symbolname = var.name
+        typename = var.typename
+
+        code= [m.Inst(opc.PUSH, 1)]
         if (typename == m.Types.Uint):
-            code.append(m.Inst(opU, self.nullarg))
+            code.append(m.Inst(self.opU, self.nullarg))
         elif (typename == m.Types.Int):
-            code.append(m.Inst(opI, self.nullarg))
+            code.append(m.Inst(self.opI, self.nullarg))
+        elif (typename == m.Types.Float):
+            code.append(m.Inst(self.opF, self.nullarg))
         else:
             print("ERROR UNIOP ONLY SUPPORTS UINT OR INT")
         code.append(env.variableLookup(symbolname).genStoreCode())
@@ -350,10 +352,12 @@ class Assign (AST):
 class Inc (UNIOP):
     opU = opc.ADDU
     opI = opc.ADDI
+    opF = opc.ADDF
 
 class Dec (UNIOP):
     opU = opc.SUBU
     opI = opc.SUBI
+    opF = opc.SUBF
 
 class Inv: # TODO
     pass

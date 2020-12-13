@@ -173,7 +173,7 @@ def p_expr(p):
     expr : primary_expr
     | LPAREN expr RPAREN
     | SYMBOL ASSIGN expr
-    | UNIOP expr
+    | UNIOP SYMBOL
     | expr BIOP expr
     | expr ADD expr
     | expr SUB expr

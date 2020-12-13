@@ -90,12 +90,14 @@ class UNIOP (AST):
         symbolname = var.name
         typename = var.typename
 
-        code= [m.Inst(opc.PUSH, 1)]
         if (typename == m.Types.Uint):
+            code= [m.Inst(opc.PUSH, 1)]
             code.append(m.Inst(self.opU, self.nullarg))
         elif (typename == m.Types.Int):
+            code= [m.Inst(opc.PUSH, 1)]
             code.append(m.Inst(self.opI, self.nullarg))
         elif (typename == m.Types.Float):
+            code= [m.Inst(opc.PUSH, 1.0)]
             code.append(m.Inst(self.opF, self.nullarg))
         else:
             print("ERROR UNIOP ONLY SUPPORTS UINT OR INT")

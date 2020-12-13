@@ -118,11 +118,11 @@ class Program (AST):
 class GlobalVar (AST):
     def __init__(self, symbolname, typename, body):
         self.typename = typename
-        self.symbol = symbol
+        self.symbolname = symbolname
         self.body = body
 
     def gencode(self, env):
-        env.addGlobal(m.Symbol(self.symbolname, self.typename, self.body.eval(env)))
+        env.addGlobal(m.Symbol(self.symbolname, self.typename, self.body.eval()))
         return env
 
 class Func (AST):

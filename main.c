@@ -1,3 +1,5 @@
+int i = 3;
+
 int square(int size) {
 	writereg(1, 0);
 	writereg(16, 1);

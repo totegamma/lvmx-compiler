@@ -7,6 +7,22 @@ from mnemonic import mnemonic as opc
 from mnemonic import mnemonic
 from yacc import makeAST
 
+def value2hex(val):
+    if isinstance(val, int):
+        if val > 2147483647: # uint
+            arg = format(val, "08x")
+        else:
+            arg = format(struct.unpack('>I', struct.pack('>i', val))[0], "08x")
+
+    elif isinstance(val, float):
+        arg = format(struct.unpack('>I', struct.pack('>f', val))[0], "08x")
+
+    else:
+        print(f"serialize arg unkown type error: {val.arg=}")
+        return "0000000000000000"
+
+    return f'00000000{arg}'
+
 
 def dumpbytecode(code):
 
@@ -53,16 +69,17 @@ def dumpbytecode(code):
         elif (elem.opc == opc.LOADG or elem.opc == opc.STOREG):
             elem.arg = len(bytecode) + elem.arg
 
-# append global variable space
-    for elem in env.globals:
-        bytecode.append(m.Inst(opc.DUMMY, elem.initvalue))
-
 # writeout
     stream = ""
     stream += f".string {len(env.strings)}" + '\n'
     for elem in env.strings:
         stream += elem
         stream += '\n'
+
+    # append global variable space
+    stream += f".global {len(env.globals)}" + '\n'
+    for elem in env.globals:
+        stream += value2hex(elem.initvalue) + '\n'
 
     stream += f".bytecode {len(bytecode)}" + '\n'
     for elem in bytecode:

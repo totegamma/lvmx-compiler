@@ -41,7 +41,7 @@ t_RBRACE = r'\}'
 t_COMMA = r','
 
 def t_NUMBERF(t):
-    r'[0-9]+(([.][0-9]+)(f)?|f)'
+    r'-?[0-9]+(([.][0-9]+)(f)?|f)'
     return t
 
 def t_NUMBERU(t):
@@ -49,7 +49,7 @@ def t_NUMBERU(t):
     return t
 
 def t_NUMBERI(t):
-    r'[0-9]+((e|E)(\+|-)?[0-9]+)?'
+    r'-?[0-9]+((e|E)(\+|-)?[0-9]+)?'
     return t
 
 

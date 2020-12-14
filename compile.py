@@ -103,10 +103,14 @@ if __name__ == '__main__':
         data = f.read()
 
     glob.init()
-    bytecode = dumpbytecode(data)
+    try:
+        bytecode = dumpbytecode(data)
+    except Exception as e:
+        print(e)
+        exit(-1)
 
     print(bytecode)
 
-    if (glob.lexerrors != '' or glob.yaccerrors != ''):
+    if (glob.lexerrors != '' or glob.yaccerrors != '' or glob.compileerrors != ''):
         exit(-1)
 

@@ -1,3 +1,4 @@
+import glob
 import MODEL as m
 from mnemonic import mnemonic as opc
 
@@ -18,7 +19,7 @@ class AST:
 
     def decideType(self, a, b):
         if (m.Types.Void in [a, b]):
-            print('eval void error')
+            glob.compileerrors += "eval void error\n"
             return MODEL.Types.Void
         #elif (a == 'any' and b == 'any'):
         #    return 'any'
@@ -36,8 +37,8 @@ class AST:
         #    return 'float'
         #elif ('int' in [a, b] and 'float' in [a, b]):
         #    return 'float'
-        print(f"{a=}")
-        print(f"{b=}")
+        glob.compileerrors += "{a=}\n"
+        glob.compileerrors += "{b=}\n"
 
 
 # -= :: Inherited MODEL :: =-
@@ -69,8 +70,8 @@ class BIOP (AST):
         elif (typename == m.Types.Float):
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            print(f"{typename=}")
-            print("ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT")
+            glob.compileerrors += f"{typename=}"
+            glob.compileerrors += f"ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT"
 
         return m.Insts(typename, code)
 
@@ -103,7 +104,8 @@ class UNIOP (AST):
             code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            print("ERROR UNIOP ONLY SUPPORTS UINT OR INT")
+            glob.compileerrors += f"ERROR UNIOP ONLY SUPPORTS UINT OR INT"
+
         code.append(env.variableLookup(symbolname).genStoreCode())
 
         return m.Insts(typename, code)

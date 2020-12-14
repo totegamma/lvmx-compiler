@@ -20,8 +20,7 @@ def parseType(typestring):
     elif typestring == 'float':
         return m.Types.Float
     else:
-        print('f"{typestring=}')
-        print('parse Type failed')
+        glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
 
 def p_program(p):
     '''
@@ -53,7 +52,7 @@ def p_external_definition(p):
         elif p[1] == 'float':
             p[0] = node.GlobalVar(p[2], m.Types.Float, node.NumberF(0))
         else:
-            print("yacc-external_definition: Unknown Type!!")
+            glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
 
     elif (len(p) == 5):
         p[0] = node.Func(p[2], p[1], p[3], p[4])
@@ -66,7 +65,7 @@ def p_external_definition(p):
         elif p[1] == 'float':
             p[0] = node.GlobalVar(p[2], m.Types.Float, p[4])
         else:
-            print("yacc-external_definition: Unknown Type!!")
+            glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
 
 
 def p_arguments(p):
@@ -157,7 +156,7 @@ def p_local_vars(p):
         elif p[1] == 'float':
             p[0] = node.LocalVar(p[2], m.Types.Float, node.NumberF(0))
         else:
-            print("yacc-local-vars: Unknown Type!!")
+            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
     else:
         if p[1] == 'uint':
             p[0] = node.LocalVar(p[2], m.Types.Uint, p[4])
@@ -166,7 +165,7 @@ def p_local_vars(p):
         elif p[1] == 'float':
             p[0] = node.LocalVar(p[2], m.Types.Float, p[4])
         else:
-            print("yacc-local-vars: Unknown Type!!")
+            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
 
 def p_expr(p):
     '''

@@ -173,7 +173,7 @@ class Block (AST):
         for elem in self.body:
             insts.extend(elem.gencode(env).bytecodes)
 
-        #env.popLocal()
+        env.popLocal()
         return m.Insts(m.Types.Void, insts)
 
 class LocalVar (AST):

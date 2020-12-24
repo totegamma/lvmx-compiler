@@ -32,13 +32,7 @@ states = (
         ('string', 'exclusive'),
 )
 
-t_COLON = r':'
-t_SEMICOLON = r';'
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-t_LBRACE = r'\{'
-t_RBRACE = r'\}'
-t_COMMA = r','
+literals = ['+', '-', '*', '/', ',', '=', '?', ':', ';', '(', ')', '{', '}', '[', ']']
 
 def t_NUMBERF(t):
     r'-?[0-9]+(([.][0-9]+)(f)?|f)'
@@ -64,27 +58,6 @@ def t_UNIOP(t):
 def t_BIOP(t):
     r'<=|>=|==|\!=|<|>'
     return t
-
-def t_ADD(t):
-    r'\+'
-    return t
-
-def t_SUB(t):
-    r'-'
-    return t
-
-def t_MUL(t):
-    r'\*'
-    return t
-
-def t_DIV(t):
-    r'/'
-    return t
-
-def t_ASSIGN(t):
-    r'='
-    return t
-
 
 def t_SYMBOL(t):
     r'[a-zA-Z][a-zA-Z0-9]*'

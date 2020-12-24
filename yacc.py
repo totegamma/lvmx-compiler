@@ -8,8 +8,8 @@ from tokens import tokens
 start = 'program'
 
 precedence = (
-    ('left', 'ADD', 'SUB'),
-    ('left', 'MUL', 'DIV'),
+    ('left', '+', '-'),
+    ('left', '*', '/'),
 )
 
 def parseType(typestring):
@@ -40,9 +40,9 @@ def p_external_definitions(p):
 
 def p_external_definition(p):
     '''
-    external_definition : TYPE SYMBOL SEMICOLON
+    external_definition : TYPE SYMBOL ';'
     | TYPE SYMBOL arguments block
-    | TYPE SYMBOL ASSIGN expr SEMICOLON
+    | TYPE SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
         if p[1] == 'uint':
@@ -70,8 +70,8 @@ def p_external_definition(p):
 
 def p_arguments(p):
     '''
-    arguments : LPAREN RPAREN
-    | LPAREN definition_list RPAREN
+    arguments : '(' ')'
+    | '(' definition_list ')'
     '''
     if (len(p) == 3):
         p[0] = []
@@ -81,7 +81,7 @@ def p_arguments(p):
 def p_definition_list(p):
     '''
     definition_list : TYPE SYMBOL
-    | definition_list COMMA TYPE SYMBOL
+    | definition_list ',' TYPE SYMBOL
     '''
     if (len(p) == 3):
         #p[0] = [[p[1], p[2]]]
@@ -94,7 +94,7 @@ def p_definition_list(p):
 
 def p_block(p):
     '''
-    block : LBRACE statements RBRACE
+    block : '{' statements '}'
     '''
     p[0] = node.Block(p[2])
 
@@ -110,15 +110,15 @@ def p_statements(p):
 
 def p_statement(p):
     '''
-    statement : expr SEMICOLON
+    statement : expr ';'
     | block
     | local_vars
-    | RETURN expr SEMICOLON
-    | RETURN SEMICOLON
-    | IF LPAREN expr RPAREN statement
-    | IF LPAREN expr RPAREN statement ELSE statement
-    | WHILE LPAREN expr RPAREN statement
-    | FOR LPAREN expr SEMICOLON expr SEMICOLON expr RPAREN statement
+    | RETURN expr ';'
+    | RETURN ';'
+    | IF '(' expr ')' statement
+    | IF '(' expr ')' statement ELSE statement
+    | WHILE '(' expr ')' statement
+    | FOR '(' expr ';' expr ';' expr ')' statement
     '''
     if (p[1] == 'return'):
         if (len(p) == 3):
@@ -145,8 +145,8 @@ def p_statement(p):
 
 def p_local_vars(p):
     '''
-    local_vars : TYPE SYMBOL SEMICOLON
-    local_vars : TYPE SYMBOL ASSIGN expr SEMICOLON
+    local_vars : TYPE SYMBOL ';' 
+    local_vars : TYPE SYMBOL '=' expr ';' 
     '''
     if (len(p) == 4):
         if p[1] == 'uint':
@@ -170,27 +170,27 @@ def p_local_vars(p):
 def p_expr(p):
     '''
     expr : primary_expr
-    | LPAREN expr RPAREN
-    | SYMBOL ASSIGN expr
+    | '(' expr ')' 
+    | SYMBOL '=' expr
     | UNIOP SYMBOL
     | expr BIOP expr
-    | expr ADD expr
-    | expr SUB expr
-    | expr MUL expr
-    | expr DIV expr
-    | expr TERNARY expr COLON expr
-    | SIN LPAREN expr RPAREN
-    | COS LPAREN expr RPAREN
-    | TAN LPAREN expr RPAREN
-    | ASIN LPAREN expr RPAREN
-    | ACOS LPAREN expr RPAREN
-    | ATAN LPAREN expr RPAREN
-    | ATAN2 LPAREN expr COMMA expr RPAREN
-    | ROOT LPAREN expr COMMA expr RPAREN
-    | POW LPAREN expr COMMA expr RPAREN
-    | LOG LPAREN expr COMMA expr RPAREN
-    | OUTPUT LPAREN string COMMA expr RPAREN
-    | WRITEREG LPAREN expr COMMA expr RPAREN
+    | expr '+' expr
+    | expr '-' expr
+    | expr '*' expr
+    | expr '/' expr
+    | expr '?' expr ':' expr
+    | SIN '(' expr ')'
+    | COS '(' expr ')'
+    | TAN '(' expr ')'
+    | ASIN '(' expr ')'
+    | ACOS '(' expr ')'
+    | ATAN '(' expr ')'
+    | ATAN2 '(' expr ',' expr ')'
+    | ROOT '(' expr ',' expr ')'
+    | POW '(' expr ',' expr ')'
+    | LOG '(' expr ',' expr ')'
+    | OUTPUT '(' string ',' expr ')'
+    | WRITEREG '(' expr ',' expr ')'
     '''
     if (len(p) == 2):
         p[0] = p[1]
@@ -258,10 +258,10 @@ def p_primary_expr(p):
     primary_expr : symbol
     | number
     | string
-    | SYMBOL LPAREN arg_list RPAREN
-    | SYMBOL LPAREN RPAREN
-    | INPUT LPAREN string RPAREN
-    | READREG LPAREN expr RPAREN
+    | SYMBOL '(' arg_list ')'
+    | SYMBOL '(' ')'
+    | INPUT '(' string ')'
+    | READREG '(' expr ')'
     '''
     if (len(p) == 2):
         p[0] = p[1]
@@ -308,7 +308,7 @@ def p_string(p):
 def p_arg_list(p):
     '''
     arg_list : expr
-    | arg_list COMMA expr
+    | arg_list ',' expr
     '''
     if (len(p) == 2):
         p[0] = [p[1]]
@@ -331,8 +331,13 @@ if __name__ == '__main__':
     with open('test.c', 'r') as f:
         data = f.read()
 
+    glob.init()
+
     parser = yacc.yacc(debug=True, write_tables=False)
     node = yacc.parse(data, lexer=lexer)
+
+    print(glob.lexerrors)
+    print(glob.yaccerrors)
 
     print(node)
 

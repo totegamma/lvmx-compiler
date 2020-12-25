@@ -1,8 +1,11 @@
 
 int main() {
-	int i = 0;
-	++i;
-	int c = i + 5;
+	int* i = 1000;
+	*i = 10;
+
+	int* a = 1001;
+	int** b = &a;
+	**b = 20;
 	
-	return c;
+	return;
 }

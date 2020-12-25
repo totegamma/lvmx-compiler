@@ -14,17 +14,20 @@ class mnemonic (IntEnum):
     POPR = 6
     CALL = 7
     RET = 8
+    PULP = 9
+    PUAP = 10
 
     LOADG = 16
     LOADL = 17
     LOADA = 18
     LOADR = 19
-    INPUT = 20
+    LOADP = 20
     STOREG = 24
     STOREL = 25
     STOREA = 26
     STORER = 27
-    OUTPUT = 28
+    STOREP = 28
+
 
     SIN = 32
     COS = 33

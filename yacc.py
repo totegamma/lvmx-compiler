@@ -1,3 +1,4 @@
+import json
 import node
 import glob
 import MODEL as m
@@ -14,11 +15,11 @@ precedence = (
 
 def parseType(typestring):
     if typestring == 'uint':
-        return m.Types.Uint
+        return m.Types(m.BT.Uint)
     elif typestring == 'int':
-        return m.Types.Int
+        return m.Types(m.BT.Int)
     elif typestring == 'float':
-        return m.Types.Float
+        return m.Types(m.BT.Float)
     else:
         glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
 
@@ -46,11 +47,11 @@ def p_external_definition(p):
     '''
     if (len(p) == 4):
         if p[1] == 'uint':
-            p[0] = node.GlobalVar(p[2], m.Types.Uint, node.NumberU(0))
+            p[0] = node.GlobalVar(p[2], m.Types(m.BT.Uint), node.NumberU(0))
         elif p[1] == 'int':
-            p[0] = node.GlobalVar(p[2], m.Types.Int, node.NumberI(0))
+            p[0] = node.GlobalVar(p[2], m.Types(m.BT.Int), node.NumberI(0))
         elif p[1] == 'float':
-            p[0] = node.GlobalVar(p[2], m.Types.Float, node.NumberF(0))
+            p[0] = node.GlobalVar(p[2], m.Types(m.BT.Float), node.NumberF(0))
         else:
             glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
 
@@ -59,11 +60,11 @@ def p_external_definition(p):
 
     else:
         if p[1] == 'uint':
-            p[0] = node.GlobalVar(p[2], m.Types.Uint, p[4])
+            p[0] = node.GlobalVar(p[2], m.Types(m.BT.Uint), p[4])
         elif p[1] == 'int':
-            p[0] = node.GlobalVar(p[2], m.Types.Int, p[4])
+            p[0] = node.GlobalVar(p[2], m.Types(m.BT.Int), p[4])
         elif p[1] == 'float':
-            p[0] = node.GlobalVar(p[2], m.Types.Float, p[4])
+            p[0] = node.GlobalVar(p[2], m.Types(m.BT.Float), p[4])
         else:
             glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
 
@@ -84,11 +85,9 @@ def p_definition_list(p):
     | definition_list ',' TYPE SYMBOL
     '''
     if (len(p) == 3):
-        #p[0] = [[p[1], p[2]]]
         p[0] = [m.Symbol(p[2], parseType(p[1]))]
     if (len(p) == 5):
         tmp = p[1]
-        #tmp.append([p[3], p[4]])
         tmp.append(m.Symbol(p[4], parseType(p[3])))
         p[0] = tmp
 
@@ -145,34 +144,45 @@ def p_statement(p):
 
 def p_local_vars(p):
     '''
-    local_vars : TYPE SYMBOL ';' 
-    local_vars : TYPE SYMBOL '=' expr ';' 
+    local_vars : TYPE pointer SYMBOL ';'
+    | TYPE pointer SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
         if p[1] == 'uint':
-            p[0] = node.LocalVar(p[2], m.Types.Uint, node.NumberU(0))
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), node.NumberU(0))
         elif p[1] == 'int':
-            p[0] = node.LocalVar(p[2], m.Types.Int, node.NumberI(0))
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), node.NumberI(0))
         elif p[1] == 'float':
-            p[0] = node.LocalVar(p[2], m.Types.Float, node.NumberF(0))
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), node.NumberF(0))
         else:
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
     else:
         if p[1] == 'uint':
-            p[0] = node.LocalVar(p[2], m.Types.Uint, p[4])
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), p[5])
         elif p[1] == 'int':
-            p[0] = node.LocalVar(p[2], m.Types.Int, p[4])
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), p[5])
         elif p[1] == 'float':
-            p[0] = node.LocalVar(p[2], m.Types.Float, p[4])
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), p[5])
         else:
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+
+def p_pointer(p):
+    '''
+    pointer :
+            | pointer '*'
+    '''
+    if (len(p) == 1):
+        p[0] = 0
+    else:
+        p[0] = p[1] + 1
 
 def p_expr(p):
     '''
     expr : primary_expr
     | '(' expr ')' 
-    | SYMBOL '=' expr
+    | expr '=' expr
     | UNIOP SYMBOL
+    | '&' SYMBOL
     | expr BIOP expr
     | expr '+' expr
     | expr '-' expr
@@ -196,6 +206,8 @@ def p_expr(p):
         p[0] = p[1]
     elif (p[1] == '('):
         p[0] = p[2]
+    elif (p[1] == '&'):
+        p[0] = node.Address(p[2])
     elif (p[1] == 'output'):
         p[0] = node.Output(p[3], p[5])
     elif (p[1] == 'writereg'):
@@ -277,9 +289,9 @@ def p_primary_expr(p):
 
 def p_symbol(p):
     '''
-    symbol : SYMBOL
+    symbol : pointer SYMBOL
     '''
-    p[0] = node.Symbol(p[1])
+    p[0] = node.Symbol(p[2], p[1])
 
 def p_numberi(p):
     '''
@@ -339,6 +351,6 @@ if __name__ == '__main__':
     print(glob.lexerrors)
     print(glob.yaccerrors)
 
-    print(node)
+    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}))
 
 

@@ -1,13 +1,37 @@
 import struct
+import glob
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
 
-class Types (IntEnum):
+class BT (IntEnum):
     Void = auto()
     Any = auto()
     Uint  = auto()
     Int = auto()
     Float = auto()
+
+class Types:
+    def __init__(self, basetype, refcount = 0):
+        self.basetype = basetype
+        self.refcount = refcount
+
+    def isVoid(self):
+        return self.basetype == BT.Void
+
+    def isAny(self):
+        return self.basetype == BT.Any
+
+    def isUint(self):
+        return self.basetype == BT.Uint
+
+    def isInt(self):
+        return self.basetype == BT.Int
+
+    def isFloat(self):
+        return self.basetype == BT.Float
+
+    def addRefcount(self, delta):
+        self.refcount += delta
 
 class VarRegion (IntEnum):
     GLOBAL = auto()
@@ -16,16 +40,16 @@ class VarRegion (IntEnum):
 
 
 class Function:
-    def __init__(self, symbolname, typename, args, insts):
+    def __init__(self, symbolname, typ, args, insts):
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
         self.args = args
         self.insts = insts
 
 class GlobalVar:
-    def __init__(self, symbolname, typename, insts):
+    def __init__(self, symbolname, typ, insts):
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
         self.insts = insts
 
 class Inst:
@@ -53,14 +77,14 @@ class Inst:
         return f'{self.opc.name} {self.arg}'
 
 class Insts:
-    def __init__(self, typename, bytecodes):
-        self.typename = typename
+    def __init__(self, typ, bytecodes):
+        self.typ = typ
         self.bytecodes = bytecodes
 
 class Symbol:
-    def __init__(self, name, typename, initvalue = 0):
+    def __init__(self, name, typ, initvalue = 0):
         self.name = name
-        self.typename = typename
+        self.typ = typ
         self.initvalue = initvalue
 
     def setID(self, newid):
@@ -89,6 +113,16 @@ class Symbol:
         else:
             print("PROGRAM ERROR GENLOADCODE")
 
+    def genAddrCode(self):
+        if (self.region == VarRegion.GLOBAL):
+            return Inst(opc.PUSH, self.id)
+        elif (self.region == VarRegion.ARGUMENT):
+            return Inst(opc.LUAP, self.id)
+        elif (self.region == VarRegion.LOCAL):
+            return Inst(opc.PULP, self.id)
+        else:
+            print("PROGRAM ERROR GENLOADCODE")
+
 class Env:
     def __init__(self):
         self.functions = []
@@ -103,7 +137,7 @@ class Env:
         for elem in self.functions:
             if (elem.symbolname == name):
                 return elem
-        print("ERROR: FUNCTION NOT FOUND")
+        glob.compileerrors += f"コンパイルエラー: 関数{name=}が見つかりません"
 
     def variableLookup(self, name):
         for scope in reversed(self.locals):
@@ -118,8 +152,7 @@ class Env:
         for elem in self.globals:
             if (elem.name == name):
                 return elem
-        print(f"{name=}")
-        print("ERROR: VAR NOT FOUND")
+        glob.compileerrors += f"コンパイルエラー: 変数{name=}が見つかりません"
 
     def stringLookup(self, string):
         return self.strings[string]

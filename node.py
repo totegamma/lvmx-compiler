@@ -18,7 +18,7 @@ class AST:
 
 
     def decideType(self, a, b):
-        if (m.Types.Void in [a, b]):
+        if (a.isVoid() or b.isVoid()):
             glob.compileerrors += "eval void error\n"
             return MODEL.Types.Void
         #elif (a == 'any' and b == 'any'):
@@ -27,12 +27,12 @@ class AST:
         #    return b
         #elif (b == 'any'):
         #    return a
-        elif (a ==  m.Types.Uint and b == m.Types.Uint):
-            return m.Types.Uint
-        elif (a == m.Types.Int and b == m.Types.Int):
-            return m.Types.Int
-        elif (a == m.Types.Float and b == m.Types.Float):
-            return m.Types.Float
+        elif (a.isUint() and b.isUint()):
+            return m.Types(m.BT.Uint)
+        elif (a.isInt() and b.isInt()):
+            return m.Types(m.BT.Int)
+        elif (a.isFloat() and b.isFloat()):
+            return m.Types(m.BT.Float)
         #elif ('uint' in [a, b] and 'float' in [a, b]):
         #    return 'float'
         #elif ('int' in [a, b] and 'float' in [a, b]):
@@ -58,22 +58,22 @@ class BIOP (AST):
         left = self.left.gencode(env)
         right = self.right.gencode(env)
 
-        typename = self.decideType(left.typename, right.typename)
+        typ = self.decideType(left.typ, right.typ)
 
         code = right.bytecodes
         code.extend(left.bytecodes)
 
-        if (typename == m.Types.Uint):
+        if typ.isUint():
             code.append(m.Inst(self.opU, self.nullarg))
-        elif (typename == m.Types.Int):
+        elif typ.isInt():
             code.append(m.Inst(self.opI, self.nullarg))
-        elif (typename == m.Types.Float):
+        elif typ.isFloat():
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            glob.compileerrors += f"{typename=}"
+            glob.compileerrors += f"{typ=}"
             glob.compileerrors += f"ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT"
 
-        return m.Insts(typename, code)
+        return m.Insts(typ, code)
 
 class UNIOP (AST):
 
@@ -89,17 +89,17 @@ class UNIOP (AST):
         var = env.variableLookup(self.right)
 
         symbolname = var.name
-        typename = var.typename
+        typ = var.typ
 
-        if (typename == m.Types.Uint):
+        if typ.isUint():
             code = [m.Inst(opc.PUSH, 1)]
             code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opU, self.nullarg))
-        elif (typename == m.Types.Int):
+        elif typ.isInt():
             code = [m.Inst(opc.PUSH, 1)]
             code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opI, self.nullarg))
-        elif (typename == m.Types.Float):
+        elif typ.isFloat():
             code = [m.Inst(opc.PUSH, 1.0)]
             code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opF, self.nullarg))
@@ -108,7 +108,7 @@ class UNIOP (AST):
 
         code.append(env.variableLookup(symbolname).genStoreCode())
 
-        return m.Insts(typename, code)
+        return m.Insts(typ, code)
 
 
 
@@ -125,19 +125,19 @@ class Program (AST):
         return env
 
 class GlobalVar (AST):
-    def __init__(self, symbolname, typename, body):
-        self.typename = typename
+    def __init__(self, symbolname, typ, body):
+        self.typ = typ
         self.symbolname = symbolname
         self.body = body
 
     def gencode(self, env):
-        env.addGlobal(m.Symbol(self.symbolname, self.typename, self.body.eval()))
+        env.addGlobal(m.Symbol(self.symbolname, self.typ, self.body.eval()))
         return env
 
 class Func (AST):
-    def __init__(self, symbolname, typename, args, body):
+    def __init__(self, symbolname, typ, args, body):
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
         self.args = args
         self.body = body
 
@@ -156,7 +156,7 @@ class Func (AST):
         insts.extend(codes)
         insts.append(m.Inst(opc.RET, self.nullarg)) # TODO codesの末尾にRETがないときだけ挿入するように
 
-        env.addFunction(m.Function(self.symbolname, self.typename, self.args, insts))
+        env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
 
         return env
 
@@ -173,20 +173,30 @@ class Block (AST):
         for elem in self.body:
             insts.extend(elem.gencode(env).bytecodes)
 
-        #env.popLocal()
-        return m.Insts(m.Types.Void, insts)
+        env.popLocal()
+        return m.Insts(m.Types(m.BT.Void), insts)
 
 class LocalVar (AST):
-    def __init__(self, symbolname, typename, body):
+    def __init__(self, symbolname, typ, body):
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
         self.body = body
 
     def gencode(self, env):
-        newid = env.addLocal(m.Symbol(self.symbolname, self.typename))
+        newid = env.addLocal(m.Symbol(self.symbolname, self.typ))
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.STOREL, newid))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
+
+class Address (AST):
+    def __init__(self, symbol):
+        self.symbol = symbol
+
+    def gencode(self, env):
+        codes = self.symbol
+        var = env.variableLookup(self.symbol)
+        codes = [var.genAddrCode()]
+        return m.Insts(var.typ, codes)
 
 class Return (AST): #TODO 自分の型とのチェック
     def __init__(self, body):
@@ -195,7 +205,7 @@ class Return (AST): #TODO 自分の型とのチェック
     def gencode(self, env):
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.RET, self.nullarg))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
 
 class Funccall (AST):
     def __init__(self, name, args):
@@ -203,7 +213,7 @@ class Funccall (AST):
         self.args = args
 
     def gencode(self, env):
-        mytype = env.functionLookup(self.name).typename
+        mytype = env.functionLookup(self.name).typ
         codes = []
         for elem in reversed(self.args):
             codes.extend(elem.gencode(env).bytecodes) # TODO 型チェック
@@ -225,7 +235,7 @@ class If (AST):
         codes.append(m.Inst(opc.JIF0, l0))
         codes.extend(then)
         codes.append(m.Inst(opc.LABEL, l0))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
 
 class Ifelse (AST):
     def __init__(self, cond, then, elst):
@@ -248,7 +258,7 @@ class Ifelse (AST):
         codes.append(m.Inst(opc.LABEL, l0))
         codes.extend(elst)
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
 
 class While (AST):
     def __init__(self, cond, body):
@@ -268,7 +278,7 @@ class While (AST):
         codes.extend(body)
         codes.append(m.Inst(opc.JUMP, l0))
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
 
 
 
@@ -296,7 +306,7 @@ class For (AST):
         codes.extend(loop)
         codes.append(m.Inst(opc.JUMP, l0))
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
 
 
 # -- Lv.2 modules --
@@ -308,7 +318,7 @@ class Input (AST):
     def gencode(self, env):
         self.key.gencode(env)
         stringslot = env.stringLookup(self.key.eval())
-        return m.Insts(m.Types.Any, [m.Inst(opc.INPUT, stringslot)])
+        return m.Insts(m.Types(m.BT.Any), [m.Inst(opc.INPUT, stringslot)])
 
 class Output (AST):
     def __init__(self, key, body):
@@ -320,7 +330,7 @@ class Output (AST):
         stringslot = env.stringLookup(self.key.eval(env))
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.OUTPUT, stringslot))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
 
 class Readreg (AST):
     def __init__(self, key):
@@ -328,7 +338,7 @@ class Readreg (AST):
 
     def gencode(self, env):
         addr = self.key.eval()
-        return m.Insts(m.Types.Any, [m.Inst(opc.LOADR, addr)])
+        return m.Insts(m.Types(m.BT.Any), [m.Inst(opc.LOADR, addr)])
 
 class Writereg (AST):
     def __init__(self, key, body):
@@ -339,7 +349,7 @@ class Writereg (AST):
         addr = self.key.eval()
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.STORER, addr))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Types(m.BT.Void), codes)
 
 class Assign (AST):
     def __init__(self, left, right):
@@ -347,13 +357,27 @@ class Assign (AST):
         self.right = right
 
     def gencode(self, env):
-        var = env.variableLookup(self.left)
+        if isinstance(self.left, Symbol):
 
-        right = self.right.gencode(env)
-        codes = right.bytecodes
-        codes.append(var.genStoreCode())
+            right = self.right.gencode(env)
+            codes = right.bytecodes
+            var = env.variableLookup(self.left.symbolname)
+            if self.left.isRow(): # Direct Access
+                codes.append(var.genStoreCode())
 
-        return m.Insts(right.typename, codes)
+                return m.Insts(right.typ, codes)
+            else: # Indirect Access
+                codes.append(var.genAddrCode())
+                for i in range(self.left.refcount -1):
+                    codes.append(m.Inst(opc.LOADP, self.nullarg))
+                codes.append(m.Inst(opc.STOREP, self.nullarg))
+
+                right.typ.addRefcount(-1 * self.left.refcount)
+
+                return m.Insts(right.typ, codes)
+        else:
+            glob.compileerrors += f"コンパイルエラー: 代入できるのはシンボルのみです(代入しようとしたオブジェクト: {self.left})" + '\n'
+
 
 
 class Inc (UNIOP):
@@ -426,7 +450,7 @@ class Sin (AST):
     def gencode(self, env):
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.SIN, self.nullarg))
-        return m.Insts(m.Types.Float, codes)
+        return m.Insts(m.Types(m.BT.Float), codes)
 
 
 class Cos (AST):
@@ -436,16 +460,20 @@ class Cos (AST):
     def gencode(self, env):
         codes = self.body.gencode(env).bytecodes
         codes.append(m.Inst(opc.COS, self.nullarg))
-        return m.Insts(m.Types.Float, codes)
+        return m.Insts(m.Types(m.BT.Float), codes)
 
 class Symbol (AST):
-    def __init__(self, symbolname):
+    def __init__(self, symbolname, refcount = 0):
         self.symbolname = symbolname
+        self.refcount = refcount
 
     def gencode(self, env):
         var = env.variableLookup(self.symbolname)
         codes = [var.genLoadCode()]
-        return m.Insts(var.typename, codes)
+        return m.Insts(var.typ, codes)
+
+    def isRow(self):
+        return self.refcount == 0
 
 class NumberU (AST):
     def __init__(self, value):
@@ -454,7 +482,7 @@ class NumberU (AST):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, self.value)])
+        return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
@@ -466,7 +494,7 @@ class NumberI (AST):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Int, [m.Inst(opc.PUSH, self.value)])
+        return m.Insts(m.Types(m.BT.Int), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
@@ -478,7 +506,7 @@ class NumberF (AST):
         self.value = value
 
     def gencode(self, env):
-        return m.Insts(m.Types.Float, [m.Inst(opc.PUSH, self.value)])
+        return m.Insts(m.Types(m.BT.Float), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
@@ -489,7 +517,7 @@ class String (AST):
 
     def gencode(self, env):
         strid = env.issueString(self.value)
-        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, strid)])
+        return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, strid)])
 
     def eval(self):
         return self.value

@@ -106,11 +106,17 @@ if __name__ == '__main__':
     try:
         bytecode = dumpbytecode(data)
     except Exception as e:
-        print(e)
+        if (glob.lexerrors != '' or glob.yaccerrors != '' or glob.compileerrors != ''):
+            print(glob.lexerrors)
+            print(glob.yaccerrors)
+            print(glob.compileerrors)
+        raise
+
+    if (glob.lexerrors != '' or glob.yaccerrors != '' or glob.compileerrors != ''):
+        print(glob.lexerrors)
+        print(glob.yaccerrors)
+        print(glob.compileerrors)
         exit(-1)
 
     print(bytecode)
-
-    if (glob.lexerrors != '' or glob.yaccerrors != '' or glob.compileerrors != ''):
-        exit(-1)
 

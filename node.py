@@ -156,7 +156,9 @@ class Func (AST):
         insts.append(m.Inst(opc.ENTRY, self.symbolname))
         insts.append(m.Inst(opc.FRAME, env.getLocalCount()))
         insts.extend(codes)
-        insts.append(m.Inst(opc.RET, self.nullarg)) # TODO codesの末尾にRETがないときだけ挿入するように
+        if (insts[-1].opc is not opc.RET):
+            insts.append(m.Inst(opc.PUSH, 0))
+            insts.append(m.Inst(opc.RET, self.nullarg))
 
         env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
 

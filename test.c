@@ -10,6 +10,4 @@ int main() {
 	**b = 20;
 
 	int c = *i;
-	
-	return;
 }

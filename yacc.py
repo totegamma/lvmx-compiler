@@ -11,6 +11,7 @@ start = 'program'
 precedence = (
     ('left', '+', '-'),
     ('left', '*', '/'),
+    ('right', 'CAST')
 )
 
 def parseType(typestring):
@@ -318,7 +319,7 @@ def p_primary_expr(p):
 
 def p_cast(p):
     '''
-    cast : '(' TYPE ')' expr
+    cast : '(' TYPE ')' expr %prec CAST
     '''
     p[0] = node.Cast(p[2], p[4])
 

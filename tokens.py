@@ -6,6 +6,7 @@ tokens = (
         'NUMBERF',
         'NUMBERU',
         'SYMBOL',
+        'CHAR',
         'STRING',
         'IF',
         'ELSE',

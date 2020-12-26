@@ -29,6 +29,7 @@ reserved = {
 }
 
 states = (
+        ('char', 'exclusive'),
         ('string', 'exclusive'),
 )
 
@@ -76,7 +77,20 @@ def t_string_end(t):
     r'"'
     t.lexer.pop_state()
 
+def t_begin_char(t):
+    r"'"
+    t.lexer.push_state('char')
+
+def t_char_CHAR(t):
+    r"[^']+"
+    return t
+
+def t_char_end(t):
+    r"'"
+    t.lexer.pop_state()
+
 t_ignore = '\t| '
+t_char_ignore = ''
 t_string_ignore = ''
 
 def t_newline(t):
@@ -84,6 +98,10 @@ def t_newline(t):
     t.lexer.lineno += len(t.value)
 
 def t_error(t):
+    glob.lexerrors += f"illegal character '{t.value[0]}'" + '\n'
+    t.lexer.skip(1)
+
+def t_char_error(t):
     glob.lexerrors += f"illegal character '{t.value[0]}'" + '\n'
     t.lexer.skip(1)
 

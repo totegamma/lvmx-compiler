@@ -296,6 +296,7 @@ def p_primary_expr(p):
     '''
     primary_expr : symbol
     | number
+    | char
     | string
     | SYMBOL '(' arg_list ')'
     | SYMBOL '(' ')'
@@ -338,6 +339,17 @@ def p_numberu(p):
     number : NUMBERU
     '''
     p[0] = node.NumberU(p[1])
+
+def p_char(p):
+    '''
+    char : CHAR
+    '''
+    p[1] = p[1].replace(r'\n', '\n') #TODO 無茶な置換をなんとかしたい
+    if (len(p[1]) == 1):
+        p[0] = node.NumberU(int.from_bytes(p[1].encode('utf-32be'), byteorder='big'))
+    else:
+        glob.yaccerrors += f"charは一文字でなければなりません (入力文字: '{p[1]}')" + "\n"
+
 
 def p_string(p):
     '''

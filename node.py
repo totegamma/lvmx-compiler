@@ -321,8 +321,54 @@ class For (AST):
         codes.append(m.Inst(opc.LABEL, l1))
         return m.Insts(m.Types(m.BT.Void), codes)
 
-
 # -- Lv.2 modules --
+
+class Cast (AST):
+    def __init__(self, targetType, body):
+        self.targetType = targetType
+        self.body = body
+
+    def gencode(self, env):
+
+        body = self.body.gencode(env)
+        codes = body.bytecodes
+
+        if body.typ.isUint():
+            if self.targetType == 'int':
+                codes.append(m.Inst(opc.UTOI, self.nullarg))
+                return m.Insts(m.Types(m.BT.Int), codes)
+            elif self.targetType == 'float':
+                codes.append(m.Inst(opc.UTOF, self.nullarg))
+                return m.Insts(m.Types(m.BT.Float), codes)
+            else:
+                glob.compileerrors += f"Cast error"
+
+        elif body.typ.isInt():
+            if self.targetType == 'float':
+                codes.append(m.Inst(opc.ITOF, self.nullarg))
+                return m.Insts(m.Types(m.BT.Float), codes)
+            elif self.targetType == 'uint':
+                codes.append(m.Inst(opc.ITOU, self.nullarg))
+                return m.Insts(m.Types(m.BT.Uint), codes)
+            else:
+                glob.compileerrors += f"Cast error"
+
+        elif body.typ.isFloat():
+            if self.targetType == 'uint':
+                codes.append(m.Inst(opc.FTOU, self.nullarg))
+                return m.Insts(m.Types(m.BT.Uint), codes)
+            elif self.targetType == 'int':
+                codes.append(m.Inst(opc.FTOI, self.nullarg))
+                return m.Insts(m.Types(m.BT.Int), codes)
+            else:
+                glob.compileerrors += f"Cast error"
+
+        else:
+            glob.compileerrors += f"Cast error"
+
+        print("PROGRAM ERROR in Cast")
+
+
 
 class Input (AST):
     def __init__(self, key):

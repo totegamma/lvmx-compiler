@@ -200,7 +200,8 @@ def p_pointer(p):
 def p_expr(p):
     '''
     expr : primary_expr
-         | '(' expr ')' 
+         | cast
+         | '(' expr ')'
          | UNIOP SYMBOL
          | '&' SYMBOL
          | '*' expr
@@ -314,6 +315,12 @@ def p_primary_expr(p):
             p[0] = node.Funccall(p[1], [])
         else:
             p[0] = node.Funccall(p[1], p[3])
+
+def p_cast(p):
+    '''
+    cast : '(' TYPE ')' expr
+    '''
+    p[0] = node.Cast(p[2], p[4])
 
 def p_symbol(p):
     '''

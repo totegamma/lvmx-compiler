@@ -28,7 +28,6 @@ class mnemonic (IntEnum):
     STORER = 27
     STOREP = 28
 
-
     SIN = 32
     COS = 33
     TAN = 34
@@ -39,6 +38,13 @@ class mnemonic (IntEnum):
     ROOT = 39
     POW = 40
     LOG = 41
+
+    UTOI = 48
+    UTOF = 49
+    ITOF = 50
+    ITOU = 51
+    FTOU = 52
+    FTOI = 53
 
     ADDU = 64
     SUBU = 65
@@ -51,8 +57,6 @@ class mnemonic (IntEnum):
     GTEU = 72
     EQU = 73
     NEQU = 74
-    UTOI = 78
-    UTOF = 79
 
     ADDI = 80
     SUBI = 81
@@ -65,8 +69,6 @@ class mnemonic (IntEnum):
     GTEI = 88
     EQI = 89
     NEQI = 90
-    ITOF = 94
-    ITOU = 95
 
     ADDF = 96
     SUBF = 97
@@ -79,6 +81,4 @@ class mnemonic (IntEnum):
     GTEF = 104
     EQF = 105
     NEQF = 106
-    FTOU = 110
-    FTOI = 111
 

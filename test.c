@@ -1,7 +1,7 @@
 
 int main() {
 
-	int i = '\n';
+	uint a = '\n';
 
 	return 0;
 }

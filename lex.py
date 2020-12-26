@@ -4,6 +4,7 @@ from tokens import tokens
 
 
 reserved = {
+        'uint': 'TYPE',
         'int': 'TYPE',
         'float': 'TYPE',
         'if': 'IF',

@@ -38,7 +38,6 @@ class VarRegion (IntEnum):
     ARGUMENT = auto()
     LOCAL = auto()
 
-
 class Function:
     def __init__(self, symbolname, typ, args, insts):
         self.symbolname = symbolname
@@ -128,6 +127,7 @@ class Env:
         self.functions = []
         self.strings = {}
         self.globals = []
+        self.globalcount = 0
         self.args = []
         self.locals = []
         self.localcount = 0
@@ -159,15 +159,19 @@ class Env:
 
     def issueString(self, string):
         if (string not in self.strings):
-            self.strings[string] = len(self.strings)
+            self.strings[string] = self.globalcount
+            self.globals.append(string)
+            self.globalcount += len(self.strings) + 1
+
         return self.strings[string]
 
     def addFunction(self, function):
         self.functions.append(function)
 
-    def addGlobal(self, symbol):
+    def addGlobal(self, symbol, size = 1):
         symbol.setRegion(VarRegion.GLOBAL)
-        symbol.setID(len(self.globals))
+        symbol.setID(self.globalcount)
+        self.globalcount += size
         self.globals.append(symbol)
 
     def addArg(self, symbol):

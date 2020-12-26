@@ -139,7 +139,14 @@ def dumpjson(code):
 
     data = []
     for elem in env.globals:
-        data.append(elem.initvalue)
+        if isinstance(elem, m.Symbol):
+            data.append(elem.initvalue)
+        elif isinstance(elem, str):
+            for c in elem:
+                data.append(int.from_bytes(c.encode('utf-32be'), byteorder='big'))
+            data.append(0)
+        else:
+            console.log("program error")
 
     body['code'] = bytecode
     body['data'] = data

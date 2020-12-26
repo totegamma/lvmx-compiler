@@ -144,63 +144,85 @@ def p_statement(p):
 
 def p_local_vars(p):
     '''
-    local_vars : TYPE pointer SYMBOL ';'
-    | TYPE pointer SYMBOL '=' expr ';'
+    local_vars : TYPE SYMBOL ';'
+               | TYPE SYMBOL '=' expr ';'
+               | TYPE pointer SYMBOL ';'
+               | TYPE pointer SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
         if p[1] == 'uint':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), node.NumberU(0))
+            p[0] = node.LocalVar(p[2], m.Types(m.BT.Uint, 0), node.NumberU(0))
         elif p[1] == 'int':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), node.NumberI(0))
+            p[0] = node.LocalVar(p[2], m.Types(m.BT.Int, 0), node.NumberI(0))
         elif p[1] == 'float':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), node.NumberF(0))
+            p[0] = node.LocalVar(p[2], m.Types(m.BT.Float, 0), node.NumberF(0))
         else:
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
-    else:
+    elif (len(p) == 6):
         if p[1] == 'uint':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), p[5])
+            p[0] = node.LocalVar(p[2], m.Types(m.BT.Uint, 0), p[4])
         elif p[1] == 'int':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), p[5])
+            p[0] = node.LocalVar(p[2], m.Types(m.BT.Int, 0), p[4])
         elif p[1] == 'float':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), p[5])
+            p[0] = node.LocalVar(p[2], m.Types(m.BT.Float, 0), p[4])
+        else:
+            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+    elif (len(p) == 5):
+        if p[1] == 'uint':
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, 0), node.NumberU(0))
+        elif p[1] == 'int':
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, 0), node.NumberI(0))
+        elif p[1] == 'float':
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, 0), node.NumberF(0))
+        else:
+            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+    elif (len(p) == 7):
+        if p[1] == 'uint':
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, 0), p[5])
+        elif p[1] == 'int':
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, 0), p[5])
+        elif p[1] == 'float':
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, 0), p[5])
         else:
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
 
 def p_pointer(p):
     '''
-    pointer :
-            | pointer '*'
+    pointer : '*'
+            | '*' pointer
     '''
-    if (len(p) == 1):
-        p[0] = 0
+    if (len(p) == 2):
+        p[0] = 1
     else:
-        p[0] = p[1] + 1
+        p[0] = p[2] + 1
+
 
 def p_expr(p):
     '''
     expr : primary_expr
-    | '(' expr ')' 
-    | expr '=' expr
-    | UNIOP SYMBOL
-    | '&' SYMBOL
-    | expr BIOP expr
-    | expr '+' expr
-    | expr '-' expr
-    | expr '*' expr
-    | expr '/' expr
-    | expr '?' expr ':' expr
-    | SIN '(' expr ')'
-    | COS '(' expr ')'
-    | TAN '(' expr ')'
-    | ASIN '(' expr ')'
-    | ACOS '(' expr ')'
-    | ATAN '(' expr ')'
-    | ATAN2 '(' expr ',' expr ')'
-    | ROOT '(' expr ',' expr ')'
-    | POW '(' expr ',' expr ')'
-    | LOG '(' expr ',' expr ')'
-    | OUTPUT '(' string ',' expr ')'
-    | WRITEREG '(' expr ',' expr ')'
+         | '(' expr ')' 
+         | UNIOP SYMBOL
+         | '&' SYMBOL
+         | '*' expr
+         | expr BIOP expr
+         | expr '=' expr
+         | expr '+' expr
+         | expr '-' expr
+         | expr '*' expr
+         | expr '/' expr
+         | expr '?' expr ':' expr
+         | SIN '(' expr ')'
+         | COS '(' expr ')'
+         | TAN '(' expr ')'
+         | ASIN '(' expr ')'
+         | ACOS '(' expr ')'
+         | ATAN '(' expr ')'
+         | ATAN2 '(' expr ',' expr ')'
+         | ROOT '(' expr ',' expr ')'
+         | POW '(' expr ',' expr ')'
+         | LOG '(' expr ',' expr ')'
+         | OUTPUT '(' string ',' expr ')'
+         | WRITEREG '(' expr ',' expr ')'
     '''
     if (len(p) == 2):
         p[0] = p[1]
@@ -208,14 +230,16 @@ def p_expr(p):
         p[0] = p[2]
     elif (p[1] == '&'):
         p[0] = node.Address(p[2])
+    elif (p[1] == '*'):
+        p[0] = node.Indirect(p[2])
     elif (p[1] == 'output'):
         p[0] = node.Output(p[3], p[5])
     elif (p[1] == 'writereg'):
         p[0] = node.Writereg(p[3], p[5])
-    elif (p[2] == '='):
-        p[0] = node.Assign(p[1], p[3])
     elif (p[2] == '!'):
         p[0] = node.Inv(p[2])
+    elif (p[2] == '='):
+        p[0] = node.Assign(p[1], p[3])
     elif (p[2] == '+'):
         p[0] = node.Add(p[1], p[3])
     elif (p[2] == '-'):
@@ -289,9 +313,10 @@ def p_primary_expr(p):
 
 def p_symbol(p):
     '''
-    symbol : pointer SYMBOL
+    symbol : SYMBOL
     '''
-    p[0] = node.Symbol(p[2], p[1])
+    p[0] = node.Symbol(p[1])
+
 
 def p_numberi(p):
     '''

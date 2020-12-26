@@ -1,8 +1,10 @@
 import sys
+import json
 import time
 import glob
 import struct
 import MODEL as m
+from argparse import ArgumentParser
 from mnemonic import mnemonic as opc
 from mnemonic import mnemonic
 from yacc import makeAST
@@ -90,21 +92,86 @@ def dumpbytecode(code):
     print(f"done! ({elapsed*1000:.3f}ms)")
 
 
+def dumpjson(code):
+
+    body = {}
+
+    start = time.time()
+
+    ast = makeAST(code)
+    if (glob.lexerrors != '' or glob.yaccerrors != ''):
+        return glob.lexerrors + glob.yaccerrors
+
+    env = m.Env()
+    ast.gencode(env)
+
+    funcLocator = {}
+    labelLocator = {}
+
+    middlecode = []
+    bytecode = []
+
+# search for main
+    for elem in env.functions:
+        if (elem.symbolname == 'main'):
+            middlecode.extend(elem.insts)
+
+# add others
+    for elem in env.functions:
+        if (elem.symbolname != 'main'):
+            middlecode.extend(elem.insts)
+
+# locate func & labels
+    for elem in middlecode:
+        if (elem.opc == opc.ENTRY):
+            funcLocator[elem.arg] = len(bytecode)
+        elif (elem.opc == opc.LABEL):
+            labelLocator[elem.arg] = len(bytecode)
+        else:
+            bytecode.append(elem)
+
+# update funcall & jump & JIF0
+    for elem in bytecode:
+        if (elem.opc == opc.CALL):
+            elem.arg = funcLocator[elem.arg]
+        elif (elem.opc == opc.JUMP or elem.opc == opc.JIF0):
+            elem.arg = labelLocator[elem.arg]
+
+    data = []
+    for elem in env.globals:
+        data.append(elem.initvalue)
+
+    body['code'] = bytecode
+    body['data'] = data
+
+    return json.dumps(body, default=lambda x: x.__dict__)
+
 
 if __name__ == '__main__':
-    filename = ""
-    if (len(sys.argv) == 2):
-        filename = sys.argv[1]
-    else:
-        filename = "test.c"
+    argparser = ArgumentParser()
+
+    argparser.add_argument('filename',type=str,
+                           nargs='?',
+                           default="test.c",
+                           help='target source file')
+
+    argparser.add_argument('-j', '--json',
+                           action='store_true',
+                           help='output as json')
+
+    args = argparser.parse_args()
 
     data = ""
-    with open(filename, mode="r") as f:
+    with open(args.filename, mode="r") as f:
         data = f.read()
 
     glob.init()
+
     try:
-        bytecode = dumpbytecode(data)
+        if args.json:
+            bytecode = dumpjson(data)
+        else:
+            bytecode = dumpbytecode(data)
     except Exception as e:
         if (glob.lexerrors != '' or glob.yaccerrors != '' or glob.compileerrors != ''):
             print(glob.lexerrors)

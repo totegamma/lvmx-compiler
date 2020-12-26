@@ -122,6 +122,8 @@ class Program (AST):
     def gencode(self, env):
         for elem in self.body:
             dumps = elem.gencode(env)
+        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void), 0))
+        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void), 0))
         return env
 
 class GlobalVar (AST):
@@ -188,12 +190,21 @@ class LocalVar (AST):
         codes.append(m.Inst(opc.STOREL, newid))
         return m.Insts(m.Types(m.BT.Void), codes)
 
+class Indirect (AST):
+    def __init__(self, body):
+        self.body = body
+
+    def gencode(self, env):
+        body = self.body.gencode(env)
+        codes = body.bytecodes
+        codes.append(m.Inst(opc.LOADP, self.nullarg))
+        return m.Insts(body.typ, codes)
+
 class Address (AST):
     def __init__(self, symbol):
         self.symbol = symbol
 
     def gencode(self, env):
-        codes = self.symbol
         var = env.variableLookup(self.symbol)
         codes = [var.genAddrCode()]
         return m.Insts(var.typ, codes)
@@ -358,25 +369,28 @@ class Assign (AST):
 
     def gencode(self, env):
         if isinstance(self.left, Symbol):
-
             right = self.right.gencode(env)
             codes = right.bytecodes
             var = env.variableLookup(self.left.symbolname)
-            if self.left.isRow(): # Direct Access
-                codes.append(var.genStoreCode())
+            codes.append(var.genStoreCode())
 
-                return m.Insts(right.typ, codes)
-            else: # Indirect Access
-                codes.append(var.genAddrCode())
-                for i in range(self.left.refcount -1):
-                    codes.append(m.Inst(opc.LOADP, self.nullarg))
-                codes.append(m.Inst(opc.STOREP, self.nullarg))
+            return m.Insts(m.Types(m.BT.Void), codes)
+        elif isinstance(self.left, Indirect):
+            right = self.right.gencode(env)
+            codes = right.bytecodes
+            body = self.left
+            refcount = 0
+            while (isinstance(body, Indirect)):
+                body = body.body
+                refcount += 1
+            codes.extend(body.gencode(env).bytecodes)
+            for i in range(refcount -1):
+                codes.append(m.Inst(opc.LOADP, self.nullarg))
+            codes.append(m.Inst(opc.STOREP, self.nullarg))
 
-                right.typ.addRefcount(-1 * self.left.refcount)
-
-                return m.Insts(right.typ, codes)
+            return m.Insts(m.Types(m.BT.Void), codes)
         else:
-            glob.compileerrors += f"コンパイルエラー: 代入できるのはシンボルのみです(代入しようとしたオブジェクト: {self.left})" + '\n'
+            glob.compileerrors += f"コンパイルエラー: 代入できるのはシンボルか参照のみです(代入しようとしたオブジェクト: {self.left})" + '\n'
 
 
 
@@ -463,17 +477,14 @@ class Cos (AST):
         return m.Insts(m.Types(m.BT.Float), codes)
 
 class Symbol (AST):
-    def __init__(self, symbolname, refcount = 0):
+    def __init__(self, symbolname):
         self.symbolname = symbolname
-        self.refcount = refcount
 
     def gencode(self, env):
         var = env.variableLookup(self.symbolname)
         codes = [var.genLoadCode()]
         return m.Insts(var.typ, codes)
 
-    def isRow(self):
-        return self.refcount == 0
 
 class NumberU (AST):
     def __init__(self, value):

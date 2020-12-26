@@ -1,13 +1,11 @@
-int hoge = 10;
-int piyo = 20;
 
 int main() {
-	int* i = 1000;
-	*i = 10;
 
-	int* a = i + 1;
-	int** b = &a;
-	**b = 20;
+	int i;
+	int* p = 1000;
+	for (i = 0; i < 10; ++i) {
+		p[i] = i;
+	}
 
-	int c = *i;
+	return p[5];
 }

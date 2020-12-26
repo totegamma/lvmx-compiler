@@ -210,6 +210,7 @@ def p_expr(p):
          | expr '-' expr
          | expr '*' expr
          | expr '/' expr
+         | expr '[' expr ']'
          | expr '?' expr ':' expr
          | SIN '(' expr ')'
          | COS '(' expr ')'
@@ -236,6 +237,8 @@ def p_expr(p):
         p[0] = node.Output(p[3], p[5])
     elif (p[1] == 'writereg'):
         p[0] = node.Writereg(p[3], p[5])
+    elif (p[2] == '['):
+        p[0] = node.Indirect(node.Add(p[1], p[3]))
     elif (p[2] == '!'):
         p[0] = node.Inv(p[2])
     elif (p[2] == '='):

@@ -27,6 +27,12 @@ class AST:
         #    return b
         #elif (b == 'any'):
         #    return a
+
+        elif (a.isIndirect() and b.isUint()):
+            return a
+        elif (a.isIndirect() and b.isInt()):
+            return a
+
         elif (a.isUint() and b.isUint()):
             return m.Types(m.BT.Uint)
         elif (a.isInt() and b.isInt()):
@@ -37,8 +43,7 @@ class AST:
         #    return 'float'
         #elif ('int' in [a, b] and 'float' in [a, b]):
         #    return 'float'
-        glob.compileerrors += f"{a=}\n"
-        glob.compileerrors += f"{b=}\n"
+        glob.compileerrors += f"型不一致エラー({a.__str__()}と{b.__str__()})" + '\n'
 
 
 # -= :: Inherited MODEL :: =-
@@ -57,8 +62,6 @@ class BIOP (AST):
 
         left = self.left.gencode(env)
         right = self.right.gencode(env)
-        print(left.typ)
-        print(right.typ)
 
         typ = self.decideType(left.typ, right.typ)
 

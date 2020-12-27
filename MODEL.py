@@ -18,6 +18,9 @@ class Types:
     def __str__(self):
         return '*' * self.refcount + self.basetype.name
 
+    def isIndirect(self):
+        return self.refcount != 0
+
     def isVoid(self):
         return self.basetype == BT.Void
 

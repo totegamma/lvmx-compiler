@@ -170,20 +170,20 @@ def p_local_vars(p):
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
     elif (len(p) == 5):
         if p[1] == 'uint':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, 0), node.NumberU(0))
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), node.NumberU(0))
         elif p[1] == 'int':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, 0), node.NumberI(0))
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), node.NumberI(0))
         elif p[1] == 'float':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, 0), node.NumberF(0))
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), node.NumberF(0))
         else:
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
     elif (len(p) == 7):
         if p[1] == 'uint':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, 0), p[5])
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), p[5])
         elif p[1] == 'int':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, 0), p[5])
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), p[5])
         elif p[1] == 'float':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, 0), p[5])
+            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), p[5])
         else:
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
 

@@ -37,8 +37,8 @@ class AST:
         #    return 'float'
         #elif ('int' in [a, b] and 'float' in [a, b]):
         #    return 'float'
-        glob.compileerrors += "{a=}\n"
-        glob.compileerrors += "{b=}\n"
+        glob.compileerrors += f"{a=}\n"
+        glob.compileerrors += f"{b=}\n"
 
 
 # -= :: Inherited MODEL :: =-
@@ -57,6 +57,8 @@ class BIOP (AST):
 
         left = self.left.gencode(env)
         right = self.right.gencode(env)
+        print(left.typ)
+        print(right.typ)
 
         typ = self.decideType(left.typ, right.typ)
 

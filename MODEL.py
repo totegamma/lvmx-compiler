@@ -15,6 +15,9 @@ class Types:
         self.basetype = basetype
         self.refcount = refcount
 
+    def __str__(self):
+        return '*' * self.refcount + self.basetype.name
+
     def isVoid(self):
         return self.basetype == BT.Void
 

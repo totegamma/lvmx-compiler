@@ -129,7 +129,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 		<tr>
 			<td rowspan=16></td>
 			<td>16</td>
@@ -243,7 +242,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 		<tr>
 			<td rowspan=16></td>
 			<td>32</td>
@@ -357,7 +355,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 		<tr>
 			<td rowspan=16></td>
 			<td>48</td>
@@ -471,9 +468,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
-
-
 		<tr>
 			<td rowspan=16></td>
 			<td>64</td>
@@ -587,7 +581,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 		<tr>
 			<td rowspan=16></td>
 			<td>80</td>
@@ -701,7 +694,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 		<tr>
 			<td rowspan=16></td>
 			<td>96</td>
@@ -815,7 +807,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 		<tr>
 			<td rowspan=16></td>
 			<td>112</td>
@@ -929,7 +920,6 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 		<tr>
 			<td rowspan=16></td>
 			<td>128</td>
@@ -1043,6 +1033,5 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 			<td></td>
 		</tr>
-
 	</tbody>
 </table>

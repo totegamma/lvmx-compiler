@@ -186,11 +186,10 @@ if __name__ == '__main__':
             print(glob.compileerrors)
         raise
 
-    if (glob.lexerrors != '' or glob.yaccerrors != '' or glob.compileerrors != ''):
-        print(glob.lexerrors)
-        print(glob.yaccerrors)
-        print(glob.compileerrors)
-        exit(-1)
+    print(glob.lexerrors)
+    print(glob.yaccerrors)
+    print(glob.compileerrors)
+    print(glob.warn)
 
     print(bytecode)
 

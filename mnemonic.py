@@ -16,6 +16,7 @@ class mnemonic (IntEnum):
     RET = 8
     PULP = 9
     PUAP = 10
+    DUP  = 11
 
     LOADG = 16
     LOADL = 17

@@ -130,7 +130,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>メモリ系</td>
 			<td>16</td>
 			<td>LOADG</td>
 			<td></td>
@@ -243,7 +243,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>Math系</td>
 			<td>32</td>
 			<td>SIN</td>
 			<td></td>
@@ -356,7 +356,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>変換系</td>
 			<td>48</td>
 			<td>UTOI</td>
 			<td></td>
@@ -469,7 +469,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>Uint演算</td>
 			<td>64</td>
 			<td>ADDU</td>
 			<td></td>
@@ -582,7 +582,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>Int演算</td>
 			<td>80</td>
 			<td>ADDI</td>
 			<td></td>
@@ -695,7 +695,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>Float演算</td>
 			<td>96</td>
 			<td>ADDF</td>
 			<td></td>
@@ -808,7 +808,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>きまってない</td>
 			<td>112</td>
 			<td></td>
 			<td></td>
@@ -921,7 +921,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16></td>
+			<td rowspan=16>拡張機能系</td>
 			<td>128</td>
 			<td>READU</td>
 			<td></td>
@@ -1028,6 +1028,119 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>143</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td rowspan=16>Slot系</td>
+			<td>144</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>145</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>146</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>147</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>148</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>149</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>150</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>151</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>152</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>153</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>154</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>155</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>156</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>157</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>158</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>159</td>
 			<td></td>
 			<td></td>
 			<td></td>

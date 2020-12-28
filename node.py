@@ -16,7 +16,6 @@ class AST:
     def eval(self):
         return None
 
-
     def decideType(self, a, b):
         if (a.isVoid() or b.isVoid()):
             glob.compileerrors += "eval void error\n"
@@ -44,7 +43,6 @@ class AST:
         #elif ('int' in [a, b] and 'float' in [a, b]):
         #    return 'float'
         glob.compileerrors += f"型不一致エラー({a.__str__()}と{b.__str__()})" + '\n'
-
 
 # -= :: Inherited MODEL :: =-
 
@@ -542,27 +540,6 @@ class Neq (BIOP):
     opI = opc.NEQI
     opF = opc.NEQF
 
-class Sin (AST):
-    def __init__(self, tok, body):
-        self.tok = tok
-        self.body = body
-
-    def gencode(self, env, pops):
-        codes = self.body.gencode(env, 1).bytecodes
-        codes.append(m.Inst(opc.SIN, self.nullarg))
-        return m.Insts(m.Types(m.BT.Float), codes)
-
-
-class Cos (AST):
-    def __init__(self, tok, body):
-        self.tok = tok
-        self.body = body
-
-    def gencode(self, env, pops):
-        codes = self.body.gencode(env, 1).bytecodes
-        codes.append(m.Inst(opc.COS, self.nullarg))
-        return m.Insts(m.Types(m.BT.Float), codes)
-
 class Symbol (AST):
     def __init__(self, tok, symbolname):
         self.tok = tok
@@ -572,7 +549,6 @@ class Symbol (AST):
         var = env.variableLookup(self.symbolname)
         codes = [var.genLoadCode()]
         return m.Insts(var.typ, codes)
-
 
 class NumberU (AST):
     def __init__(self, tok, value):

@@ -4,9 +4,9 @@ int main() {
 
 	5 + 3;
 
-	int i = 0;
+	int _i_ = 0;
 
-	int a = ++i;
+	int a = ++_i_;
 
 
 	return 0;

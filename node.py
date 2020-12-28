@@ -75,7 +75,6 @@ class BIOP (AST):
         elif typ.isFloat():
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            glob.compileerrors += f"{typ=}"
             glob.compileerrors += f"ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT"
 
         return m.Insts(typ, code)

@@ -14,6 +14,16 @@ precedence = (
     ('right', 'CAST')
 )
 
+def parseBT(typestring):
+    if typestring == 'uint':
+        return m.BT.Uint
+    elif typestring == 'int':
+        return m.BT.Int
+    elif typestring == 'float':
+        return m.BT.Float
+    else:
+        glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
+
 def parseType(typestring):
     if typestring == 'uint':
         return m.Types(m.BT.Uint)
@@ -42,9 +52,11 @@ def p_external_definitions(p):
 
 def p_external_definition(p):
     '''
-    external_definition : TYPE SYMBOL ';'
-    | TYPE SYMBOL arguments block
-    | TYPE SYMBOL '=' expr ';'
+    external_definition : function_def
+                        | TYPE SYMBOL ';'
+                        | TYPE SYMBOL '=' expr ';'
+                        | TYPE pointer SYMBOL ';'
+                        | TYPE pointer SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
         if p[1] == 'uint':
@@ -56,10 +68,7 @@ def p_external_definition(p):
         else:
             glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
 
-    elif (len(p) == 5):
-        p[0] = node.Func(p[2], p[1], p[3], p[4])
-
-    else:
+    elif (len(p) == 6):
         if p[1] == 'uint':
             p[0] = node.GlobalVar(p[2], m.Types(m.BT.Uint), p[4])
         elif p[1] == 'int':
@@ -68,6 +77,23 @@ def p_external_definition(p):
             p[0] = node.GlobalVar(p[2], m.Types(m.BT.Float), p[4])
         else:
             glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
+
+    elif (len(p) == 5):
+        p[0] = node.GlobalVar(p[3], m.Types(parseBT(p[1]), p[2]), node.NumberU(0))
+
+    elif (len(p) == 7):
+        p[0] = node.GlobalVar(p[3], m.Types(parseBT(p[1]), p[2]), p[5])
+
+    else:
+        p[0] = p[1]
+
+
+
+def p_function_def(p):
+    '''
+    function_def : TYPE SYMBOL arguments block
+    '''
+    p[0] = node.Func(p[2], p[1], p[3], p[4])
 
 
 def p_arguments(p):
@@ -168,24 +194,12 @@ def p_local_vars(p):
             p[0] = node.LocalVar(p[2], m.Types(m.BT.Float, 0), p[4])
         else:
             glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+
     elif (len(p) == 5):
-        if p[1] == 'uint':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), node.NumberU(0))
-        elif p[1] == 'int':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), node.NumberI(0))
-        elif p[1] == 'float':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), node.NumberF(0))
-        else:
-            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+        p[0] = node.LocalVar(p[3], m.Types(parseBT(p[1]), p[2]), node.NumberU(0))
+
     elif (len(p) == 7):
-        if p[1] == 'uint':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Uint, p[2]), p[5])
-        elif p[1] == 'int':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Int, p[2]), p[5])
-        elif p[1] == 'float':
-            p[0] = node.LocalVar(p[3], m.Types(m.BT.Float, p[2]), p[5])
-        else:
-            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+        p[0] = node.LocalVar(p[3], m.Types(parseBT(p[1]), p[2]), p[5])
 
 def p_pointer(p):
     '''

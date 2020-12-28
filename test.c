@@ -1,5 +1,4 @@
 
-
 uint* c = 100;
 
 int main() {

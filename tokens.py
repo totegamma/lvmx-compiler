@@ -13,18 +13,6 @@ tokens = (
         'RETURN',
         'WHILE',
         'FOR',
-        'INPUT',
-        'OUTPUT',
         'READREG',
         'WRITEREG',
-        'SIN',
-        'COS',
-        'TAN',
-        'ASIN',
-        'ACOS',
-        'ATAN',
-        'ATAN2',
-        'ROOT',
-        'POW',
-        'LOG'
 )

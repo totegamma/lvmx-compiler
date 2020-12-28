@@ -12,20 +12,8 @@ reserved = {
         'else': 'ELSE',
         'while': 'WHILE',
         'for': 'FOR',
-        'input': 'INPUT',
-        'output': 'OUTPUT',
         'readreg': 'READREG',
         'writereg': 'WRITEREG',
-        'sin': 'SIN',
-        'cos': 'COS',
-        'tan': 'TAN',
-        'asin': 'ASIN',
-        'acos': 'ACOS',
-        'atan': 'ATAN',
-        'atan2': 'ATAN2',
-        'root': 'ROOT',
-        'pow': 'POW',
-        'log': 'LOG',
         'return': 'RETURN'
 }
 

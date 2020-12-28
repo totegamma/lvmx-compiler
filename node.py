@@ -7,8 +7,8 @@ class AST:
 
     nullarg = 0
 
-    def __init__(self):
-        pass
+    def __init__(self, tok):
+        self.t = tok
 
     def gencode(self, env, pops = 0):
         pass
@@ -54,7 +54,8 @@ class BIOP (AST):
     opI = None
     opF = None
 
-    def __init__(self, left, right):
+    def __init__(self, tok, left, right):
+        self.t = tok
         self.left = left
         self.right = right
 
@@ -90,7 +91,8 @@ class UNIOP (AST):
     opI = None
     opF = None
 
-    def __init__(self, right):
+    def __init__(self, tok, right):
+        self.t = tok
         self.right = right
 
     def gencode(self, env, pops):
@@ -132,7 +134,8 @@ class UNIOP (AST):
 # -- Lv0 modules --
 
 class Program (AST):
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
         pass
 
@@ -144,7 +147,8 @@ class Program (AST):
         return env
 
 class GlobalVar (AST):
-    def __init__(self, symbolname, typ, body):
+    def __init__(self, tok, symbolname, typ, body):
+        self.tok = tok
         self.typ = typ
         self.symbolname = symbolname
         self.body = body
@@ -155,7 +159,8 @@ class GlobalVar (AST):
         return env
 
 class Func (AST):
-    def __init__(self, symbolname, typ, args, body):
+    def __init__(self, tok, symbolname, typ, args, body):
+        self.tok = tok
         self.symbolname = symbolname
         self.typ = typ
         self.args = args
@@ -185,7 +190,8 @@ class Func (AST):
 # -- Lv1 modules --
 
 class Block (AST):
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
     def gencode(self, env, pops):
@@ -199,7 +205,8 @@ class Block (AST):
         return m.Insts(m.Types(m.BT.Void), insts)
 
 class LocalVar (AST):
-    def __init__(self, symbolname, typ, body):
+    def __init__(self, tok, symbolname, typ, body):
+        self.tok = tok
         self.symbolname = symbolname
         self.typ = typ
         self.body = body
@@ -211,7 +218,8 @@ class LocalVar (AST):
         return m.Insts(m.Types(m.BT.Void), codes)
 
 class Indirect (AST):
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
     def gencode(self, env, pops):
@@ -221,7 +229,8 @@ class Indirect (AST):
         return m.Insts(body.typ, codes)
 
 class Address (AST):
-    def __init__(self, symbol):
+    def __init__(self, tok, symbol):
+        self.tok = tok
         self.symbol = symbol
 
     def gencode(self, env, pops):
@@ -230,7 +239,8 @@ class Address (AST):
         return m.Insts(var.typ, codes)
 
 class Return (AST): #TODO 自分の型とのチェック
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
     def gencode(self, env, pops):
@@ -239,7 +249,8 @@ class Return (AST): #TODO 自分の型とのチェック
         return m.Insts(m.Types(m.BT.Void), codes)
 
 class Funccall (AST):
-    def __init__(self, name, args):
+    def __init__(self, tok, name, args):
+        self.tok = tok
         self.name = name
         self.args = args
 
@@ -253,7 +264,8 @@ class Funccall (AST):
         return m.Insts(mytype, codes)
 
 class If (AST):
-    def __init__(self, cond, then):
+    def __init__(self, tok, cond, then):
+        self.tok = tok
         self.cond = cond
         self.then = then
 
@@ -269,7 +281,8 @@ class If (AST):
         return m.Insts(m.Types(m.BT.Void), codes)
 
 class Ifelse (AST):
-    def __init__(self, cond, then, elst):
+    def __init__(self, tok, cond, then, elst):
+        self.tok = tok
         self.cond = cond
         self.then = then
         self.elst = elst
@@ -292,7 +305,8 @@ class Ifelse (AST):
         return m.Insts(m.Types(m.BT.Void), codes)
 
 class While (AST):
-    def __init__(self, cond, body):
+    def __init__(self, tok, cond, body):
+        self.tok = tok
         self.cond = cond
         self.body = body
 
@@ -314,7 +328,8 @@ class While (AST):
 
 
 class For (AST):
-    def __init__(self, init, cond, loop, body):
+    def __init__(self, tok, init, cond, loop, body):
+        self.tok = tok
         self.init = init
         self.cond = cond
         self.loop = loop
@@ -342,7 +357,8 @@ class For (AST):
 # -- Lv.2 modules --
 
 class Cast (AST):
-    def __init__(self, targetType, body):
+    def __init__(self, tok, targetType, body):
+        self.tok = tok
         self.targetType = targetType
         self.body = body
 
@@ -388,7 +404,8 @@ class Cast (AST):
 
 
 class Readreg (AST):
-    def __init__(self, key):
+    def __init__(self, tok, key):
+        self.tok = tok
         self.key = key
 
     def gencode(self, env, pops):
@@ -399,7 +416,8 @@ class Readreg (AST):
             print("unused value in readreg")
 
 class Writereg (AST):
-    def __init__(self, key, body):
+    def __init__(self, tok, key, body):
+        self.tok = tok
         self.key = key
         self.body = body
 
@@ -410,7 +428,8 @@ class Writereg (AST):
         return m.Insts(m.Types(m.BT.Void), codes)
 
 class Assign (AST):
-    def __init__(self, left, right):
+    def __init__(self, tok, left, right):
+        self.tok = tok
         self.left = left
         self.right = right
 
@@ -436,10 +455,12 @@ class Assign (AST):
             codes = right.bytecodes
             body = self.left
             refcount = 0
+
             while (isinstance(body, Indirect)):
                 body = body.body
                 refcount += 1
             codes.extend(body.gencode(env, 1).bytecodes)
+
             for i in range(refcount -1):
                 codes.append(m.Inst(opc.LOADP, self.nullarg))
             codes.append(m.Inst(opc.STOREP, self.nullarg))
@@ -450,6 +471,7 @@ class Assign (AST):
             elif pops == 1:
                 codes.append(m.Inst(opc.DUP, 1));
                 return m.Insts(var.typ, codes)
+            else:
                 print("program error in Assign")
 
         else:
@@ -521,7 +543,8 @@ class Neq (BIOP):
     opF = opc.NEQF
 
 class Sin (AST):
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
     def gencode(self, env, pops):
@@ -531,7 +554,8 @@ class Sin (AST):
 
 
 class Cos (AST):
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
     def gencode(self, env, pops):
@@ -540,7 +564,8 @@ class Cos (AST):
         return m.Insts(m.Types(m.BT.Float), codes)
 
 class Symbol (AST):
-    def __init__(self, symbolname):
+    def __init__(self, tok, symbolname):
+        self.tok = tok
         self.symbolname = symbolname
 
     def gencode(self, env, pops):
@@ -550,7 +575,8 @@ class Symbol (AST):
 
 
 class NumberU (AST):
-    def __init__(self, value):
+    def __init__(self, tok, value):
+        self.tok = tok
         if isinstance(value, str):
             value = int(value.replace('u', ''))
         self.value = value
@@ -562,7 +588,8 @@ class NumberU (AST):
         return self.value
 
 class NumberI (AST):
-    def __init__(self, value):
+    def __init__(self, tok, value):
+        self.tok = tok
         if isinstance(value, str):
             value = int(value)
         self.value = value
@@ -574,7 +601,8 @@ class NumberI (AST):
         return self.value
 
 class NumberF (AST):
-    def __init__(self, value):
+    def __init__(self, tok, value):
+        self.tok = tok
         if isinstance(value, str):
             value = float(value.replace('f', ''))
         self.value = value
@@ -586,7 +614,8 @@ class NumberF (AST):
         return self.value
 
 class String (AST):
-    def __init__(self, value):
+    def __init__(self, tok, value):
+        self.tok = tok
         self.value = value
 
     def gencode(self, env, pops):

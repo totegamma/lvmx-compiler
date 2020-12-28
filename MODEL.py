@@ -218,3 +218,12 @@ class Env:
         self.labelitr += 1
         return newlabel
 
+class TokenInfo:
+    def __init__(self, lineno, colno, filename = "unnamed.c"):
+        self.lineno = lineno
+        self.colno = colno
+        self.filename = filename
+
+    def __str__(self):
+        return f"{self.filename}:{self.lineno}:{self.colno}"
+

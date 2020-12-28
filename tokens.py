@@ -13,6 +13,5 @@ tokens = (
         'RETURN',
         'WHILE',
         'FOR',
-        'READREG',
-        'WRITEREG',
+        'RAW',
 )

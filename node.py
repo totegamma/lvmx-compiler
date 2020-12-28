@@ -400,6 +400,21 @@ class Cast (AST):
 
         print("PROGRAM ERROR in Cast")
 
+class Raw (AST):
+    def __init__(self, tok, typ, opc, arg, bodys):
+        self.tok = tok
+        self.typ = typ
+        self.opc = opc
+        self.arg = arg
+        self.bodys = bodys
+
+    def gencode(self, env, pops):
+        insts = []
+        for elem in reversed(self.bodys):
+            insts.extend(elem.gencode(env, 1).bytecodes)
+        insts.append(m.Inst(opc[self.opc], self.arg.eval()))
+
+        return m.Insts(self.typ, insts)
 
 class Readreg (AST):
     def __init__(self, tok, key):

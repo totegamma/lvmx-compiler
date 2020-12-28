@@ -21,6 +21,10 @@ def parseBT(typestring):
         return m.BT.Int
     elif typestring == 'float':
         return m.BT.Float
+    elif typestring == 'void':
+        return m.BT.Void
+    elif typestring == 'any':
+        return m.BT.Any
     else:
         glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
 
@@ -31,6 +35,10 @@ def parseType(typestring):
         return m.Types(m.BT.Int)
     elif typestring == 'float':
         return m.Types(m.BT.Float)
+    elif typestring == 'void':
+        return m.Types(m.BT.Void)
+    elif typestring == 'any':
+        return m.Types(m.BT.Any)
     else:
         glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
 
@@ -221,10 +229,33 @@ def p_pointer(p):
         p[0] = p[2] + 1
 
 
+def p_expr_csl(p):
+    '''
+    expr_csl : expr
+             | expr_csl ',' expr
+    '''
+    if (len(p) == 2):
+        p[0] = [p[1]]
+    else:
+        tmp = p[1]
+        tmp.append(p[3])
+        p[0] = tmp
+
+def p_op(p):
+    '''
+    raw : RAW '(' TYPE ',' STRING ',' expr ')'
+        | RAW '(' TYPE ',' STRING ',' expr ',' expr_csl ')'
+    '''
+    if (len(p) == 9):
+        p[0] = node.Raw(genTokenInfo(p, 1), parseType(p[3]), p[5], p[7], [])
+    else:
+        p[0] = node.Raw(genTokenInfo(p, 1), parseType(p[3]), p[5], p[7], p[9])
+
 def p_expr(p):
     '''
     expr : primary_expr
          | cast
+         | raw
          | '(' expr ')'
          | UNIOP SYMBOL
          | '&' SYMBOL
@@ -237,7 +268,6 @@ def p_expr(p):
          | expr '/' expr
          | expr '[' expr ']'
          | expr '?' expr ':' expr
-         | WRITEREG '(' expr ',' expr ')'
     '''
     if (len(p) == 2):
         p[0] = p[1]
@@ -247,8 +277,6 @@ def p_expr(p):
         p[0] = node.Address(genTokenInfo(p, 1), p[2])
     elif (p[1] == '*'):
         p[0] = node.Indirect(genTokenInfo(p, 1), p[2])
-    elif (p[1] == 'writereg'):
-        p[0] = node.Writereg(genTokenInfo(p, 1), p[3], p[5])
     elif (p[2] == '['):
         p[0] = node.Indirect(genTokenInfo(p, 2), node.Add(genTokenInfo(p, 2), p[1], p[3]))
     elif (p[2] == '!'):
@@ -281,6 +309,8 @@ def p_expr(p):
         p[0] = node.Dec(genTokenInfo(p, 2), p[2])
     elif (p[2] == '?'):
         p[0] = node.Ternary(genTokenInfo(p, 2), p[1], p[3], p[5])
+    elif (p[1] == '__op'):
+        p[0] = node.Eval(genTokenInfo(p, 1), p[3], p[5])
     else:
         p[0] = p[1]
 
@@ -292,12 +322,9 @@ def p_primary_expr(p):
     | string
     | SYMBOL '(' arg_list ')'
     | SYMBOL '(' ')'
-    | READREG '(' expr ')'
     '''
     if (len(p) == 2):
         p[0] = p[1]
-    elif (p[1] == "readreg"):
-        p[0] = node.Readreg(genTokenInfo(p, 1), p[3])
     else:
         if (len(p) == 4):
             p[0] = node.Funccall(genTokenInfo(p, 1), p[1], [])

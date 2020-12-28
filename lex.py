@@ -4,6 +4,8 @@ from tokens import tokens
 
 
 reserved = {
+        'void': 'TYPE',
+        'any': 'TYPE',
         'uint': 'TYPE',
         'int': 'TYPE',
         'float': 'TYPE',
@@ -12,9 +14,8 @@ reserved = {
         'else': 'ELSE',
         'while': 'WHILE',
         'for': 'FOR',
-        'readreg': 'READREG',
-        'writereg': 'WRITEREG',
-        'return': 'RETURN'
+        'return': 'RETURN',
+        '__raw': 'RAW'
 }
 
 states = (

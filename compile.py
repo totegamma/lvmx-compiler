@@ -10,7 +10,6 @@ from yacc import makeAST
 from pcpp import Preprocessor
 from argparse import ArgumentParser
 from mnemonic import mnemonic as opc
-from mnemonic import mnemonic
 
 def value2hex(val):
     if isinstance(val, int):
@@ -139,6 +138,10 @@ def dumpjson(code):
             elem.arg = funcLocator[elem.arg]
         elif (elem.opc == opc.JUMP or elem.opc == opc.JIF0):
             elem.arg = labelLocator[elem.arg]
+
+# overwrite mnemonic
+    for elem in bytecode:
+        elem.opc = elem.opc.name
 
     data = []
     for elem in env.globals:

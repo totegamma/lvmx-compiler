@@ -377,7 +377,7 @@ def p_string(p):
     '''
     string : STRING
     '''
-    p[0] = node.String(p[1])
+    p[0] = node.String(genTokenInfo(p, 1), p[1])
 
 def p_arg_list(p):
     '''

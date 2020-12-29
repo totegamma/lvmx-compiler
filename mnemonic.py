@@ -17,6 +17,7 @@ class mnemonic (IntEnum):
     PULP = 9
     PUAP = 10
     DUP  = 11
+    PRINT = 15
 
     LOADG = 16
     LOADL = 17

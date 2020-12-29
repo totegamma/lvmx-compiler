@@ -1,8 +1,9 @@
-#include <math.h>
 
 int main() {
 
-	float test = sin(0);
+	uint* message = "日本語もOK!";
+
+	__raw(void, "PRINT", 0, message);
 
 	return 0;
 }

@@ -84,3 +84,23 @@ class mnemonic (IntEnum):
     EQF = 105
     NEQF = 106
 
+    REDDU = 128
+    REDDI = 129
+    REDDF = 130
+    REDDS = 131
+
+    WRIDU = 136
+    WRIDI = 137
+    WRIDF = 138
+    WRIDS = 139
+
+    GSPO = 144
+    GSRO = 145
+    GSSC = 146
+    SSPO = 148
+    SSRO = 149
+    SSSC = 150
+    CSFT = 152
+    SSPA = 153
+    DS   = 154
+

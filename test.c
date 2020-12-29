@@ -1,9 +1,8 @@
+#include <lvmx.h>
 
 int main() {
 
-	uint* message = "日本語もOK!";
-
-	__raw(void, "PRINT", 0, message);
+	debuglog("Hello, World!\n");
 
 	return 0;
 }

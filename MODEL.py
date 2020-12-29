@@ -167,7 +167,7 @@ class Env:
         if (string not in self.strings):
             self.strings[string] = self.globalcount
             self.globals.append(string)
-            self.globalcount += len(self.strings) + 1
+            self.globalcount += len(string) + 1
 
         return self.strings[string]
 

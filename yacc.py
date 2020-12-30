@@ -350,7 +350,7 @@ def p_char(p):
     '''
     p[1] = p[1].replace(r'\n', '\n') #TODO 無茶な置換をなんとかしたい
     if (len(p[1]) == 1):
-        p[0] = node.NumberU(int.from_bytes(genTokenInfo(p, 1), p[1].encode('utf-32be'), byteorder='big'))
+        p[0] = node.NumberU(genTokenInfo(p, 1), int.from_bytes(p[1].encode('utf-32be'), byteorder='big'))
     else:
         glob.yaccerrors += f"charは一文字でなければなりません (入力文字: '{p[1]}')" + "\n"
 

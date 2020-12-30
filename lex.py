@@ -105,6 +105,7 @@ if __name__ == '__main__':
     with open('test.c', 'r') as f:
         data = f.read()
 
+    glob.init()
     lexer.input(data)
 
     while True:

@@ -140,8 +140,8 @@ class Program (AST):
     def gencode(self, env, pops = 0):
         for elem in self.body:
             dumps = elem.gencode(env, 0)
-        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void), 0))
-        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void), 0))
+        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void), 1, 0))
+        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void), 1, 0))
         return env
 
 class GlobalVar (AST):
@@ -153,7 +153,7 @@ class GlobalVar (AST):
 
     def gencode(self, env, pops = 0):
         #TODO 処遇に困る
-        env.addGlobal(m.Symbol(self.symbolname, self.typ, self.body.eval()))
+        env.addGlobal(m.Symbol(self.symbolname, self.typ, 1, self.body.eval()))
         return env
 
 class Func (AST):
@@ -203,17 +203,34 @@ class Block (AST):
         return m.Insts(m.Types(m.BT.Void), insts)
 
 class LocalVar (AST):
-    def __init__(self, tok, symbolname, typ, body):
+    def __init__(self, tok, symbolname, typ, init = None, size = None):
         self.tok = tok
         self.symbolname = symbolname
         self.typ = typ
-        self.body = body
+        self.init = init 
+        self.size = size
 
     def gencode(self, env, pops):
-        newid = env.addLocal(m.Symbol(self.symbolname, self.typ))
-        codes = self.body.gencode(env, 1).bytecodes
-        codes.append(m.Inst(opc.STOREL, newid))
-        return m.Insts(m.Types(m.BT.Void), codes)
+
+
+        if (self.size is None):
+            size = 1
+        elif (isinstance(self.size, AST)):
+            size = self.size.eval()
+        elif (type(self.size) == int or float): # XXX
+            size = self.size
+        else:
+            print("fatal")
+
+        newid = env.addLocal(m.Symbol(self.symbolname, self.typ, size))
+
+        if (self.init is None):
+            return m.Insts(m.Types(m.BT.Void), [])
+
+        else:
+            codes = self.init.gencode(env, 1).bytecodes
+            codes.append(m.Inst(opc.STOREL, newid))
+            return m.Insts(m.Types(m.BT.Void), codes)
 
 class Indirect (AST):
     def __init__(self, tok, body):

@@ -185,9 +185,16 @@ def p_statement(p):
     else:
         p[0] = p[1];
 
+def p_local_array(p):
+    '''
+    local_array : TYPE SYMBOL '[' expr ']' ';'
+    '''
+    p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 1), None, p[4])
+
 def p_local_vars(p):
     '''
-    local_vars : TYPE SYMBOL ';'
+    local_vars : local_array
+               | TYPE SYMBOL ';'
                | TYPE SYMBOL '=' expr ';'
                | TYPE pointer SYMBOL ';'
                | TYPE pointer SYMBOL '=' expr ';'
@@ -217,6 +224,9 @@ def p_local_vars(p):
 
     elif (len(p) == 7):
         p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(parseBT(p[1]), p[2]), p[5])
+
+    else:
+        p[0] = p[1]
 
 def p_pointer(p):
     '''

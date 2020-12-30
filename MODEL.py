@@ -11,15 +11,19 @@ class BT (IntEnum):
     Float = auto()
 
 class Types:
-    def __init__(self, basetype, refcount = 0):
+    def __init__(self, basetype, refcount = 0, isarray = 0):
         self.basetype = basetype
         self.refcount = refcount
+        self.isarray = isarray
 
     def __str__(self):
         return '*' * self.refcount + self.basetype.name
 
     def isIndirect(self):
         return self.refcount != 0
+
+    def isArray(self):
+        return self.isarray == 1
 
     def isVoid(self):
         return self.basetype == BT.Void
@@ -110,6 +114,9 @@ class Symbol:
             print("PROGRAM ERROR GENSTORECODE")
 
     def genLoadCode(self):
+        if (self.typ.isArray()):
+            return self.genAddrCode()
+
         if (self.region == VarRegion.GLOBAL):
             return Inst(opc.LOADG, self.id)
         elif (self.region == VarRegion.ARGUMENT):

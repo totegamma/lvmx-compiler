@@ -67,24 +67,10 @@ def p_external_definition(p):
                         | TYPE pointer SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
-        if p[1] == 'uint':
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Uint), node.NumberU(0))
-        elif p[1] == 'int':
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Int), node.NumberI(0))
-        elif p[1] == 'float':
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Float), node.NumberF(0))
-        else:
-            glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], parseType(p[1]))
 
     elif (len(p) == 6):
-        if p[1] == 'uint':
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Uint), p[4])
-        elif p[1] == 'int':
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Int), p[4])
-        elif p[1] == 'float':
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Float), p[4])
-        else:
-            glob.yaccerrors += f"yacc-external_definition: Unknown Type!!" + "\n"
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], parseType(p[1]), p[4])
 
     elif (len(p) == 5):
         p[0] = node.GlobalVar(p[3], m.Types(parseBT(p[1]), p[2]), node.NumberU(0))
@@ -189,7 +175,7 @@ def p_local_array(p):
     '''
     local_array : TYPE SYMBOL '[' expr ']' ';'
     '''
-    p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 1), None, p[4])
+    p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), None, p[4])
 
 def p_local_vars(p):
     '''
@@ -200,27 +186,13 @@ def p_local_vars(p):
                | TYPE pointer SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
-        if p[1] == 'uint':
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Uint, 0), node.NumberU(0))
-        elif p[1] == 'int':
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Int, 0), node.NumberI(0))
-        elif p[1] == 'float':
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Float, 0), node.NumberF(0))
-        else:
-            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], parseType(p[1]))
 
     elif (len(p) == 6):
-        if p[1] == 'uint':
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Uint, 0), p[4])
-        elif p[1] == 'int':
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Int, 0), p[4])
-        elif p[1] == 'float':
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(m.BT.Float, 0), p[4])
-        else:
-            glob.yaccerrors += f"yacc-local-vars: Unknown Type!!" + "\n"
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], parseType(p[1]), p[4])
 
     elif (len(p) == 5):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(parseBT(p[1]), p[2]), node.NumberU(0))
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(parseBT(p[1]), p[2]))
 
     elif (len(p) == 7):
         p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(parseBT(p[1]), p[2]), p[5])

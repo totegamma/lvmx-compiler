@@ -222,6 +222,9 @@ class LocalVar (AST):
         else:
             print("fatal")
 
+        if (size > 1):
+            self.typ.isarray = 1
+
         newid = env.addLocal(m.Symbol(self.symbolname, self.typ, size))
 
         if (self.init is None):
@@ -489,6 +492,13 @@ class Assign (AST):
             while (isinstance(body, Indirect)):
                 body = body.body
                 refcount += 1
+
+#           if isinstance(body, Symbol) and not body.isIndirect():
+#               var = env.variableLookup(body.symbolname)
+#               codes.append(var.genAddrCode())
+#           else:
+#               codes.extend(body.gencode(env, 1).bytecodes)
+
             codes.extend(body.gencode(env, 1).bytecodes)
 
             for i in range(refcount -1):

@@ -212,7 +212,6 @@ class LocalVar (AST):
 
     def gencode(self, env, pops):
 
-
         if (self.size is None):
             size = 1
         elif (isinstance(self.size, AST)):
@@ -225,14 +224,27 @@ class LocalVar (AST):
         if (size > 1):
             self.typ.isarray = 1
 
-        newid = env.addLocal(m.Symbol(self.symbolname, self.typ, size))
+        var = env.addLocal(m.Symbol(self.symbolname, self.typ, size))
 
         if (self.init is None):
             return m.Insts(m.Types(m.BT.Void), [])
+        if (isinstance(self.init, list)):
 
+            if (size != len(self.init)):
+                print("initalizer length mismatch!")
+                return m.Insts(m.Types(m.BT.Void), [])
+
+            codes = []
+            for i, elem in enumerate(self.init):
+                codes.extend(elem.gencode(env, 1).bytecodes)
+                codes.append(var.genAddrCode())
+                codes.append(m.Inst(opc.PUSH, i))
+                codes.append(m.Inst(opc.ADDI, self.nullarg))
+                codes.append(m.Inst(opc.STOREP, self.nullarg))
+            return m.Insts(m.Types(m.BT.Void), codes)
         else:
             codes = self.init.gencode(env, 1).bytecodes
-            codes.append(m.Inst(opc.STOREL, newid))
+            codes.append(m.Inst(opc.STOREL, var.id))
             return m.Insts(m.Types(m.BT.Void), codes)
 
 class Indirect (AST):

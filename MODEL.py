@@ -199,7 +199,7 @@ class Env:
         symbol.setID(newid)
         self.localcount += symbol.size
         self.locals[-1].append(symbol)
-        return newid
+        return symbol
 
     def pushLocal(self):
         self.locals.append([])

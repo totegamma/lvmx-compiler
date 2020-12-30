@@ -73,7 +73,7 @@ def p_external_definition(p):
         p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], parseType(p[1]), p[4])
 
     elif (len(p) == 5):
-        p[0] = node.GlobalVar(p[3], m.Types(parseBT(p[1]), p[2]), node.NumberU(0))
+        p[0] = node.GlobalVar(p[3], m.Types(parseBT(p[1]), p[2]), node.NumberI(0))
 
     elif (len(p) == 7):
         p[0] = node.GlobalVar(p[3], m.Types(parseBT(p[1]), p[2]), p[5])
@@ -150,7 +150,7 @@ def p_statement(p):
     '''
     if (p[1] == 'return'):
         if (len(p) == 3):
-            p[0] = node.Return(genTokenInfo(p, 1), node.NumberU(0))
+            p[0] = node.Return(genTokenInfo(p, 1), node.NumberI(0))
 
         else:
             p[0] = node.Return(genTokenInfo(p, 1), p[2])
@@ -171,11 +171,39 @@ def p_statement(p):
     else:
         p[0] = p[1];
 
+def p_initializer(p):
+    '''
+    initializer : STRING
+                | '{' initializer_list '}'
+    '''
+    if (len(p) == 2):
+        li = list(map(lambda a : node.NumberI(genTokenInfo(p, 1), int.from_bytes(a.encode('utf-32be'), byteorder='big')), p[1]))
+        li.append(node.NumberI(genTokenInfo(p, 1), 0))
+        p[0] = li
+    else:
+        p[0] = p[2]
+
+def p_initializer_list(p):
+    '''
+    initializer_list : expr
+                     | initializer_list ',' expr
+    '''
+    if (len(p) == 2):
+        p[0] = [p[1]]
+    else:
+        buf = p[1]
+        buf.append(p[3])
+        p[0] = buf
+
 def p_local_array(p):
     '''
     local_array : TYPE SYMBOL '[' expr ']' ';'
+                | TYPE SYMBOL '[' expr ']' '=' initializer ';'
     '''
-    p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), None, p[4])
+    if (len(p) == 6):
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), None, p[4])
+    else:
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), p[7], p[4])
 
 def p_local_vars(p):
     '''
@@ -350,7 +378,7 @@ def p_char(p):
     '''
     p[1] = p[1].replace(r'\n', '\n') #TODO 無茶な置換をなんとかしたい
     if (len(p[1]) == 1):
-        p[0] = node.NumberU(genTokenInfo(p, 1), int.from_bytes(p[1].encode('utf-32be'), byteorder='big'))
+        p[0] = node.NumberI(genTokenInfo(p, 1), int.from_bytes(p[1].encode('utf-32be'), byteorder='big'))
     else:
         glob.yaccerrors += f"charは一文字でなければなりません (入力文字: '{p[1]}')" + "\n"
 

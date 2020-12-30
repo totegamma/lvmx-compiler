@@ -2,11 +2,9 @@
 
 int main() {
 
-	int testA[2] = "A";
-	int testB[2] = {'B', 0};
+	int message[] = "Hello, World!";
 
-	debuglog(testA);
-	debuglog(testB);
+	debuglog(message);
 
 	return 0;
 }

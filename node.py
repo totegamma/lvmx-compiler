@@ -213,7 +213,10 @@ class LocalVar (AST):
     def gencode(self, env, pops):
 
         if (self.size is None):
-            size = 1
+            if (self.init is None):
+                size = 1
+            else:
+                size = len(self.init)
         elif (isinstance(self.size, AST)):
             size = self.size.eval()
         elif (type(self.size) == int or float): # XXX

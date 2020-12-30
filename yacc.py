@@ -199,11 +199,14 @@ def p_local_array(p):
     '''
     local_array : TYPE SYMBOL '[' expr ']' ';'
                 | TYPE SYMBOL '[' expr ']' '=' initializer ';'
+                | TYPE SYMBOL '[' ']' '=' initializer ';'
     '''
     if (len(p) == 6):
         p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), None, p[4])
-    else:
+    elif (len(p) == 9):
         p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), p[7], p[4])
+    else:
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), p[6], None)
 
 def p_local_vars(p):
     '''

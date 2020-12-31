@@ -161,7 +161,7 @@ class Symbol:
         if (self.region == VarRegion.GLOBAL):
             return Inst(opc.PUSH, self.id)
         elif (self.region == VarRegion.ARGUMENT):
-            return Inst(opc.LUAP, self.id)
+            return Inst(opc.PUAP, self.id)
         elif (self.region == VarRegion.LOCAL):
             return Inst(opc.PULP, self.id)
         else:

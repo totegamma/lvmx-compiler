@@ -153,10 +153,10 @@ def p_definition_list(p):
         tmp.append(m.Symbol(p[4], parseType(p[3])))
         p[0] = tmp
     if (len(p) == 4):
-        p[0] = [m.Symbol(p[3], m.Types(parseBT(p[1]), p[2]))]
+        p[0] = [m.Symbol(p[3], m.Types(parseBT(p[1]), p[2], 1))]
     if (len(p) == 6):
         tmp = p[1]
-        tmp.append(m.Symbol(p[5], m.Types(parseType(p[3]), p[4])))
+        tmp.append(m.Symbol(p[5], m.Types(parseBT(p[3]), p[4], 1)))
         p[0] = tmp
 
 def p_block(p):

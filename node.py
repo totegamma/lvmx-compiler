@@ -42,7 +42,7 @@ class AST:
         #    return 'float'
         #elif ('int' in [a, b] and 'float' in [a, b]):
         #    return 'float'
-        glob.compileerrors += f"型不一致エラー({a.__str__()}と{b.__str__()})" + '\n'
+        glob.compileerrors += f"型不一致エラー({a.basetype}と{b.basetype})" + '\n'
 
 # -= :: Inherited MODEL :: =-
 
@@ -278,7 +278,6 @@ class LocalVar (AST):
                 codes.append(m.Inst(opc.STOREP, self.nullarg))
             return m.Insts(m.Types(m.BT.Void), codes)
         else:
-            print(self.init)
             codes = self.init.gencode(env, 1).bytecodes
             codes.append(m.Inst(opc.STOREL, var.id))
             return m.Insts(m.Types(m.BT.Void), codes)

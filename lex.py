@@ -43,12 +43,15 @@ def t_COMMENT(t):
     '/\*[\s\S]*?\*/|//.*'
     t.lexer.lineno += t.value.count('\n')
 
+def t_DIRECTIVE(t):
+    '\#.*\n'
+
 def t_UNIOP(t):
     r'\+\+|--|\!'
     return t
 
 def t_BIOP(t):
-    r'<=|>=|==|\!=|<|>'
+    r'<=|>=|==|!=|<|>'
     return t
 
 def t_SYMBOL(t):

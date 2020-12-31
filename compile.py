@@ -195,6 +195,8 @@ if __name__ == '__main__':
 
     processedinput = tmpf.getvalue()
 
+    #print(processedinput)
+
     try:
         if args.json:
             bytecode = dumpjson(processedinput)

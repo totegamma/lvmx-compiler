@@ -122,10 +122,9 @@ class Insts:
         self.bytecodes = bytecodes
 
 class Symbol:
-    def __init__(self, name, typ, size = 1, initvalue = 0):
+    def __init__(self, name, typ, initvalue = 0):
         self.name = name
         self.typ = typ
-        self.size = size
         self.initvalue = initvalue
 
     def setID(self, newid):
@@ -229,7 +228,7 @@ class Env:
         symbol.setRegion(VarRegion.LOCAL)
         newid = self.localcount
         symbol.setID(newid)
-        self.localcount += symbol.size
+        self.localcount += symbol.typ.size
         self.locals[-1].append(symbol)
         return symbol
 

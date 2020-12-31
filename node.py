@@ -140,8 +140,8 @@ class Program (AST):
     def gencode(self, env, pops = 0):
         for elem in self.body:
             dumps = elem.gencode(env, 0)
-        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void, 0, 1), 1, 0))
-        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void, 0, 1), 1, 0))
+        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void, 0, 1), 0))
+        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void, 0, 1), 0))
         return env
 
 class GlobalVar (AST):
@@ -173,7 +173,7 @@ class GlobalVar (AST):
                 init = list(map(lambda a : a.eval(), self.body))
 
 
-        env.addGlobal(m.Symbol(self.symbolname, self.typ, 1, init))
+        env.addGlobal(m.Symbol(self.symbolname, self.typ, init))
         return env
 
 class Struct (AST):
@@ -248,6 +248,7 @@ class LocalVar (AST):
                 size = 1
             else:
                 size = len(self.init)
+                self.typ.size = size
         elif (isinstance(self.typ.size, AST)):
             size = self.typ.size.eval()
         elif (type(self.typ.size) == int or float): # XXX
@@ -258,7 +259,7 @@ class LocalVar (AST):
         if (size > 1):
             self.typ.isarray = 1
 
-        var = env.addLocal(m.Symbol(self.symbolname, self.typ, size))
+        var = env.addLocal(m.Symbol(self.symbolname, self.typ))
 
         if (self.init is None):
             return m.Insts(m.Types(m.BT.Void), [])

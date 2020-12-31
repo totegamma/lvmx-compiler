@@ -283,42 +283,24 @@ def p_op(p):
     else:
         p[0] = node.Raw(genTokenInfo(p, 1), p[3], p[5], p[7], p[9])
 
-def p_expr(p):
+def p_uniop(p):
     '''
-    expr : primary_expr
-         | cast
-         | raw
-         | '(' expr ')'
-         | UNIOP SYMBOL
-         | '&' SYMBOL
-         | '*' expr
-         | expr BIOP expr
-         | expr '=' expr
+    uniop : UNIOP SYMBOL
+    '''
+    if (p[1] == '++'):
+        p[0] = node.Inc(genTokenInfo(p, 2), p[2])
+    elif (p[1] == '--'):
+        p[0] = node.Dec(genTokenInfo(p, 2), p[2])
+
+def p_biop(p):
+    '''
+    biop : expr BIOP expr
          | expr '+' expr
          | expr '-' expr
          | expr '*' expr
          | expr '/' expr
-         | expr '[' expr ']'
-         | expr '.' SYMBOL
-         | expr '?' expr ':' expr
     '''
-    if (len(p) == 2):
-        p[0] = p[1]
-    elif (p[1] == '('):
-        p[0] = p[2]
-    elif (p[1] == '&'):
-        p[0] = node.Address(genTokenInfo(p, 1), p[2])
-    elif (p[1] == '*'):
-        p[0] = node.Indirect(genTokenInfo(p, 1), p[2])
-    elif (p[2] == '['):
-        p[0] = node.Indirect(genTokenInfo(p, 2), node.Add(genTokenInfo(p, 2), p[1], p[3]))
-    elif (p[2] == '.'):
-        p[0] = node.Indirect(genTokenInfo(p, 2), node.FieldAccess(genTokenInfo(p, 2), p[1], p[3]))
-    elif (p[2] == '!'):
-        p[0] = node.Inv(genTokenInfo(p, 2), p[2])
-    elif (p[2] == '='):
-        p[0] = node.Assign(genTokenInfo(p, 2), p[1], p[3])
-    elif (p[2] == '+'):
+    if (p[2] == '+'):
         p[0] = node.Add(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '-'):
         p[0] = node.Sub(genTokenInfo(p, 2), p[1], p[3])
@@ -338,10 +320,45 @@ def p_expr(p):
         p[0] = node.Eq(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '!='):
         p[0] = node.Neq(genTokenInfo(p, 2), p[1], p[3])
-    elif (p[1] == '++'):
-        p[0] = node.Inc(genTokenInfo(p, 2), p[2])
-    elif (p[1] == '--'):
-        p[0] = node.Dec(genTokenInfo(p, 2), p[2])
+
+def p_assign(p):
+    '''
+    assign : expr '=' expr
+    '''
+    if (p[2] == '='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], p[3])
+
+
+def p_expr(p):
+    '''
+    expr : primary_expr
+         | cast
+         | raw
+         | assign
+         | uniop
+         | biop
+         | '(' expr ')'
+         | '&' SYMBOL
+         | '*' expr
+         | expr BIOP expr
+         | expr '[' expr ']'
+         | expr '.' SYMBOL
+         | expr '?' expr ':' expr
+    '''
+    if (len(p) == 2):
+        p[0] = p[1]
+    elif (p[1] == '('):
+        p[0] = p[2]
+    elif (p[1] == '&'):
+        p[0] = node.Address(genTokenInfo(p, 1), p[2])
+    elif (p[1] == '*'):
+        p[0] = node.Indirect(genTokenInfo(p, 1), p[2])
+    elif (p[2] == '['):
+        p[0] = node.Indirect(genTokenInfo(p, 2), node.Add(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '.'):
+        p[0] = node.Indirect(genTokenInfo(p, 2), node.FieldAccess(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '!'):
+        p[0] = node.Inv(genTokenInfo(p, 2), p[2])
     elif (p[2] == '?'):
         p[0] = node.Ternary(genTokenInfo(p, 2), p[1], p[3], p[5])
     elif (p[1] == '__op'):
@@ -355,8 +372,8 @@ def p_primary_expr(p):
     | number
     | char
     | string
-    | SYMBOL '(' arg_list ')'
     | SYMBOL '(' ')'
+    | SYMBOL '(' arg_list ')'
     '''
     if (len(p) == 2):
         p[0] = p[1]

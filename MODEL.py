@@ -1,5 +1,6 @@
 import struct
 import glob
+import node
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
 
@@ -49,7 +50,8 @@ class Types:
 
     def resolve(self, env):
         if isinstance(self.basetype, BT):
-            self.size = 1
+            if isinstance(self.size, node.AST):
+                self.size = self.size.eval()
         else:
             typ = env.resolveType(self.basetype)
             self.basetype = typ.basetype
@@ -212,10 +214,10 @@ class Env:
     def addFunction(self, function):
         self.functions.append(function)
 
-    def addGlobal(self, symbol, size = 1):
+    def addGlobal(self, symbol):
         symbol.setRegion(VarRegion.GLOBAL)
         symbol.setID(self.globalcount)
-        self.globalcount += size
+        self.globalcount += symbol.typ.size
         self.globals.append(symbol)
 
     def addArg(self, symbol):

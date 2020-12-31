@@ -140,20 +140,40 @@ class Program (AST):
     def gencode(self, env, pops = 0):
         for elem in self.body:
             dumps = elem.gencode(env, 0)
-        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void), 1, 0))
-        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void), 1, 0))
+        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void, 0, 1), 1, 0))
+        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void, 0, 1), 1, 0))
         return env
 
 class GlobalVar (AST):
-    def __init__(self, tok, symbolname, typ, body):
+    def __init__(self, tok, symbolname, typ, body = None):
         self.tok = tok
         self.typ = typ
         self.symbolname = symbolname
         self.body = body
 
     def gencode(self, env, pops = 0):
-        #TODO 処遇に困る
-        env.addGlobal(m.Symbol(self.symbolname, self.typ, 1, self.body.eval()))
+        self.typ.resolve(env)
+        size = self.typ.size
+
+        if (size == 1):
+            init = 0
+            if (self.body is not None):
+                init = self.body.eval()
+        else:
+
+            if (size is None):
+                size = len(self.body)
+                self.typ.size = size
+
+            init = [0] * size
+
+            if (self.body is not None):
+                if (size != len(self.body)):
+                    print("size mismatch (global)")
+                init = list(map(lambda a : a.eval(), self.body))
+
+
+        env.addGlobal(m.Symbol(self.symbolname, self.typ, 1, init))
         return env
 
 class Struct (AST):

@@ -146,11 +146,15 @@ def dumpjson(code):
     data = []
     for elem in env.globals:
         if isinstance(elem, m.Symbol):
-            data.append(elem.initvalue)
-        elif isinstance(elem, str):
-            for c in elem:
-                data.append(int.from_bytes(c.encode('utf-32be'), byteorder='big'))
-            data.append(0)
+            if isinstance(elem.initvalue, list):
+                for value in elem.initvalue:
+                    data.append(value)
+            else:
+                data.append(elem.initvalue)
+#        elif isinstance(elem, str):
+#            for c in elem:
+#                data.append(int.from_bytes(c.encode('utf-32be'), byteorder='big'))
+#            data.append(0)
         else:
             console.log("program error")
 

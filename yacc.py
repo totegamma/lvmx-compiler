@@ -77,10 +77,29 @@ def p_struct_member_list(p):
         p[0] = tmp
 
 
+def p_global_array(p):
+    '''
+    global_array : TYPE SYMBOL '[' expr ']' ';'
+                 | TYPE SYMBOL '[' expr ']' '=' initializer ';'
+                 | TYPE SYMBOL '[' ']' '=' initializer ';'
+                 | STRUCT SYMBOL SYMBOL ';'
+    '''
+    if (p[1] == 'struct'):
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[3], m.Types(p[2], 0))
+    else:
+        if (len(p) == 7):
+            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0, p[4]), None)
+        elif (len(p) == 9):
+            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0, p[4]), p[7])
+        else:
+            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), p[6])
+
+
 def p_external_definition(p):
     '''
     external_definition : function_def
                         | struct_def
+                        | global_array
                         | TYPE SYMBOL ';'
                         | TYPE SYMBOL '=' expr ';'
                         | TYPE pointer SYMBOL ';'

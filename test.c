@@ -1,15 +1,46 @@
 #include <lvmx.h>
+int i;
 
-struct a {
-	int hoge;
-	int piyo;
-};
+int strcmp(int* a, int* b) {
+	int itr = 0;
+	while (a[i] != 0) {
 
-int test[] = "hello";
+		++itr;
+	}
 
-struct a mm;
+}
 
 int main() {
+	debuglog("test start\n");
+	
+	if (0) {
+		debuglog("ng\n");
+	}
 
+	if (1) {
+		debuglog("ok\n");
+	}
+
+	if (0) {
+		debuglog("ng\n");
+	} else {
+		debuglog("ok\n");
+	}
+
+	if (1) {
+		debuglog("ok\n");
+	} else {
+		debuglog("ng\n");
+	}
+
+	int localarr[5];
+	for (i = 0; i < 3; ++i) {
+		localarr[i] = i + 'a';
+	}
+	localarr[3] = '\n';
+	localarr[4] = 0;
+	debuglog(localarr);
+
+	debuglog("test end\n");
 	return 0;
 }

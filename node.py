@@ -558,12 +558,6 @@ class Assign (AST):
                 body = body.body
                 refcount += 1
 
-#           if isinstance(body, Symbol) and not body.isIndirect():
-#               var = env.variableLookup(body.symbolname)
-#               codes.append(var.genAddrCode())
-#           else:
-#               codes.extend(body.gencode(env, 1).bytecodes)
-
             codes.extend(body.gencode(env, 1).bytecodes)
 
             for i in range(refcount -1):

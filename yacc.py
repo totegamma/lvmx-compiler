@@ -30,15 +30,15 @@ def parseBT(typestring):
 
 def parseType(typestring):
     if typestring == 'uint':
-        return m.Types(m.BT.Uint)
+        return m.Types(m.BT.Uint, None, 1)
     elif typestring == 'int':
-        return m.Types(m.BT.Int)
+        return m.Types(m.BT.Int, None, 1)
     elif typestring == 'float':
-        return m.Types(m.BT.Float)
+        return m.Types(m.BT.Float, None, 1)
     elif typestring == 'void':
-        return m.Types(m.BT.Void)
+        return m.Types(m.BT.Void, None, 1)
     elif typestring == 'any':
-        return m.Types(m.BT.Any)
+        return m.Types(m.BT.Any, None, 1)
     else:
         glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
 

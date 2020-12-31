@@ -36,11 +36,19 @@ def p_type(p):
     '''
     type : basetype
          | basetype pointer
+         | STRUCT SYMBOL
+         | STRUCT SYMBOL pointer
     '''
-    if (len(p) == 2):
-        p[0] = m.Types(p[1], 0)
+    if (p[1] == 'struct'):
+        if (len(p) == 3):
+            p[0] = m.Types(p[2], 0)
+        else:
+            p[0] = m.Types(p[2], p[3])
     else:
-        p[0] = m.Types(p[1], p[2])
+        if (len(p) == 2):
+            p[0] = m.Types(p[1], 0)
+        else:
+            p[0] = m.Types(p[1], p[2])
 
 def p_program(p):
     '''
@@ -82,17 +90,13 @@ def p_global_array(p):
     global_array : type SYMBOL '[' expr ']' ';'
                  | type SYMBOL '[' expr ']' '=' initializer ';'
                  | type SYMBOL '[' ']' '=' initializer ';'
-                 | STRUCT SYMBOL SYMBOL ';'
     '''
-    if (p[1] == 'struct'):
-        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[3], m.Types(p[2], 0))
+    if (len(p) == 7):
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), None)
+    elif (len(p) == 9):
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), p[7])
     else:
-        if (len(p) == 7):
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), None)
-        elif (len(p) == 9):
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), p[7])
-        else:
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(None), p[6])
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(None), p[6])
 
 
 def p_external_definition(p):
@@ -223,17 +227,13 @@ def p_local_array(p):
     local_array : type SYMBOL '[' expr ']' ';'
                 | type SYMBOL '[' expr ']' '=' initializer ';'
                 | type SYMBOL '[' ']' '=' initializer ';'
-                | STRUCT SYMBOL SYMBOL ';'
     '''
-    if (p[1] == 'struct'):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(p[2], 0))
+    if (len(p) == 7):
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), None)
+    elif (len(p) == 9):
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), p[7])
     else:
-        if (len(p) == 7):
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), None)
-        elif (len(p) == 9):
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), p[7])
-        else:
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(None), p[6])
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(None), p[6])
 
 def p_local_vars(p):
     '''

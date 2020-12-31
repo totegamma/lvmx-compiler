@@ -284,6 +284,23 @@ class Address (AST):
         codes = [var.genAddrCode()]
         return m.Insts(var.typ, codes)
 
+class FieldAccess (AST):
+    def __init__(self, tok, left, fieldname):
+        self.tok = tok
+        self.left = left
+        self.fieldname = fieldname
+
+    def gencode(self, env, pops):
+        left = self.left.gencode(env, 1)
+        codes = left.bytecodes
+
+        field = left.typ.getField(env, self.fieldname)
+        codes.append(m.Inst(opc.PUSH, field.offset))
+        codes.append(m.Inst(opc.ADDI, self.nullarg))
+
+        return m.Insts(field.typ, codes)
+
+
 class Return (AST): #TODO 自分の型とのチェック
     def __init__(self, tok, body):
         self.tok = tok

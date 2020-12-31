@@ -48,11 +48,29 @@ class Types:
         self.refcount += delta
 
     def resolve(self, env):
-        if not isinstance(self.basetype, BT):
+        if isinstance(self.basetype, BT):
+            self.size = 1
+        else:
             typ = env.resolveType(self.basetype)
             self.basetype = typ.basetype
             self.size = typ.size
             self.fields = typ.fields
+
+
+    def getField(self, env, name):
+        offset = 0
+        for elem in self.fields:
+            elem.typ.resolve(env)
+            if (elem.name == name):
+                return StructField(elem.typ, offset)
+            offset += elem.typ.size
+
+        return None
+
+class StructField:
+    def __init__ (self, typ, offset):
+        self.typ = typ
+        self.offset = offset
 
 class VarRegion (IntEnum):
     GLOBAL = auto()

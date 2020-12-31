@@ -304,6 +304,7 @@ def p_expr(p):
          | expr '*' expr
          | expr '/' expr
          | expr '[' expr ']'
+         | expr '.' SYMBOL
          | expr '?' expr ':' expr
     '''
     if (len(p) == 2):
@@ -316,6 +317,8 @@ def p_expr(p):
         p[0] = node.Indirect(genTokenInfo(p, 1), p[2])
     elif (p[2] == '['):
         p[0] = node.Indirect(genTokenInfo(p, 2), node.Add(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '.'):
+        p[0] = node.Indirect(genTokenInfo(p, 2), node.FieldAccess(genTokenInfo(p, 2), p[1], p[3]))
     elif (p[2] == '!'):
         p[0] = node.Inv(genTokenInfo(p, 2), p[2])
     elif (p[2] == '='):

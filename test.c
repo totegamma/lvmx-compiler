@@ -1,67 +1,78 @@
 #include <lvmx.h>
 int i;
 
+struct testStruct {
+	int fieldA;
+	int fieldB;
+};
+
+int testGlobalA;
+int testGlobalB = 3;
+int testGlobalC[2];
+int testGlobalD[2] = "a";
+int testGlobalE[2] = {'a', 0};
+int testGlobalF[] = "test";
+
 int strncmp(int* a, int* b, int n) {
 	for (i = 0; i < n; ++i) {
 		if (*a == *b) return 1;
-		a = a + 1;
-		b = b + 1;
+		++a;
+		++b;
 	}
 
 	return 0;
 }
 
 int print1num(int a) {
-	int buf[2];
+	int buf[3];
 	buf[0] = a + '0';
-	buf[1] = 0;
+	buf[1] = '\n';
+	buf[2] = 0;
 	debuglog(buf);
 }
 
+struct testStruct globalStruct;
+
 int main() {
 
-	int a[] = "hoge";
-	int b[] = "hoge";
-	int judge = strncmp(a, b, 5);
+	int judge;
+
+	int testLocalA;
+	int testLocalB = 3;
+	int testLocalC[2];
+	int testLocalD[2] = "a";
+	int testLocalE[2] = {'a', 0};
+	int testLocalF[] = "test";
+
+	int testLocalZ[] = "hoge";
+
+	judge = strncmp(testGlobalD, testLocalD, 2);
+	print1num(judge);
+	judge = strncmp(testGlobalE, testLocalE, 2);
+	print1num(judge);
+	judge = strncmp(testGlobalF, testLocalF, 5);
 	print1num(judge);
 
-	int c[] = "hoge";
-	int d[] = "hooe";
-	judge = strncmp(c, d, 5);
+	struct testStruct localStruct;
+
+	globalStruct.fieldA = 'a';
+	globalStruct.fieldB = 0;
+	localStruct.fieldA = 'a';
+	localStruct.fieldB = 0;
+
+	judge = strncmp(globalStruct, localStruct, 2);
 	print1num(judge);
 
-	/*
-	debuglog("test start\n");
-	
-	if (0) {
-		debuglog("ng\n");
-	}
+	judge = strncmp(globalStruct, testLocalE, 2);
+	print1num(judge);
 
-	if (1) {
-		debuglog("ok\n");
-	}
+	judge = strncmp(localStruct, testGlobalE, 2);
+	print1num(judge);
 
-	if (0) {
-		debuglog("ng\n");
-	} else {
-		debuglog("ok\n");
-	}
+	judge = strncmp(testLocalZ, testGlobalF, 5);
+	print1num(judge);
 
-	if (1) {
-		debuglog("ok\n");
-	} else {
-		debuglog("ng\n");
-	}
 
-	int localarr[5];
-	for (i = 0; i < 3; ++i) {
-		localarr[i] = i + 'a';
-	}
-	localarr[3] = '\n';
-	localarr[4] = 0;
-	debuglog(localarr);
 
-	debuglog("test end\n");
-	*/
 	return 0;
 }

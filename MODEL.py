@@ -12,7 +12,7 @@ class BT (IntEnum):
     Float = auto()
 
 class Types:
-    def __init__(self, basetype, refcount = 0, size = None, fields = []):
+    def __init__(self, basetype, refcount = 0, size = 1, fields = []):
         self.basetype = basetype
         self.refcount = refcount
         self.size = size
@@ -20,6 +20,10 @@ class Types:
 
     def __str__(self):
         return '*' * self.refcount + self.basetype.name
+
+    def convertToArray(self, size):
+        self.size = size
+        return self
 
     def isBaseType(self):
         return isinstance(self.basetype, BT)

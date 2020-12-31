@@ -32,6 +32,16 @@ def p_basetype(p):
     else:
         glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
 
+def p_type(p):
+    '''
+    type : basetype
+         | basetype pointer
+    '''
+    if (len(p) == 2):
+        p[0] = m.Types(p[1], 0)
+    else:
+        p[0] = m.Types(p[1], p[2])
+
 def p_program(p):
     '''
     program : external_definitions
@@ -56,33 +66,33 @@ def p_struct_def(p):
 
 def p_struct_member_list(p):
     '''
-    struct_member_list : basetype SYMBOL ';'
-                       | struct_member_list basetype SYMBOL ';'
+    struct_member_list : type SYMBOL ';'
+                       | struct_member_list type SYMBOL ';'
     '''
     if (len(p) == 4):
-        p[0] = [m.Symbol(p[2], m.Types(p[1], 0, 1))]
+        p[0] = [m.Symbol(p[2], p[1])]
     if (len(p) == 5):
         tmp = p[1]
-        tmp.append(m.Symbol(p[3], m.Types(p[2], 0, 1)))
+        tmp.append(m.Symbol(p[3], p[2]))
         p[0] = tmp
 
 
 def p_global_array(p):
     '''
-    global_array : basetype SYMBOL '[' expr ']' ';'
-                 | basetype SYMBOL '[' expr ']' '=' initializer ';'
-                 | basetype SYMBOL '[' ']' '=' initializer ';'
+    global_array : type SYMBOL '[' expr ']' ';'
+                 | type SYMBOL '[' expr ']' '=' initializer ';'
+                 | type SYMBOL '[' ']' '=' initializer ';'
                  | STRUCT SYMBOL SYMBOL ';'
     '''
     if (p[1] == 'struct'):
         p[0] = node.GlobalVar(genTokenInfo(p, 1), p[3], m.Types(p[2], 0))
     else:
         if (len(p) == 7):
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, p[4]), None)
+            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), None)
         elif (len(p) == 9):
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, p[4]), p[7])
+            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), p[7])
         else:
-            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0), p[6])
+            p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(None), p[6])
 
 
 def p_external_definition(p):
@@ -90,22 +100,14 @@ def p_external_definition(p):
     external_definition : function_def
                         | struct_def
                         | global_array
-                        | basetype SYMBOL ';'
-                        | basetype SYMBOL '=' expr ';'
-                        | basetype pointer SYMBOL ';'
-                        | basetype pointer SYMBOL '=' expr ';'
+                        | type SYMBOL ';'
+                        | type SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
-        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, 1))
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1])
 
     elif (len(p) == 6):
-        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, 1), p[4])
-
-    elif (len(p) == 5):
-        p[0] = node.GlobalVar(p[3], m.Types(p[1], p[2]), node.NumberI(0))
-
-    elif (len(p) == 7):
-        p[0] = node.GlobalVar(p[3], m.Types(p[1], p[2]), p[5])
+        p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], p[1], p[4])
 
     else:
         p[0] = p[1]
@@ -114,7 +116,7 @@ def p_external_definition(p):
 
 def p_function_def(p):
     '''
-    function_def : basetype SYMBOL arguments block
+    function_def : type SYMBOL arguments block
     '''
     p[0] = node.Func(genTokenInfo(p, 1), p[2], p[1], p[3], p[4])
 
@@ -131,22 +133,14 @@ def p_arguments(p):
 
 def p_definition_list(p):
     '''
-    definition_list : basetype SYMBOL
-                    | definition_list ',' basetype SYMBOL
-                    | basetype pointer SYMBOL
-                    | definition_list ',' basetype pointer SYMBOL
+    definition_list : type SYMBOL
+                    | definition_list ',' type SYMBOL
     '''
     if (len(p) == 3):
-        p[0] = [m.Symbol(p[2], m.Types(p[1], 0, 1))]
+        p[0] = [m.Symbol(p[2], p[1])]
     if (len(p) == 5):
         tmp = p[1]
-        tmp.append(m.Symbol(p[4], m.Types(p[3], 0, 1)))
-        p[0] = tmp
-    if (len(p) == 4):
-        p[0] = [m.Symbol(p[3], m.Types(p[1], p[2], 1))]
-    if (len(p) == 6):
-        tmp = p[1]
-        tmp.append(m.Symbol(p[5], m.Types(p[3], p[4], 1)))
+        tmp.append(m.Symbol(p[4], p[3]))
         p[0] = tmp
 
 def p_block(p):
@@ -226,40 +220,32 @@ def p_initializer_list(p):
 
 def p_local_array(p):
     '''
-    local_array : basetype SYMBOL '[' expr ']' ';'
-                | basetype SYMBOL '[' expr ']' '=' initializer ';'
-                | basetype SYMBOL '[' ']' '=' initializer ';'
+    local_array : type SYMBOL '[' expr ']' ';'
+                | type SYMBOL '[' expr ']' '=' initializer ';'
+                | type SYMBOL '[' ']' '=' initializer ';'
                 | STRUCT SYMBOL SYMBOL ';'
     '''
     if (p[1] == 'struct'):
         p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(p[2], 0))
     else:
         if (len(p) == 7):
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, p[4]), None)
+            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), None)
         elif (len(p) == 9):
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, p[4]), p[7])
+            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(p[4]), p[7])
         else:
-            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0), p[6])
+            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1].convertToArray(None), p[6])
 
 def p_local_vars(p):
     '''
     local_vars : local_array
-               | basetype SYMBOL ';'
-               | basetype SYMBOL '=' expr ';'
-               | basetype pointer SYMBOL ';'
-               | basetype pointer SYMBOL '=' expr ';'
+               | type SYMBOL ';'
+               | type SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, 1))
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1])
 
     elif (len(p) == 6):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(p[1], 0, 1), p[4])
-
-    elif (len(p) == 5):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(p[1], p[2]))
-
-    elif (len(p) == 7):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(p[1], p[2]), p[5])
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], p[1], p[4])
 
     else:
         p[0] = p[1]
@@ -289,13 +275,13 @@ def p_expr_csl(p):
 
 def p_op(p):
     '''
-    raw : RAW '(' basetype ',' STRING ',' expr ')'
-        | RAW '(' basetype ',' STRING ',' expr ',' expr_csl ')'
+    raw : RAW '(' type ',' STRING ',' expr ')'
+        | RAW '(' type ',' STRING ',' expr ',' expr_csl ')'
     '''
     if (len(p) == 9):
-        p[0] = node.Raw(genTokenInfo(p, 1), m.Types(p[3], 0, 1), p[5], p[7], [])
+        p[0] = node.Raw(genTokenInfo(p, 1), p[3], p[5], p[7], [])
     else:
-        p[0] = node.Raw(genTokenInfo(p, 1), m.Types(p[3], 0, 1), p[5], p[7], p[9])
+        p[0] = node.Raw(genTokenInfo(p, 1), p[3], p[5], p[7], p[9])
 
 def p_expr(p):
     '''
@@ -382,7 +368,7 @@ def p_primary_expr(p):
 
 def p_cast(p):
     '''
-    cast : '(' basetype ')' expr %prec CAST
+    cast : '(' type ')' expr %prec CAST
     '''
     p[0] = node.Cast(genTokenInfo(p, 1), p[2], p[4])
 

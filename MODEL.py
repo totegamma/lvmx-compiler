@@ -11,19 +11,23 @@ class BT (IntEnum):
     Float = auto()
 
 class Types:
-    def __init__(self, basetype, refcount = 0, isarray = 0):
+    def __init__(self, basetype, refcount = 0, size = None, fields = []):
         self.basetype = basetype
         self.refcount = refcount
-        self.isarray = isarray
+        self.size = size
+        self.fields = fields
 
     def __str__(self):
         return '*' * self.refcount + self.basetype.name
+
+    def isBaseType(self):
+        return isinstance(self.basetype, BT)
 
     def isIndirect(self):
         return self.refcount != 0
 
     def isArray(self):
-        return self.isarray == 1
+        return self.size != 1
 
     def isVoid(self):
         return self.basetype == BT.Void
@@ -42,6 +46,13 @@ class Types:
 
     def addRefcount(self, delta):
         self.refcount += delta
+
+    def resolve(self, env):
+        if not isinstance(self.basetype, BT):
+            typ = env.resolveType(self.basetype)
+            self.basetype = typ.basetype
+            self.size = typ.size
+            self.fields = typ.fields
 
 class VarRegion (IntEnum):
     GLOBAL = auto()
@@ -91,7 +102,7 @@ class Insts:
         self.bytecodes = bytecodes
 
 class Symbol:
-    def __init__(self, name, typ, size, initvalue = 0):
+    def __init__(self, name, typ, size = 1, initvalue = 0):
         self.name = name
         self.typ = typ
         self.size = size
@@ -146,6 +157,7 @@ class Env:
         self.locals = []
         self.localcount = 0
         self.labelitr = 0
+        self.types = {}
 
     def functionLookup(self, name):
         for elem in self.functions:
@@ -225,6 +237,12 @@ class Env:
         newlabel = self.labelitr
         self.labelitr += 1
         return newlabel
+
+    def addType(self, name, typ): # TODO Type Name X is already exists!
+        self.types[name] = typ
+
+    def resolveType(self, name):
+        return self.types[name]
 
 class TokenInfo:
     def __init__(self, lineno, colno, filename = "unnamed.c"):

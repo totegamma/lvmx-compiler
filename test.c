@@ -1,10 +1,13 @@
 #include <lvmx.h>
 
+struct test_t {
+	int first;
+	int second;
+};
+
 int main() {
 
-	int message[] = "Hello, World!";
-
-	debuglog(message);
+	struct test_t test;
 
 	return 0;
 }

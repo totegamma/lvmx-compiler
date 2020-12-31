@@ -9,6 +9,7 @@ reserved = {
         'uint': 'TYPE',
         'int': 'TYPE',
         'float': 'TYPE',
+        'struct': 'STRUCT',
         'if': 'IF',
         'then': 'THEN',
         'else': 'ELSE',

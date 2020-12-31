@@ -58,9 +58,29 @@ def p_external_definitions(p):
     else:
         p[0] = p[1] + [p[2]]
 
+def p_struct_def(p):
+    '''
+    struct_def : STRUCT SYMBOL '{' struct_member_list '}' ';'
+    '''
+    p[0] = node.Struct(genTokenInfo(p, 1), p[2], p[4])
+
+def p_struct_member_list(p):
+    '''
+    struct_member_list : TYPE SYMBOL ';'
+                       | struct_member_list TYPE SYMBOL ';'
+    '''
+    if (len(p) == 4):
+        p[0] = [m.Symbol(p[2], parseType(p[1]))]
+    if (len(p) == 5):
+        tmp = p[1]
+        tmp.append(m.Symbol(p[3], parseType(p[2])))
+        p[0] = tmp
+
+
 def p_external_definition(p):
     '''
     external_definition : function_def
+                        | struct_def
                         | TYPE SYMBOL ';'
                         | TYPE SYMBOL '=' expr ';'
                         | TYPE pointer SYMBOL ';'
@@ -200,13 +220,17 @@ def p_local_array(p):
     local_array : TYPE SYMBOL '[' expr ']' ';'
                 | TYPE SYMBOL '[' expr ']' '=' initializer ';'
                 | TYPE SYMBOL '[' ']' '=' initializer ';'
+                | STRUCT SYMBOL SYMBOL ';'
     '''
-    if (len(p) == 6):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), None, p[4])
-    elif (len(p) == 9):
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), p[7], p[4])
+    if (p[1] == 'struct'):
+        p[0] = node.LocalVar(genTokenInfo(p, 1), p[3], m.Types(p[2], 0))
     else:
-        p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), p[6], None)
+        if (len(p) == 7):
+            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0, p[4]), None)
+        elif (len(p) == 9):
+            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0, p[4]), p[7])
+        else:
+            p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], m.Types(parseBT(p[1]), 0), p[6])
 
 def p_local_vars(p):
     '''

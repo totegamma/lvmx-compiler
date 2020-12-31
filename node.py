@@ -156,6 +156,16 @@ class GlobalVar (AST):
         env.addGlobal(m.Symbol(self.symbolname, self.typ, 1, self.body.eval()))
         return env
 
+class Struct (AST):
+    def __init__(self, tok, symbolname, members):
+        self.tok = tok
+        self.symbolname = symbolname
+        self.members = members
+
+    def gencode(self, env, pops = 0):
+        env.addType(self.symbolname, m.Types(None, 0, len(self.members), self.members))
+        return m.Insts(m.Types(m.BT.Void), [])
+
 class Func (AST):
     def __init__(self, tok, symbolname, typ, args, body):
         self.tok = tok
@@ -203,24 +213,25 @@ class Block (AST):
         return m.Insts(m.Types(m.BT.Void), insts)
 
 class LocalVar (AST):
-    def __init__(self, tok, symbolname, typ, init = None, size = None):
+    def __init__(self, tok, symbolname, typ, init = None):
         self.tok = tok
         self.symbolname = symbolname
         self.typ = typ
         self.init = init 
-        self.size = size
 
     def gencode(self, env, pops):
 
-        if (self.size is None):
+        self.typ.resolve(env)
+
+        if (self.typ.size is None):
             if (self.init is None):
                 size = 1
             else:
                 size = len(self.init)
-        elif (isinstance(self.size, AST)):
-            size = self.size.eval()
-        elif (type(self.size) == int or float): # XXX
-            size = self.size
+        elif (isinstance(self.typ.size, AST)):
+            size = self.typ.size.eval()
+        elif (type(self.typ.size) == int or float): # XXX
+            size = self.typ.size
         else:
             print("fatal")
 
@@ -231,6 +242,7 @@ class LocalVar (AST):
 
         if (self.init is None):
             return m.Insts(m.Types(m.BT.Void), [])
+
         if (isinstance(self.init, list)):
 
             if (size != len(self.init)):
@@ -246,6 +258,7 @@ class LocalVar (AST):
                 codes.append(m.Inst(opc.STOREP, self.nullarg))
             return m.Insts(m.Types(m.BT.Void), codes)
         else:
+            print(self.init)
             codes = self.init.gencode(env, 1).bytecodes
             codes.append(m.Inst(opc.STOREL, var.id))
             return m.Insts(m.Types(m.BT.Void), codes)

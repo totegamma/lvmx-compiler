@@ -66,8 +66,8 @@ def p_struct_def(p):
 
 def p_struct_member_list(p):
     '''
-    struct_member_list : TYPE SYMBOL ';'
-                       | struct_member_list TYPE SYMBOL ';'
+    struct_member_list : BASETYPE SYMBOL ';'
+                       | struct_member_list BASETYPE SYMBOL ';'
     '''
     if (len(p) == 4):
         p[0] = [m.Symbol(p[2], parseType(p[1]))]
@@ -79,9 +79,9 @@ def p_struct_member_list(p):
 
 def p_global_array(p):
     '''
-    global_array : TYPE SYMBOL '[' expr ']' ';'
-                 | TYPE SYMBOL '[' expr ']' '=' initializer ';'
-                 | TYPE SYMBOL '[' ']' '=' initializer ';'
+    global_array : BASETYPE SYMBOL '[' expr ']' ';'
+                 | BASETYPE SYMBOL '[' expr ']' '=' initializer ';'
+                 | BASETYPE SYMBOL '[' ']' '=' initializer ';'
                  | STRUCT SYMBOL SYMBOL ';'
     '''
     if (p[1] == 'struct'):
@@ -100,10 +100,10 @@ def p_external_definition(p):
     external_definition : function_def
                         | struct_def
                         | global_array
-                        | TYPE SYMBOL ';'
-                        | TYPE SYMBOL '=' expr ';'
-                        | TYPE pointer SYMBOL ';'
-                        | TYPE pointer SYMBOL '=' expr ';'
+                        | BASETYPE SYMBOL ';'
+                        | BASETYPE SYMBOL '=' expr ';'
+                        | BASETYPE pointer SYMBOL ';'
+                        | BASETYPE pointer SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
         p[0] = node.GlobalVar(genTokenInfo(p, 1), p[2], parseType(p[1]))
@@ -124,7 +124,7 @@ def p_external_definition(p):
 
 def p_function_def(p):
     '''
-    function_def : TYPE SYMBOL arguments block
+    function_def : BASETYPE SYMBOL arguments block
     '''
     p[0] = node.Func(genTokenInfo(p, 1), p[2], p[1], p[3], p[4])
 
@@ -141,10 +141,10 @@ def p_arguments(p):
 
 def p_definition_list(p):
     '''
-    definition_list : TYPE SYMBOL
-                    | definition_list ',' TYPE SYMBOL
-                    | TYPE pointer SYMBOL
-                    | definition_list ',' TYPE pointer SYMBOL
+    definition_list : BASETYPE SYMBOL
+                    | definition_list ',' BASETYPE SYMBOL
+                    | BASETYPE pointer SYMBOL
+                    | definition_list ',' BASETYPE pointer SYMBOL
     '''
     if (len(p) == 3):
         p[0] = [m.Symbol(p[2], parseType(p[1]))]
@@ -236,9 +236,9 @@ def p_initializer_list(p):
 
 def p_local_array(p):
     '''
-    local_array : TYPE SYMBOL '[' expr ']' ';'
-                | TYPE SYMBOL '[' expr ']' '=' initializer ';'
-                | TYPE SYMBOL '[' ']' '=' initializer ';'
+    local_array : BASETYPE SYMBOL '[' expr ']' ';'
+                | BASETYPE SYMBOL '[' expr ']' '=' initializer ';'
+                | BASETYPE SYMBOL '[' ']' '=' initializer ';'
                 | STRUCT SYMBOL SYMBOL ';'
     '''
     if (p[1] == 'struct'):
@@ -254,10 +254,10 @@ def p_local_array(p):
 def p_local_vars(p):
     '''
     local_vars : local_array
-               | TYPE SYMBOL ';'
-               | TYPE SYMBOL '=' expr ';'
-               | TYPE pointer SYMBOL ';'
-               | TYPE pointer SYMBOL '=' expr ';'
+               | BASETYPE SYMBOL ';'
+               | BASETYPE SYMBOL '=' expr ';'
+               | BASETYPE pointer SYMBOL ';'
+               | BASETYPE pointer SYMBOL '=' expr ';'
     '''
     if (len(p) == 4):
         p[0] = node.LocalVar(genTokenInfo(p, 1), p[2], parseType(p[1]))
@@ -299,8 +299,8 @@ def p_expr_csl(p):
 
 def p_op(p):
     '''
-    raw : RAW '(' TYPE ',' STRING ',' expr ')'
-        | RAW '(' TYPE ',' STRING ',' expr ',' expr_csl ')'
+    raw : RAW '(' BASETYPE ',' STRING ',' expr ')'
+        | RAW '(' BASETYPE ',' STRING ',' expr ',' expr_csl ')'
     '''
     if (len(p) == 9):
         p[0] = node.Raw(genTokenInfo(p, 1), parseType(p[3]), p[5], p[7], [])
@@ -392,7 +392,7 @@ def p_primary_expr(p):
 
 def p_cast(p):
     '''
-    cast : '(' TYPE ')' expr %prec CAST
+    cast : '(' BASETYPE ')' expr %prec CAST
     '''
     p[0] = node.Cast(genTokenInfo(p, 1), p[2], p[4])
 

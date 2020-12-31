@@ -1,5 +1,5 @@
 tokens = (
-        'TYPE',
+        'BASETYPE',
         'STRUCT',
         'UNIOP',
         'BIOP',

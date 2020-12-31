@@ -4,11 +4,11 @@ from tokens import tokens
 
 
 reserved = {
-        'void': 'TYPE',
-        'any': 'TYPE',
-        'uint': 'TYPE',
-        'int': 'TYPE',
-        'float': 'TYPE',
+        'void': 'BASETYPE',
+        'any': 'BASETYPE',
+        'uint': 'BASETYPE',
+        'int': 'BASETYPE',
+        'float': 'BASETYPE',
         'struct': 'STRUCT',
         'if': 'IF',
         'then': 'THEN',

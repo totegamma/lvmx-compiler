@@ -292,10 +292,14 @@ class Env:
                 level = '\033[33mwarning\033[0m'
 
             print(f"{elem.tok}: {level}: {elem.message}")
-            line = text.split("\n")[elem.tok.lineno - 1].replace('\t', ' ')
-            space = line.count(' ')
-            print('\t' + line.replace(' ', ''))
-            print('\t' + ' ' * (elem.tok.colno - space - 1) + '\033[32m^\033[0m')
+
+            rawline = text.split("\n")[elem.tok.lineno - 1]
+            line = rawline.lstrip()
+
+            deleted = len(rawline) - len(line)
+
+            print('\t' + line)
+            print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
 
 class TokenInfo:
     def __init__(self, lineno, colno, filename = "unnamed.c"):

@@ -121,7 +121,7 @@ class Inst:
         return f'{self.opc.name} {self.arg}'
 
 class Insts:
-    def __init__(self, typ, bytecodes):
+    def __init__(self, typ = BT.Void, bytecodes = []):
         self.typ = typ
         self.bytecodes = bytecodes
 
@@ -280,11 +280,22 @@ class Env:
 
     def report(self, text):
         for elem in self.reports:
-            print(f"{elem.tok}: \033[33m{elem.level}:\033[0m {elem.message}")
+            level = elem.level
+
+            if (level == 'fatal'):
+                level = '\033[35mfatal\033[0m'
+
+            if (level == 'error'):
+                level = '\033[31merror\033[0m'
+
+            if (level == 'warning'):
+                level = '\033[33mwarning\033[0m'
+
+            print(f"{elem.tok}: {level}: {elem.message}")
             line = text.split("\n")[elem.tok.lineno - 1].replace('\t', ' ')
             space = line.count(' ')
             print('\t' + line.replace(' ', ''))
-            print('\t' + ' ' * (elem.tok.colno - space) + '\033[32m^\033[0m')
+            print('\t' + ' ' * (elem.tok.colno - space - 1) + '\033[32m^\033[0m')
 
 class TokenInfo:
     def __init__(self, lineno, colno, filename = "unnamed.c"):

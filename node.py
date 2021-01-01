@@ -9,15 +9,25 @@ class OPT:
         self.popc = popc
         self.lr = lr
 
-class AST:
+class AST (object):
 
     nullarg = 0
 
     def __init__(self, tok):
-        self.t = tok
+        self.tok = tok
 
     def gencode(self, env, opt):
         pass
+
+    def assertOnlyRValue(self, env, opt):
+        if (opt.lr != 'r'):
+            env.addReport(m.Report('error', self.tok, f'{self.__class__.__name__}は左辺値として評価できません'))
+            return m.Insts()
+
+    def assertOnlyPop1(self, env, opt):
+        if (opt.popc != 1):
+            env.addReport(m.Report('warning', self.tok, '評価結果を利用していません'))
+            return m.Insts()
 
     def eval(self):
         return None
@@ -59,34 +69,35 @@ class BIOP (AST):
     opF = None
 
     def __init__(self, tok, left, right):
-        self.t = tok
+        self.tok = tok
         self.left = left
         self.right = right
 
     def gencode(self, env, opt):
 
-        if (opt.popc == 1):
-            left = self.left.gencode(env, OPT(1))
-            right = self.right.gencode(env, OPT(1))
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
 
-            typ = self.decideType(left.typ, right.typ)
+        left = self.left.gencode(env, OPT(1))
+        right = self.right.gencode(env, OPT(1))
 
-            code = right.bytecodes
-            code.extend(left.bytecodes)
+        typ = self.decideType(left.typ, right.typ)
 
-            if typ.isUint():
-                code.append(m.Inst(self.opU, self.nullarg))
-            elif typ.isInt():
-                code.append(m.Inst(self.opI, self.nullarg))
-            elif typ.isFloat():
-                code.append(m.Inst(self.opF, self.nullarg))
-            else:
-                glob.compileerrors += f"ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT"
+        code = right.bytecodes
+        code.extend(left.bytecodes)
 
-            return m.Insts(typ, code)
+        if typ.isUint():
+            code.append(m.Inst(self.opU, self.nullarg))
+        elif typ.isInt():
+            code.append(m.Inst(self.opI, self.nullarg))
+        elif typ.isFloat():
+            code.append(m.Inst(self.opF, self.nullarg))
         else:
-            env.addReport(m.Report('warning', self.t, '評価結果を利用していません'))
-            return m.Insts(m.Types(m.BT.Void), [])
+            glob.compileerrors += f"ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT"
+
+        return m.Insts(typ, code)
 
 
 class UNIOP (AST):
@@ -96,10 +107,13 @@ class UNIOP (AST):
     opF = None
 
     def __init__(self, tok, right):
-        self.t = tok
+        self.tok = tok
         self.right = right
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
 
         var = env.variableLookup(self.right)
 
@@ -295,6 +309,10 @@ class Indirect (AST):
         self.body = body
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         body = self.body.gencode(env, OPT(1))
         codes = body.bytecodes
         if opt.lr == 'r':
@@ -310,6 +328,12 @@ class Address (AST):
         self.symbol = symbol
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         var = env.variableLookup(self.symbol)
         codes = [var.genAddrCode()]
         return m.Insts(var.typ, codes)
@@ -348,6 +372,10 @@ class Funccall (AST):
         self.args = args
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
         mytype = env.functionLookup(self.name).typ
         codes = []
         for elem in reversed(self.args):
@@ -457,6 +485,9 @@ class Cast (AST):
 
     def gencode(self, env, opt):
 
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         body = self.body.gencode(env, OPT(1))
         codes = body.bytecodes
 
@@ -510,30 +541,6 @@ class Raw (AST):
         insts.append(m.Inst(opc[self.opc], self.arg.eval()))
 
         return m.Insts(self.typ, insts)
-
-class Readreg (AST):
-    def __init__(self, tok, key):
-        self.tok = tok
-        self.key = key
-
-    def gencode(self, env, opt):
-        if opt.popc == 1:
-            addr = self.key.eval()
-            return m.Insts(m.Types(m.BT.Any), [m.Inst(opc.LOADR, addr)])
-        else:
-            print("unused value in readreg")
-
-class Writereg (AST):
-    def __init__(self, tok, key, body):
-        self.tok = tok
-        self.key = key
-        self.body = body
-
-    def gencode(self, env, opt):
-        addr = self.key.eval()
-        codes = self.body.gencode(env, OPT(1)).bytecodes
-        codes.append(m.Inst(opc.STORER, addr))
-        return m.Insts(m.Types(m.BT.Void), codes)
 
 class Assign (AST):
     def __init__(self, tok, left, right):
@@ -625,6 +632,10 @@ class Symbol (AST):
         self.symbolname = symbolname
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         var = env.variableLookup(self.symbolname)
         if opt.lr == 'r':
             codes = [var.genLoadCode()]
@@ -632,6 +643,7 @@ class Symbol (AST):
         else:
             codes = [var.genStoreCode()]
             return m.Insts(m.Types(m.BT.Void), codes)
+
 
 class NumberU (AST):
     def __init__(self, tok, value):
@@ -641,7 +653,14 @@ class NumberU (AST):
         self.value = value
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, self.value)])
+
 
     def eval(self):
         return self.value
@@ -654,6 +673,12 @@ class NumberI (AST):
         self.value = value
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         return m.Insts(m.Types(m.BT.Int), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
@@ -667,6 +692,12 @@ class NumberF (AST):
         self.value = value
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         return m.Insts(m.Types(m.BT.Float), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
@@ -678,6 +709,12 @@ class String (AST):
         self.value = value
 
     def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         strid = env.issueString(self.value)
         return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, strid)])
 

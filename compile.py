@@ -3,7 +3,7 @@ import os
 import sys
 import json
 import time
-import glob
+import glob as g
 import struct
 import MODEL as m
 from node import OPT
@@ -34,8 +34,8 @@ def dumpbytecode(code):
     start = time.time()
 
     ast = makeAST(code)
-    if (glob.lexerrors != '' or glob.yaccerrors != ''):
-        return glob.lexerrors + glob.yaccerrors
+    #if (glob.lexerrors != '' or glob.yaccerrors != ''):
+        #return glob.lexerrors + glob.yaccerrors
 
     env = m.Env()
     ast.gencode(env)
@@ -102,12 +102,13 @@ def dumpjson(code):
     start = time.time()
 
     ast = makeAST(code)
-    if (glob.lexerrors != '' or glob.yaccerrors != ''):
-        return glob.lexerrors + glob.yaccerrors
+    if g.r.hasError():
+        return
 
     env = m.Env()
     ast.gencode(env, OPT())
-    env.report(code)
+    if g.r.hasError():
+        return
 
     funcLocator = {}
     labelLocator = {}
@@ -180,45 +181,31 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
 
-    glob.init()
-
     rawinput = ""
     with open(args.filename, mode="r") as f:
         rawinput = f.read()
 
-
     cpp = Preprocessor()
     cpp.add_path(os.getcwd() + "/lvmxlib")
-
     cpp.parse(rawinput)
-
     tmpf = io.StringIO("")
     cpp.write(tmpf)
 
-    processedinput = tmpf.getvalue()
-
-    #print(processedinput)
+    g.init(tmpf.getvalue())
 
     try:
         if args.json:
-            bytecode = dumpjson(processedinput)
+            bytecode = dumpjson(g.source)
         else:
-            bytecode = dumpbytecode(processedinput)
+            bytecode = dumpbytecode(g.source)
     except Exception as e:
-        if (glob.lexerrors != '' or glob.yaccerrors != '' or glob.compileerrors != ''):
-            print(glob.lexerrors)
-            print(glob.yaccerrors)
-            print(glob.compileerrors)
+        g.r.report()
         raise
 
-    if glob.lexerrors != '':
-        print(glob.lexerrors)
-    if glob.yaccerrors != '':
-        print(glob.yaccerrors)
-    if glob.compileerrors != '':
-        print(glob.compileerrors)
-    if glob.warn != '':
-        print(glob.warn)
-
-    print(bytecode)
+    if g.r.hasError():
+        g.r.report()
+    else:
+        if g.r.hasNotice():
+            g.r.report()
+        print(bytecode)
 

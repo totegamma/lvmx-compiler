@@ -1,5 +1,5 @@
 import struct
-import glob
+import glob as g
 import node
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
@@ -19,7 +19,15 @@ class Types:
         self.fields = fields
 
     def __str__(self):
-        return '*' * self.refcount + self.basetype.name
+        buff = self.basetype.name
+        buff += ' '
+        buff += '*' * self.refcount
+        if (self.isArray()):
+            buff += '['
+            buff += str(self.size)
+            buff += ']'
+
+        return buff
 
     def convertToArray(self, size):
         self.size = size
@@ -170,13 +178,6 @@ class Symbol:
         else:
             print("PROGRAM ERROR GENLOADCODE")
 
-class Report:
-    def __init__(self, level, tok, message):
-        self.level = level
-        self.tok = tok
-        self.message = message
-
-
 class Env:
     def __init__(self):
         self.functions = []
@@ -194,7 +195,7 @@ class Env:
         for elem in self.functions:
             if (elem.symbolname == name):
                 return elem
-        glob.compileerrors += f"コンパイルエラー: 関数{name=}が見つかりません"
+        #glob.compileerrors += f"コンパイルエラー: 関数{name=}が見つかりません"
 
     def variableLookup(self, name):
         for scope in reversed(self.locals):
@@ -209,7 +210,7 @@ class Env:
         for elem in self.globals:
             if (elem.name == name):
                 return elem
-        glob.compileerrors += f"コンパイルエラー: 変数{name=}が見つかりません"
+        #glob.compileerrors += f"コンパイルエラー: 変数{name=}が見つかりません"
 
     def stringLookup(self, string):
         return self.strings[string]
@@ -275,34 +276,8 @@ class Env:
     def resolveType(self, name):
         return self.types[name]
 
-    def addReport(self, report):
-        self.reports.append(report)
-
-    def report(self, text):
-        for elem in self.reports:
-            level = elem.level
-
-            if (level == 'fatal'):
-                level = '\033[35mfatal\033[0m'
-
-            if (level == 'error'):
-                level = '\033[31merror\033[0m'
-
-            if (level == 'warning'):
-                level = '\033[33mwarning\033[0m'
-
-            print(f"{elem.tok}: {level}: {elem.message}")
-
-            rawline = text.split("\n")[elem.tok.lineno - 1]
-            line = rawline.lstrip()
-
-            deleted = len(rawline) - len(line)
-
-            print('\t' + line)
-            print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
-
 class TokenInfo:
-    def __init__(self, lineno, colno, filename = "unnamed.c"):
+    def __init__(self, lineno, colno, filename = "input.c"):
         self.lineno = lineno
         self.colno = colno
         self.filename = filename
@@ -310,3 +285,67 @@ class TokenInfo:
     def __str__(self):
         return f"{self.filename}:{self.lineno}:{self.colno}"
 
+class ErrorModule:
+    def __init__(self):
+        self.reports = []
+        self.fail = 0
+        self.notice = 0
+
+    def addReport(self, report):
+        if (report.level == 'fatal' or report.level == 'error'):
+            self.fail += 1
+        self.notice += 1
+        self.reports.append(report)
+
+    def hasError(self):
+        return self.fail != 0
+
+    def hasNotice(self):
+        return self.notice != 0
+
+    def report(self):
+        fatal = 0
+        error = 0
+        warning = 0
+
+        for elem in self.reports:
+            level = elem.level
+
+            if (level == 'fatal'):
+                level = '\033[35mfatal\033[0m'
+                fatal += 1
+
+            if (level == 'error'):
+                level = '\033[31merror\033[0m'
+                error += 1
+
+            if (level == 'warning'):
+                level = '\033[33mwarning\033[0m'
+                warning += 1
+
+            print(f"{elem.tok}: {level}: {elem.message}")
+
+            rawline = g.source.split("\n")[elem.tok.lineno - 1]
+            line = rawline.lstrip()
+
+            deleted = len(rawline) - len(line)
+
+            print('\t' + line)
+            print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
+
+        msg = ""
+        if (warning != 0):
+            msg += f"{warning} warning" + ("s" if warning != 1 else "")
+        if (error != 0):
+            msg += (" and" if len(msg) != 0 else "") + f" {error} error" + ("s" if error != 1 else "")
+        if (fatal != 0):
+            msg += (" and" if len(msg) != 0 else "") + f" {fatal} fatal error" + ("s" if fatal != 1 else "")
+        msg += " generated."
+        print(msg)
+
+
+class Report:
+    def __init__(self, level, tok, message):
+        self.level = level
+        self.tok = tok
+        self.message = message

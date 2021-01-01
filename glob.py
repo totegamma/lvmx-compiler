@@ -1,10 +1,8 @@
+from MODEL import ErrorModule
 
-def init():
-    global lexerrors
-    global yaccerrors
-    global compileerrors
-    global warn
-    lexerrors = ""
-    yaccerrors = ""
-    compileerrors = ""
-    warn = ""
+def init(s):
+    global r
+    global source
+    r = ErrorModule()
+    source = s
+

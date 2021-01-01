@@ -1,4 +1,5 @@
-import glob
+import glob as g
+import MODEL as m
 import ply.lex as lex
 from tokens import tokens
 
@@ -107,16 +108,23 @@ def t_newline(t):
     t.lexer.lineno += len(t.value)
 
 def t_error(t):
-    glob.lexerrors += f"illegal character '{t.value[0]}'" + '\n'
+    g.r.addReport(m.Report('warning', genTokenInfo(t), f'illegal character \'{t.value[0]}\' skipped'))
     t.lexer.skip(1)
 
 def t_char_error(t):
-    glob.lexerrors += f"illegal character '{t.value[0]}'" + '\n'
+    g.r.addReport(m.Report('warning', genTokenInfo(t), f'illegal character \'{t.value[0]}\' skipped'))
     t.lexer.skip(1)
 
 def t_string_error(t):
-    glob.lexerrors += f"illegal character '{t.value[0]}'" + '\n'
+    g.r.addReport(m.Report('warning', genTokenInfo(t), f'illegal character \'{t.value[0]}\' skipped'))
     t.lexer.skip(1)
+
+def genTokenInfo(t):
+
+    line_start = g.source.rfind('\n', 0, t.lexpos) + 1
+    colno = (t.lexpos - line_start) + 1
+
+    return m.TokenInfo(t.lexer.lineno, colno)
 
 lexer = lex.lex()
 
@@ -124,7 +132,7 @@ if __name__ == '__main__':
     with open('test.c', 'r') as f:
         data = f.read()
 
-    glob.init()
+    g.init(data)
     lexer.input(data)
 
     while True:

@@ -1,4 +1,4 @@
-import glob
+import glob as g
 import MODEL as m
 from mnemonic import mnemonic as opc
 
@@ -21,12 +21,12 @@ class AST (object):
 
     def assertOnlyRValue(self, env, opt):
         if (opt.lr != 'r'):
-            env.addReport(m.Report('error', self.tok, f'{self.__class__.__name__}は左辺値として評価できません'))
+            g.r.addReport(m.Report('error', self.tok, f'expression \'{self.__class__.__name__}\' is not assignable'))
             return m.Insts()
 
     def assertOnlyPop1(self, env, opt):
         if (opt.popc != 1):
-            env.addReport(m.Report('warning', self.tok, '評価結果を利用していません'))
+            g.r.addReport(m.Report('warning', self.tok, 'expression result unused'))
             return m.Insts()
 
     def eval(self):
@@ -34,7 +34,6 @@ class AST (object):
 
     def decideType(self, a, b):
         if (a.isVoid() or b.isVoid()):
-            glob.compileerrors += "eval void error\n"
             return MODEL.Types.Void
         #elif (a == 'any' and b == 'any'):
         #    return 'any'
@@ -54,11 +53,10 @@ class AST (object):
             return m.Types(m.BT.Int)
         elif (a.isFloat() and b.isFloat()):
             return m.Types(m.BT.Float)
-        #elif ('uint' in [a, b] and 'float' in [a, b]):
-        #    return 'float'
-        #elif ('int' in [a, b] and 'float' in [a, b]):
-        #    return 'float'
-        glob.compileerrors += f"型不一致エラー({a.basetype}と{b.basetype})" + '\n'
+        raise DeclTypeException(f"invalid operands to binary expression('{a}' and '{b}')")
+
+class DeclTypeException(Exception):
+    pass
 
 # -= :: Inherited MODEL :: =-
 
@@ -83,7 +81,12 @@ class BIOP (AST):
         left = self.left.gencode(env, OPT(1))
         right = self.right.gencode(env, OPT(1))
 
-        typ = self.decideType(left.typ, right.typ)
+        try:
+            typ = self.decideType(left.typ, right.typ)
+        except DeclTypeException as e:
+            g.r.addReport(m.Report('error', self.tok, e))
+            return m.Insts()
+
 
         code = right.bytecodes
         code.extend(left.bytecodes)
@@ -95,7 +98,8 @@ class BIOP (AST):
         elif typ.isFloat():
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            glob.compileerrors += f"ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT"
+            g.r.addReport(m.Report('fatal', self.tok, 'Type inference failed'))
+            return m.Insts()
 
         return m.Insts(typ, code)
 
@@ -133,7 +137,8 @@ class UNIOP (AST):
             code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            glob.compileerrors += f"ERROR UNIOP ONLY SUPPORTS UINT OR INT"
+            g.r.addReport(m.Report('error', self.tok, 'Failed to inference Type'))
+            return MODEL.Types.Void
 
         if opt.popc == 0:
             code.append(env.variableLookup(symbolname).genStoreCode())
@@ -143,10 +148,6 @@ class UNIOP (AST):
             code.append(m.Inst(opc.DUP, 1))
             code.append(env.variableLookup(symbolname).genStoreCode())
             return m.Insts(typ, code)
-
-        else:
-            glob.compileerrors += f"Program Error"
-
 
 
 # -- Lv0 modules --
@@ -189,7 +190,8 @@ class GlobalVar (AST):
 
             if (self.body is not None):
                 if (size != len(self.body)):
-                    print("size mismatch (global)")
+                    g.r.addReport(m.Report('error', self.tok, 'Initializer list length is different from the declaration'))
+                    return m.Insts()
                 init = list(map(lambda a : a.eval(), self.body))
 
 
@@ -274,7 +276,8 @@ class LocalVar (AST):
         elif (type(self.typ.size) == int or float): # XXX
             size = self.typ.size
         else:
-            print("fatal")
+            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'LocalVar\''))
+            return m.Insts()
 
         if (size > 1):
             self.typ.isarray = 1
@@ -287,8 +290,8 @@ class LocalVar (AST):
         if (isinstance(self.init, list)):
 
             if (size != len(self.init)):
-                print("initalizer length mismatch!")
-                return m.Insts(m.Types(m.BT.Void), [])
+                g.r.addReport(m.Report('error', self.tok, 'Initializer list length is different from the declaration'))
+                return m.Insts()
 
             codes = []
             for i, elem in enumerate(self.init):
@@ -499,7 +502,8 @@ class Cast (AST):
                 codes.append(m.Inst(opc.UTOF, self.nullarg))
                 return m.Insts(m.Types(m.BT.Float), codes)
             else:
-                glob.compileerrors += f"Cast error"
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                return m.Insts()
 
         elif body.typ.isInt():
             if self.targetType == 'float':
@@ -509,7 +513,8 @@ class Cast (AST):
                 codes.append(m.Inst(opc.ITOU, self.nullarg))
                 return m.Insts(m.Types(m.BT.Uint), codes)
             else:
-                glob.compileerrors += f"Cast error"
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                return m.Insts()
 
         elif body.typ.isFloat():
             if self.targetType == 'uint':
@@ -519,12 +524,12 @@ class Cast (AST):
                 codes.append(m.Inst(opc.FTOI, self.nullarg))
                 return m.Insts(m.Types(m.BT.Int), codes)
             else:
-                glob.compileerrors += f"Cast error"
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                return m.Insts()
 
         else:
-            glob.compileerrors += f"Cast error"
-
-        print("PROGRAM ERROR in Cast")
+            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+            return m.Insts()
 
 class Raw (AST):
     def __init__(self, tok, typ, opc, arg, bodys):

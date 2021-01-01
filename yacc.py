@@ -1,6 +1,6 @@
 import json
 import node
-import glob
+import glob as g
 import MODEL as m
 import ply.yacc as yacc
 from lex import lexer
@@ -37,7 +37,7 @@ def p_basetype(p):
     elif p[1] == 'any':
         p[0] = m.BT.Any
     else:
-        glob.yaccerrors += f"Parse Type Failed ({typestring=})" + "\n"
+        g.r.addReport(m.Report('fatal', self.tok, f"Parse Type Failed ({typestring=})"))
 
 def p_type(p):
     '''
@@ -434,7 +434,7 @@ def p_char(p):
     if (len(p[1]) == 1):
         p[0] = node.NumberI(genTokenInfo(p, 1), int.from_bytes(p[1].encode('utf-32be'), byteorder='big'))
     else:
-        glob.yaccerrors += f"charは一文字でなければなりません (入力文字: '{p[1]}')" + "\n"
+        g.r.addReport(m.Report('error', self.tok, f"'char' must be one character"))
 
 
 def p_string(p):
@@ -454,21 +454,22 @@ def p_arg_list(p):
         p[0] = p[1] + [p[3]]
 
 
-def p_error(p):
-    glob.yaccerrors += f"line: {p.lineno}. Syntax error at or near '{p.value}'"
+def p_error(t):
+
+    line_start = g.source.rfind('\n', 0, t.lexpos) + 1
+    colno = (t.lexpos - line_start) + 1
+
+    g.r.addReport(m.Report('error', m.TokenInfo(t.lexer.lineno, colno), "syntax error"))
 
 
 def genTokenInfo(p, index):
-    global target
-    line_start = target.rfind('\n', 0, p.lexpos(index)) + 1
+    line_start = g.source.rfind('\n', 0, p.lexpos(index)) + 1
     colno = (p.lexpos(index) - line_start) + 1
 
     return m.TokenInfo(p.lineno(index), colno)
 
 
 def makeAST(code):
-    global target
-    target = code
 
     parser = yacc.yacc(debug=False, write_tables=False)
     node = yacc.parse(code, lexer=lexer)
@@ -477,20 +478,16 @@ def makeAST(code):
 
 if __name__ == '__main__':
 
-    global target
-
     with open('test.c', 'r') as f:
         data = f.read()
 
-    glob.init()
-
-    target = data
+    g.init(data)
 
     parser = yacc.yacc(debug=True, write_tables=False)
     node = yacc.parse(data, lexer=lexer)
 
-    print(glob.lexerrors)
-    print(glob.yaccerrors)
+#   print(glob.lexerrors)
+#   print(glob.yaccerrors)
 
     print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}))
 

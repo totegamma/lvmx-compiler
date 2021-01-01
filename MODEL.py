@@ -323,7 +323,7 @@ class ErrorModule:
                 level = '\033[33mwarning\033[0m'
                 warning += 1
 
-            print(f"{elem.tok}: {level}: {elem.message}")
+            print(f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m")
 
             rawline = g.source.split("\n")[elem.tok.lineno - 1]
             line = rawline.lstrip()

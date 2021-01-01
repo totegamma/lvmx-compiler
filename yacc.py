@@ -175,8 +175,8 @@ def p_statement(p):
     statement : expr ';'
     | block
     | local_vars
-    | RETURN expr ';'
     | RETURN ';'
+    | RETURN expr ';'
     | IF '(' expr ')' statement                 %prec THEN
     | IF '(' expr ')' statement ELSE statement
     | WHILE '(' expr ')' statement
@@ -184,7 +184,7 @@ def p_statement(p):
     '''
     if (p[1] == 'return'):
         if (len(p) == 3):
-            p[0] = node.Return(genTokenInfo(p, 1), node.NumberI(0))
+            p[0] = node.Return(genTokenInfo(p, 1), node.NumberI(genTokenInfo(p, 1), 0))
 
         else:
             p[0] = node.Return(genTokenInfo(p, 1), p[2])

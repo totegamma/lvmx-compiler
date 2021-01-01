@@ -85,8 +85,8 @@ class BIOP (AST):
 
             return m.Insts(typ, code)
         else:
+            env.addReport(m.Report('warning', self.t, '評価結果を利用していません'))
             return m.Insts(m.Types(m.BT.Void), [])
-            glob.warn += f"[BIOP] 利用していない評価結果"
 
 
 class UNIOP (AST):

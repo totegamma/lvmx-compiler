@@ -107,6 +107,7 @@ def dumpjson(code):
 
     env = m.Env()
     ast.gencode(env, OPT())
+    env.report(code)
 
     funcLocator = {}
     labelLocator = {}

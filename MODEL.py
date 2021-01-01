@@ -170,6 +170,13 @@ class Symbol:
         else:
             print("PROGRAM ERROR GENLOADCODE")
 
+class Report:
+    def __init__(self, level, tok, message):
+        self.level = level
+        self.tok = tok
+        self.message = message
+
+
 class Env:
     def __init__(self):
         self.functions = []
@@ -181,6 +188,7 @@ class Env:
         self.localcount = 0
         self.labelitr = 0
         self.types = {}
+        self.reports = []
 
     def functionLookup(self, name):
         for elem in self.functions:
@@ -266,6 +274,17 @@ class Env:
 
     def resolveType(self, name):
         return self.types[name]
+
+    def addReport(self, report):
+        self.reports.append(report)
+
+    def report(self, text):
+        for elem in self.reports:
+            print(f"{elem.tok}: \033[33m{elem.level}:\033[0m {elem.message}")
+            line = text.split("\n")[elem.tok.lineno - 1].replace('\t', ' ')
+            space = line.count(' ')
+            print('\t' + line.replace(' ', ''))
+            print('\t' + ' ' * (elem.tok.colno - space) + '\033[32m^\033[0m')
 
 class TokenInfo:
     def __init__(self, lineno, colno, filename = "unnamed.c"):

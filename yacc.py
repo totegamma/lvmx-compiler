@@ -9,9 +9,16 @@ from tokens import tokens
 start = 'program'
 
 precedence = (
+    ('left', 'ELSE'),
+    ('left', 'THEN'),
+    ('right', 'SIMPLE_ASSIGN'),
+    ('right', 'TERNARY'),
+    ('left', 'EQ_OP', 'NE_OP'),
+    ('left', '<', '>', 'LE_OP', 'GE_OP'),
     ('left', '+', '-'),
     ('left', '*', '/'),
-    ('right', 'CAST')
+    ('right', 'CAST', 'INDIRECT', 'ADDRESS'),
+    ('left', 'STRUCT_ACCESS')
 )
 
 
@@ -170,7 +177,7 @@ def p_statement(p):
     | local_vars
     | RETURN expr ';'
     | RETURN ';'
-    | IF '(' expr ')' statement
+    | IF '(' expr ')' statement                 %prec THEN
     | IF '(' expr ')' statement ELSE statement
     | WHILE '(' expr ')' statement
     | FOR '(' expr ';' expr ';' expr ')' statement
@@ -285,7 +292,8 @@ def p_op(p):
 
 def p_uniop(p):
     '''
-    uniop : UNIOP SYMBOL
+    uniop : INC_OP SYMBOL
+          | DEC_OP SYMBOL
     '''
     if (p[1] == '++'):
         p[0] = node.Inc(genTokenInfo(p, 2), p[2])
@@ -294,11 +302,16 @@ def p_uniop(p):
 
 def p_biop(p):
     '''
-    biop : expr BIOP expr
-         | expr '+' expr
+    biop : expr '+' expr
          | expr '-' expr
          | expr '*' expr
          | expr '/' expr
+         | expr '<' expr
+         | expr '>' expr
+         | expr LE_OP expr
+         | expr GE_OP expr
+         | expr EQ_OP expr
+         | expr NE_OP expr
     '''
     if (p[2] == '+'):
         p[0] = node.Add(genTokenInfo(p, 2), p[1], p[3])
@@ -323,7 +336,7 @@ def p_biop(p):
 
 def p_assign(p):
     '''
-    assign : expr '=' expr
+    assign : expr '=' expr %prec SIMPLE_ASSIGN
     '''
     if (p[2] == '='):
         p[0] = node.Assign(genTokenInfo(p, 2), p[1], p[3])
@@ -338,12 +351,11 @@ def p_expr(p):
          | uniop
          | biop
          | '(' expr ')'
-         | '&' SYMBOL
-         | '*' expr
-         | expr BIOP expr
+         | '&' SYMBOL               %prec ADDRESS
+         | '*' expr                 %prec INDIRECT
          | expr '[' expr ']'
-         | expr '.' SYMBOL
-         | expr '?' expr ':' expr
+         | expr '.' SYMBOL          %prec STRUCT_ACCESS
+         | expr '?' expr ':' expr   %prec TERNARY
     '''
     if (len(p) == 2):
         p[0] = p[1]

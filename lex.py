@@ -24,7 +24,7 @@ states = (
         ('string', 'exclusive'),
 )
 
-literals = ['+', '-', '*', '/', '&', ',', '=', '.', '?', ':', ';', '(', ')', '{', '}', '[', ']']
+literals = ['+', '-', '*', '/', '%', '&', ',', '=', '.', '!', '?', ':', ';', '(', ')', '<', '>', '{', '}', '[', ']']
 
 def t_NUMBERF(t):
     r'-?[0-9]+(([.][0-9]+)(f)?|f)'
@@ -38,7 +38,6 @@ def t_NUMBERI(t):
     r'-?[0-9]+((e|E)(\+|-)?[0-9]+)?'
     return t
 
-
 def t_COMMENT(t):
     '/\*[\s\S]*?\*/|//.*'
     t.lexer.lineno += t.value.count('\n')
@@ -46,12 +45,28 @@ def t_COMMENT(t):
 def t_DIRECTIVE(t):
     '\#.*\n'
 
-def t_UNIOP(t):
-    r'\+\+|--|\!'
+def t_INC_OP(t):
+    r'\+\+'
     return t
 
-def t_BIOP(t):
-    r'<=|>=|==|!=|<|>'
+def t_NEQ_OP(t):
+    r'--'
+    return t
+
+def t_LE_OP(t):
+    r'<='
+    return t
+
+def t_GE_OP(t):
+    r'>='
+    return t
+
+def t_EQ_OP(t):
+    r'=='
+    return t
+
+def t_NE_OP(t):
+    r'!='
     return t
 
 def t_SYMBOL(t):

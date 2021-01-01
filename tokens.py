@@ -1,8 +1,6 @@
 tokens = (
         'BASETYPE',
         'STRUCT',
-        'UNIOP',
-        'BIOP',
         'NUMBERI',
         'NUMBERF',
         'NUMBERU',
@@ -15,4 +13,12 @@ tokens = (
         'WHILE',
         'FOR',
         'RAW',
+
+        'INC_OP',
+        'DEC_OP',
+        'LE_OP',
+        'GE_OP',
+        'EQ_OP',
+        'NE_OP'
+
 )

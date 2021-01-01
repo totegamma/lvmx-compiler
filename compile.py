@@ -6,6 +6,7 @@ import time
 import glob
 import struct
 import MODEL as m
+from node import OPT
 from yacc import makeAST
 from pcpp import Preprocessor
 from argparse import ArgumentParser
@@ -105,7 +106,7 @@ def dumpjson(code):
         return glob.lexerrors + glob.yaccerrors
 
     env = m.Env()
-    ast.gencode(env)
+    ast.gencode(env, OPT())
 
     funcLocator = {}
     labelLocator = {}

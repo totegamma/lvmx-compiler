@@ -3,6 +3,12 @@ import MODEL as m
 from mnemonic import mnemonic as opc
 
 # -= :: TOP MODELS :: =-
+
+class OPT:
+    def __init__(self, popc = 0, lr = 'r'):
+        self.popc = popc
+        self.lr = lr
+
 class AST:
 
     nullarg = 0
@@ -10,7 +16,7 @@ class AST:
     def __init__(self, tok):
         self.t = tok
 
-    def gencode(self, env, pops = 0):
+    def gencode(self, env, opt):
         pass
 
     def eval(self):
@@ -57,11 +63,11 @@ class BIOP (AST):
         self.left = left
         self.right = right
 
-    def gencode(self, env, pops = 0):
+    def gencode(self, env, opt):
 
-        if (pops == 1):
-            left = self.left.gencode(env, 1)
-            right = self.right.gencode(env, 1)
+        if (opt.popc == 1):
+            left = self.left.gencode(env, OPT(1))
+            right = self.right.gencode(env, OPT(1))
 
             typ = self.decideType(left.typ, right.typ)
 
@@ -93,7 +99,7 @@ class UNIOP (AST):
         self.t = tok
         self.right = right
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
 
         var = env.variableLookup(self.right)
 
@@ -115,11 +121,11 @@ class UNIOP (AST):
         else:
             glob.compileerrors += f"ERROR UNIOP ONLY SUPPORTS UINT OR INT"
 
-        if pops == 0:
+        if opt.popc == 0:
             code.append(env.variableLookup(symbolname).genStoreCode())
             return m.Insts(typ, code)
 
-        elif pops == 1:
+        elif opt.popc == 1:
             code.append(m.Inst(opc.DUP, 1))
             code.append(env.variableLookup(symbolname).genStoreCode())
             return m.Insts(typ, code)
@@ -137,9 +143,9 @@ class Program (AST):
         self.body = body
         pass
 
-    def gencode(self, env, pops = 0):
+    def gencode(self, env, opt):
         for elem in self.body:
-            dumps = elem.gencode(env, 0)
+            dumps = elem.gencode(env, OPT(0))
         env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void, 0, 1), 0))
         env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void, 0, 1), 0))
         return env
@@ -151,7 +157,7 @@ class GlobalVar (AST):
         self.symbolname = symbolname
         self.body = body
 
-    def gencode(self, env, pops = 0):
+    def gencode(self, env, opt):
         self.typ.resolve(env)
         size = self.typ.size
 
@@ -182,7 +188,7 @@ class Struct (AST):
         self.symbolname = symbolname
         self.members = members
 
-    def gencode(self, env, pops = 0):
+    def gencode(self, env, opt):
         env.addType(self.symbolname, m.Types(None, 0, len(self.members), self.members))
         return m.Insts(m.Types(m.BT.Void), [])
 
@@ -194,14 +200,14 @@ class Func (AST):
         self.args = args
         self.body = body
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
 
         env.resetFrame()
 
         for elem in self.args:
             env.addArg(elem)
 
-        codes = self.body.gencode(env, 0).bytecodes
+        codes = self.body.gencode(env, OPT(0)).bytecodes
 
         insts = []
         insts.append(m.Inst(opc.ENTRY, self.symbolname))
@@ -222,12 +228,12 @@ class Block (AST):
         self.tok = tok
         self.body = body
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         env.pushLocal()
 
         insts = []
         for elem in self.body:
-            insts.extend(elem.gencode(env, 0).bytecodes)
+            insts.extend(elem.gencode(env, OPT(0)).bytecodes)
 
         env.popLocal()
         return m.Insts(m.Types(m.BT.Void), insts)
@@ -239,7 +245,7 @@ class LocalVar (AST):
         self.typ = typ
         self.init = init 
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
 
         self.typ.resolve(env)
 
@@ -272,14 +278,14 @@ class LocalVar (AST):
 
             codes = []
             for i, elem in enumerate(self.init):
-                codes.extend(elem.gencode(env, 1).bytecodes)
+                codes.extend(elem.gencode(env, OPT(1)).bytecodes)
                 codes.append(var.genAddrCode())
                 codes.append(m.Inst(opc.PUSH, i))
                 codes.append(m.Inst(opc.ADDI, self.nullarg))
                 codes.append(m.Inst(opc.STOREP, self.nullarg))
             return m.Insts(m.Types(m.BT.Void), codes)
         else:
-            codes = self.init.gencode(env, 1).bytecodes
+            codes = self.init.gencode(env, OPT(1)).bytecodes
             codes.append(m.Inst(opc.STOREL, var.id))
             return m.Insts(m.Types(m.BT.Void), codes)
 
@@ -288,18 +294,22 @@ class Indirect (AST):
         self.tok = tok
         self.body = body
 
-    def gencode(self, env, pops):
-        body = self.body.gencode(env, 1)
+    def gencode(self, env, opt):
+        body = self.body.gencode(env, OPT(1))
         codes = body.bytecodes
-        codes.append(m.Inst(opc.LOADP, self.nullarg))
-        return m.Insts(body.typ, codes)
+        if opt.lr == 'r':
+            codes.append(m.Inst(opc.LOADP, self.nullarg))
+            return m.Insts(body.typ, codes) # TODO typeのrefcountを増減する必要があるかも
+        else:
+            codes.append(m.Inst(opc.STOREP, self.nullarg))
+            return m.Insts(body.typ, codes) # TODO typeのrefcountを増減する必要があるかも
 
 class Address (AST):
     def __init__(self, tok, symbol):
         self.tok = tok
         self.symbol = symbol
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         var = env.variableLookup(self.symbol)
         codes = [var.genAddrCode()]
         return m.Insts(var.typ, codes)
@@ -310,8 +320,8 @@ class FieldAccess (AST):
         self.left = left
         self.fieldname = fieldname
 
-    def gencode(self, env, pops):
-        left = self.left.gencode(env, 1)
+    def gencode(self, env, opt):
+        left = self.left.gencode(env, OPT(1))
         codes = left.bytecodes
 
         field = left.typ.getField(env, self.fieldname)
@@ -326,8 +336,8 @@ class Return (AST): #TODO 自分の型とのチェック
         self.tok = tok
         self.body = body
 
-    def gencode(self, env, pops):
-        codes = self.body.gencode(env, 1).bytecodes
+    def gencode(self, env, opt):
+        codes = self.body.gencode(env, OPT(1)).bytecodes
         codes.append(m.Inst(opc.RET, self.nullarg))
         return m.Insts(m.Types(m.BT.Void), codes)
 
@@ -337,13 +347,13 @@ class Funccall (AST):
         self.name = name
         self.args = args
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         mytype = env.functionLookup(self.name).typ
         codes = []
         for elem in reversed(self.args):
-            codes.extend(elem.gencode(env, 1).bytecodes) # TODO 型チェック
+            codes.extend(elem.gencode(env, OPT(1)).bytecodes) # TODO 型チェック
         codes.append(m.Inst(opc.CALL, self.name))
-        codes.append(m.Inst(opc.POPR, len(self.args) + 1 if (pops == 0) else 0))
+        codes.append(m.Inst(opc.POPR, len(self.args) + 1 if (opt.popc == 0) else 0))
         return m.Insts(mytype, codes)
 
 class If (AST):
@@ -352,9 +362,9 @@ class If (AST):
         self.cond = cond
         self.then = then
 
-    def gencode(self, env, pops):
-        cond = self.cond.gencode(env, 1).bytecodes
-        then = self.then.gencode(env, 0).bytecodes
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, OPT(1)).bytecodes
+        then = self.then.gencode(env, OPT(0)).bytecodes
 
         l0 = env.issueLabel()
         codes = cond
@@ -370,10 +380,10 @@ class Ifelse (AST):
         self.then = then
         self.elst = elst
 
-    def gencode(self, env, pops):
-        cond = self.cond.gencode(env, 1).bytecodes
-        then = self.then.gencode(env, 0).bytecodes
-        elst = self.elst.gencode(env, 0).bytecodes
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, OPT(1)).bytecodes
+        then = self.then.gencode(env, OPT(0)).bytecodes
+        elst = self.elst.gencode(env, OPT(0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -393,9 +403,9 @@ class While (AST):
         self.cond = cond
         self.body = body
 
-    def gencode(self, env, pops):
-        cond = self.cond.gencode(env, 1).bytecodes
-        body = self.body.gencode(env, 0).bytecodes
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, OPT(1)).bytecodes
+        body = self.body.gencode(env, OPT(0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -418,11 +428,11 @@ class For (AST):
         self.loop = loop
         self.body = body
 
-    def gencode(self, env, pops):
-        init = self.init.gencode(env, 0).bytecodes
-        cond = self.cond.gencode(env, 1).bytecodes
-        loop = self.loop.gencode(env, 0).bytecodes
-        body = self.body.gencode(env, 0).bytecodes
+    def gencode(self, env, opt):
+        init = self.init.gencode(env, OPT(0)).bytecodes
+        cond = self.cond.gencode(env, OPT(1)).bytecodes
+        loop = self.loop.gencode(env, OPT(0)).bytecodes
+        body = self.body.gencode(env, OPT(0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -445,9 +455,9 @@ class Cast (AST):
         self.targetType = targetType
         self.body = body
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
 
-        body = self.body.gencode(env, 1)
+        body = self.body.gencode(env, OPT(1))
         codes = body.bytecodes
 
         if body.typ.isUint():
@@ -493,10 +503,10 @@ class Raw (AST):
         self.arg = arg
         self.bodys = bodys
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         insts = []
         for elem in reversed(self.bodys):
-            insts.extend(elem.gencode(env, 1).bytecodes)
+            insts.extend(elem.gencode(env, OPT(1)).bytecodes)
         insts.append(m.Inst(opc[self.opc], self.arg.eval()))
 
         return m.Insts(self.typ, insts)
@@ -506,8 +516,8 @@ class Readreg (AST):
         self.tok = tok
         self.key = key
 
-    def gencode(self, env, pops):
-        if pops == 1:
+    def gencode(self, env, opt):
+        if opt.popc == 1:
             addr = self.key.eval()
             return m.Insts(m.Types(m.BT.Any), [m.Inst(opc.LOADR, addr)])
         else:
@@ -519,9 +529,9 @@ class Writereg (AST):
         self.key = key
         self.body = body
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         addr = self.key.eval()
-        codes = self.body.gencode(env, 1).bytecodes
+        codes = self.body.gencode(env, OPT(1)).bytecodes
         codes.append(m.Inst(opc.STORER, addr))
         return m.Insts(m.Types(m.BT.Void), codes)
 
@@ -531,52 +541,20 @@ class Assign (AST):
         self.left = left
         self.right = right
 
-    def gencode(self, env, pops):
-        if isinstance(self.left, Symbol):
-            right = self.right.gencode(env, 1)
-            codes = right.bytecodes
-            var = env.variableLookup(self.left.symbolname)
-            codes.append(var.genStoreCode())
+    def gencode(self, env, opt):
 
-            if pops == 0:
-                return m.Insts(m.Types(m.BT.Void), codes)
+        right = self.right.gencode(env, OPT(1))
+        left = self.left.gencode(env, OPT(1, 'l'))
 
-            elif pops == 1:
-                codes.append(m.Inst(opc.DUP, 1));
-                return m.Insts(var.typ, codes)
+        typ = m.Types(m.BT.Void)
 
-            else:
-                print("program error in Assign")
+        codes = right.bytecodes
+        if opt.popc == 1:
+            codes.append(m.Inst(opc.DUP, 1))
+            typ = right.typ
+        codes.extend(left.bytecodes)
 
-        elif isinstance(self.left, Indirect):
-            right = self.right.gencode(env, 1)
-            codes = right.bytecodes
-            body = self.left
-            refcount = 0
-
-            while (isinstance(body, Indirect)):
-                body = body.body
-                refcount += 1
-
-            codes.extend(body.gencode(env, 1).bytecodes)
-
-            for i in range(refcount -1):
-                codes.append(m.Inst(opc.LOADP, self.nullarg))
-            codes.append(m.Inst(opc.STOREP, self.nullarg))
-
-            if pops == 0:
-                return m.Insts(m.Types(m.BT.Void), codes)
-
-            elif pops == 1:
-                codes.append(m.Inst(opc.DUP, 1));
-                return m.Insts(var.typ, codes)
-            else:
-                print("program error in Assign")
-
-        else:
-            glob.compileerrors += f"コンパイルエラー: 代入できるのはシンボルか参照のみです(代入しようとしたオブジェクト: {self.left})" + '\n'
-
-
+        return m.Insts(typ, codes)
 
 class Inc (UNIOP):
     opU = opc.ADDU
@@ -646,10 +624,14 @@ class Symbol (AST):
         self.tok = tok
         self.symbolname = symbolname
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         var = env.variableLookup(self.symbolname)
-        codes = [var.genLoadCode()]
-        return m.Insts(var.typ, codes)
+        if opt.lr == 'r':
+            codes = [var.genLoadCode()]
+            return m.Insts(var.typ, codes)
+        else:
+            codes = [var.genStoreCode()]
+            return m.Insts(m.Types(m.BT.Void), codes)
 
 class NumberU (AST):
     def __init__(self, tok, value):
@@ -658,7 +640,7 @@ class NumberU (AST):
             value = int(value.replace('u', ''))
         self.value = value
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
@@ -671,7 +653,7 @@ class NumberI (AST):
             value = int(value)
         self.value = value
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         return m.Insts(m.Types(m.BT.Int), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
@@ -684,7 +666,7 @@ class NumberF (AST):
             value = float(value.replace('f', ''))
         self.value = value
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         return m.Insts(m.Types(m.BT.Float), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
@@ -695,7 +677,7 @@ class String (AST):
         self.tok = tok
         self.value = value
 
-    def gencode(self, env, pops):
+    def gencode(self, env, opt):
         strid = env.issueString(self.value)
         return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, strid)])
 

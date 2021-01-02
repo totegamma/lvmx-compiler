@@ -10,6 +10,7 @@ tokens = (
         'IF',
         'ELSE',
         'RETURN',
+        'DO',
         'WHILE',
         'FOR',
         'RAW',

@@ -181,6 +181,7 @@ def p_statement(p):
     | IF '(' expr ')' statement                 %prec THEN
     | IF '(' expr ')' statement ELSE statement
     | WHILE '(' expr ')' statement
+    | DO statement WHILE '(' expr ')' ';'
     | FOR '(' expr ';' expr ';' expr ')' statement
     '''
     if (p[1] == 'return'):
@@ -196,6 +197,9 @@ def p_statement(p):
 
         else:
             p[0] = node.Ifelse(genTokenInfo(p, 1), p[3], p[5], p[7])
+
+    elif (p[1] == 'do'):
+        p[0] = node.DoWhile(genTokenInfo(p, 1), p[2], p[5])
 
     elif (p[1] == 'while'):
         p[0] = node.While(genTokenInfo(p, 1), p[3], p[5])

@@ -377,6 +377,27 @@ class Ifelse (AST):
         codes.append(m.Inst(opc.LABEL, l1))
         return m.Insts(m.Types(m.BT.Void), codes)
 
+class DoWhile (AST):
+    def __init__(self, tok, body, cond):
+        self.tok = tok
+        self.body = body
+        self.cond = cond
+
+    def gencode(self, env, opt):
+        body = self.body.gencode(env, OPT(0)).bytecodes
+        cond = self.cond.gencode(env, OPT(1)).bytecodes
+
+        l0 = env.issueLabel()
+
+        codes = [m.Inst(opc.LABEL, l0)]
+        codes.extend(body)
+        codes.extend(cond)
+        codes.append(m.Inst(opc.INV, self.nullarg))
+        codes.append(m.Inst(opc.JIF0, l0))
+
+        return m.Insts(m.Types(m.BT.Void), codes)
+
+
 class While (AST):
     def __init__(self, tok, cond, body):
         self.tok = tok
@@ -390,7 +411,7 @@ class While (AST):
         l0 = env.issueLabel()
         l1 = env.issueLabel()
 
-        codes = m.Inst(opc.LABEL, l0)
+        codes = [m.Inst(opc.LABEL, l0)]
         codes.extend(cond)
         codes.append(m.Inst(opc.JIF0, l1))
         codes.extend(body)

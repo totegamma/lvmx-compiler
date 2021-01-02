@@ -124,7 +124,7 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>15</td>
-			<td></td>
+			<td>PRINT</td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -160,15 +160,15 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>20</td>
-			<td>STOREP</td>
+			<td>LOADP</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>21</td>
-			<td></td>
-			<td></td>
+			<td>LOADD</td>
+			<td>0: int, 1: float, 2: string</td>
 			<td></td>
 			<td></td>
 		</tr>
@@ -188,7 +188,7 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>24</td>
-			<td>STOREG</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -223,8 +223,8 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>29</td>
-			<td></td>
-			<td></td>
+			<td>STORED</td>
+			<td>0: int, 1: float, 2: string</td>
 			<td></td>
 			<td></td>
 		</tr>
@@ -356,44 +356,44 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16>変換系</td>
+			<td rowspan=16>単項演算</td>
 			<td>48</td>
-			<td>UTOI</td>
+			<td>INV</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>!</td>
 		</tr>
 		<tr>
 			<td>49</td>
-			<td>UTOF</td>
+			<td>INC</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>50</td>
-			<td>ITOF</td>
+			<td>DEC</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>51</td>
-			<td>ITOU</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>52</td>
-			<td>FTOU</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>53</td>
-			<td>FTOI</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -414,14 +414,14 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>56</td>
-			<td></td>
+			<td>ITOF</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>57</td>
-			<td></td>
+			<td>FTOI</td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -469,96 +469,96 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16>Uint演算</td>
+			<td rowspan=16>2項演算</td>
 			<td>64</td>
-			<td>ADDU</td>
+			<td>ADDI</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>int +</td>
 		</tr>
 		<tr>
 			<td>65</td>
-			<td>SUBU</td>
+			<td>SUBI</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>int -</td>
 		</tr>
 		<tr>
 			<td>66</td>
-			<td>MULU</td>
+			<td>MULI</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>int *</td>
 		</tr>
 		<tr>
 			<td>67</td>
-			<td>DIVU</td>
+			<td>DIVI</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>int /</td>
 		</tr>
 		<tr>
 			<td>68</td>
-			<td>MODU</td>
+			<td>MODI</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>int %</td>
 		</tr>
 		<tr>
 			<td>69</td>
-			<td>LTU</td>
+			<td>ADDF</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>float +</td>
 		</tr>
 		<tr>
 			<td>70</td>
-			<td>LTEU</td>
+			<td>SUBF</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>float -</td>
 		</tr>
 		<tr>
 			<td>71</td>
-			<td>GTU</td>
+			<td>MULF</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>float *</td>
 		</tr>
 		<tr>
 			<td>72</td>
-			<td>GTEU</td>
+			<td>DIVF</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>float /</td>
 		</tr>
 		<tr>
 			<td>73</td>
-			<td>EQU</td>
+			<td>MODF</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>float %</td>
 		</tr>
 		<tr>
 			<td>74</td>
-			<td>NEQU</td>
+			<td>AND</td>
 			<td></td>
 			<td></td>
-			<td></td>
+			<td>&</td>
 		</tr>
 		<tr>
 			<td>75</td>
+			<td>OR</td>
 			<td></td>
 			<td></td>
-			<td></td>
-			<td></td>
+			<td>|</td>
 		</tr>
 		<tr>
 			<td>76</td>
+			<td>XOR</td>
 			<td></td>
 			<td></td>
-			<td></td>
-			<td></td>
+			<td>^</td>
 		</tr>
 		<tr>
 			<td>77</td>
@@ -582,100 +582,100 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16>Int演算</td>
+			<td rowspan=16>BOOL</td>
 			<td>80</td>
-			<td>ADDI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>81</td>
-			<td>SUBI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>82</td>
-			<td>MULI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>83</td>
-			<td>DIVI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>84</td>
-			<td>MODI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>85</td>
-			<td>LTI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>86</td>
-			<td>LTEI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>87</td>
-			<td>GTI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>88</td>
-			<td>GTEI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>89</td>
 			<td>EQI</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
-			<td>90</td>
+			<td>81</td>
 			<td>NEQI</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
-			<td>91</td>
+			<td>82</td>
+			<td>LTI</td>
 			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>83</td>
+			<td>LTEI</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>84</td>
+			<td>GTI</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>85</td>
+			<td>GTEI</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>86</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>87</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>88</td>
+			<td>EQF</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>89</td>
+			<td>NEQF</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>90</td>
+			<td>LTF</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>91</td>
+			<td>LTEF</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>92</td>
-			<td></td>
+			<td>GTF</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>93</td>
-			<td></td>
+			<td>GTEF</td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -695,79 +695,79 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16>Float演算</td>
+			<td rowspan=16>STRING</td>
 			<td>96</td>
-			<td>ADDF</td>
+			<td>SLEN</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>97</td>
-			<td>SUBF</td>
+			<td>STOI</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>98</td>
-			<td>MULF</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>99</td>
-			<td>DIVF</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>100</td>
-			<td>MODF</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>101</td>
-			<td>LTE</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>102</td>
-			<td>LTEF</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>103</td>
-			<td>GTF</td>
+			<td>SCMP</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>104</td>
-			<td>GTEF</td>
+			<td>ITOS</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>105</td>
-			<td>EQF</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>106</td>
-			<td>NEQF</td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -808,26 +808,27 @@ https://www.dabeaz.com/ply/ply.html
 			<td></td>
 		</tr>
 		<tr>
-			<td rowspan=16>きまってない</td>
+		<tr>
+			<td rowspan=16>Slot系</td>
 			<td>112</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>GSPO</td>
+			<td>0: Local, 1: Global</td>
+			<td>pop1(uint slot), push3(float x, float y, float z)</td>
+			<td>Set Position</td>
 		</tr>
 		<tr>
 			<td>113</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>GSRO</td>
+			<td>0: Local, 1: Global</td>
+			<td>pop1(uint slot), push3(float x, float y, float z)</td>
+			<td>Set Rotation</td>
 		</tr>
 		<tr>
 			<td>114</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>GSSC</td>
+			<td>0: Local, 1: Global</td>
+			<td>pop1(uint slot), push3(float x, float y, float z)</td>
+			<td>Set Scale</td>
 		</tr>
 		<tr>
 			<td>115</td>
@@ -838,24 +839,24 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>116</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>SSPO</td>
+			<td>0: Local, 1: Global</td>
+			<td>pop4(uint slot, float x, float y, float z)</td>
+			<td>Set Global Position</td>
 		</tr>
 		<tr>
 			<td>117</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>SSRO</td>
+			<td>0: Local, 1: Global</td>
+			<td>pop4(uint slot, float x, float y, float z)</td>
+			<td>Set Global Rotation</td>
 		</tr>
 		<tr>
 			<td>118</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>SSSC</td>
+			<td>0: Local, 1: Global</td>
+			<td>pop4(uint slot, float x, float y, float z)</td>
+			<td>Set Global Scale</td>
 		</tr>
 		<tr>
 			<td>119</td>
@@ -866,24 +867,24 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>120</td>
+			<td>CSFT</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop1(uint* template_name), push(uint slot)</td>
+			<td>CreateSlotFromTemplate</td>
 		</tr>
 		<tr>
 			<td>121</td>
+			<td>SSPA</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop2(uint slot, uint new_slot)</td>
+			<td>SetSlotParent</td>
 		</tr>
 		<tr>
 			<td>122</td>
+			<td>DS</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop1(uint slot)</td>
+			<td>DestroySlot</td>
 		</tr>
 		<tr>
 			<td>123</td>
@@ -915,345 +916,6 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>127</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td rowspan=16>拡張機能系</td>
-			<td>128</td>
-			<td>REDDU</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>129</td>
-			<td>REDDI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>130</td>
-			<td>REDDF</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>131</td>
-			<td>REDDS</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>132</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>133</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>134</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>135</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>136</td>
-			<td>WRIDU</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>137</td>
-			<td>WRIDI</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>138</td>
-			<td>WRIDF</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>139</td>
-			<td>WRIDS</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>140</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>141</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>142</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>143</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td rowspan=16>Slot系</td>
-			<td>144</td>
-			<td>GSPO</td>
-			<td>0: Local, 1: Global</td>
-			<td>pop1(uint slot), push3(float x, float y, float z)</td>
-			<td>Set Position</td>
-		</tr>
-		<tr>
-			<td>145</td>
-			<td>GSRO</td>
-			<td>0: Local, 1: Global</td>
-			<td>pop1(uint slot), push3(float x, float y, float z)</td>
-			<td>Set Rotation</td>
-		</tr>
-		<tr>
-			<td>146</td>
-			<td>GSSC</td>
-			<td>0: Local, 1: Global</td>
-			<td>pop1(uint slot), push3(float x, float y, float z)</td>
-			<td>Set Scale</td>
-		</tr>
-		<tr>
-			<td>147</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>148</td>
-			<td>SSPO</td>
-			<td>0: Local, 1: Global</td>
-			<td>pop4(uint slot, float x, float y, float z)</td>
-			<td>Set Global Position</td>
-		</tr>
-		<tr>
-			<td>149</td>
-			<td>SSRO</td>
-			<td>0: Local, 1: Global</td>
-			<td>pop4(uint slot, float x, float y, float z)</td>
-			<td>Set Global Rotation</td>
-		</tr>
-		<tr>
-			<td>150</td>
-			<td>SSSC</td>
-			<td>0: Local, 1: Global</td>
-			<td>pop4(uint slot, float x, float y, float z)</td>
-			<td>Set Global Scale</td>
-		</tr>
-		<tr>
-			<td>151</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>152</td>
-			<td>CSFT</td>
-			<td></td>
-			<td>pop1(uint* template_name), push(uint slot)</td>
-			<td>CreateSlotFromTemplate</td>
-		</tr>
-		<tr>
-			<td>153</td>
-			<td>SSPA</td>
-			<td></td>
-			<td>pop2(uint slot, uint new_slot)</td>
-			<td>SetSlotParent</td>
-		</tr>
-		<tr>
-			<td>154</td>
-			<td>DS</td>
-			<td></td>
-			<td>pop1(uint slot)</td>
-			<td>DestroySlot</td>
-		</tr>
-		<tr>
-			<td>155</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>156</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>157</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>158</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>159</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td rowspan=16>未定</td>
-			<td>160</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>161</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>162</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>163</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>164</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>165</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>166</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>167</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>168</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>169</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>170</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>171</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>172</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>173</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>174</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>175</td>
 			<td></td>
 			<td></td>
 			<td></td>

@@ -11,6 +11,10 @@ start = 'program'
 precedence = (
     ('left', 'ELSE'),
     ('left', 'THEN'),
+    ('right', 'AND_ASSIGN', 'XOR_ASSIGN', 'OR_ASSIGN'),
+    ('right', 'LEFT_ASSIGN', 'RIGHT_ASSIGN'),
+    ('right', 'MUL_ASSIGN', 'DIV_ASSIGN', 'MOD_ASSIGN'),
+    ('right', 'ADD_ASSIGN', 'SUB_ASSIGN'),
     ('right', 'SIMPLE_ASSIGN'),
     ('right', 'TERNARY'),
     ('left', '$'),
@@ -18,6 +22,7 @@ precedence = (
     ('left', '&'),
     ('left', 'EQ_OP', 'NE_OP'),
     ('left', '<', '>', 'LE_OP', 'GE_OP'),
+    ('left', 'LEFT_OP', 'RIGHT_OP'),
     ('left', '+', '-'),
     ('left', '*', '/', '%'),
     ('right', 'PRE_UNIOP', 'CAST', 'INDIRECT', 'ADDRESS'),

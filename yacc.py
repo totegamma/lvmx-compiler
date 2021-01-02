@@ -290,13 +290,22 @@ def p_op(p):
 
 def p_uniop(p):
     '''
-    uniop : INC_OP SYMBOL
-          | DEC_OP SYMBOL
+    uniop : '!' expr
+          | INC_OP expr
+          | DEC_OP expr
+          | expr INC_OP
+          | expr DEC_OP
     '''
-    if (p[1] == '++'):
-        p[0] = node.Inc(genTokenInfo(p, 2), p[2])
+    if (p[1] == '!'):
+        p[0] = node.INV(genTokenInfo(p, 2), p[2])
+    elif (p[1] == '++'):
+        p[0] = node.PRE_INC(genTokenInfo(p, 2), p[2])
     elif (p[1] == '--'):
-        p[0] = node.Dec(genTokenInfo(p, 2), p[2])
+        p[0] = node.PRE_Dec(genTokenInfo(p, 2), p[2])
+    elif (p[2] == '++'):
+        p[0] = node.POST_INC(genTokenInfo(p, 1), p[1])
+    elif (p[2] == '--'):
+        p[0] = node.POST_Dec(genTokenInfo(p, 1), p[1])
 
 def p_biop(p):
     '''

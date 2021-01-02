@@ -72,7 +72,13 @@ int main() {
 	judge = strncmp(testLocalZ, testGlobalF, 5);
 	print1num(judge);
 
+	int a = 5;
+	int b = 5;
+	print1num(++a);
+	print1num(b++);
 
+	print1num(a);
+	print1num(b);
 
 	return 0;
 }

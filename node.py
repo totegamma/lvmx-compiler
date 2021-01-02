@@ -97,47 +97,6 @@ class BIOP (AST):
         return m.Insts(typ, code)
 
 
-class UNIOP (AST):
-
-    opI = None
-    opF = None
-
-    def __init__(self, tok, right):
-        self.tok = tok
-        self.right = right
-
-    def gencode(self, env, opt):
-
-        if (result := self.assertOnlyRValue(env, opt)) is not None:
-            return result
-
-        var = env.variableLookup(self.right)
-
-        symbolname = var.name
-        typ = var.typ
-
-        if typ.isInt():
-            code = [m.Inst(opc.PUSH, 1)]
-            code.append(env.variableLookup(symbolname).genLoadCode())
-            code.append(m.Inst(self.opI, self.nullarg))
-        elif typ.isFloat():
-            code = [m.Inst(opc.PUSH, 1.0)]
-            code.append(env.variableLookup(symbolname).genLoadCode())
-            code.append(m.Inst(self.opF, self.nullarg))
-        else:
-            g.r.addReport(m.Report('error', self.tok, 'Failed to inference Type'))
-            return MODEL.Types.Void
-
-        if opt.popc == 0:
-            code.append(env.variableLookup(symbolname).genStoreCode())
-            return m.Insts(typ, code)
-
-        elif opt.popc == 1:
-            code.append(m.Inst(opc.DUP, 1))
-            code.append(env.variableLookup(symbolname).genStoreCode())
-            return m.Insts(typ, code)
-
-
 # -- Lv0 modules --
 
 class Program (AST):
@@ -372,7 +331,9 @@ class Funccall (AST):
         for elem in reversed(self.args):
             codes.extend(elem.gencode(env, OPT(1)).bytecodes) # TODO 型チェック
         codes.append(m.Inst(opc.CALL, self.name))
-        codes.append(m.Inst(opc.POPR, len(self.args) + 1 if (opt.popc == 0) else 0))
+        codes.append(m.Inst(opc.POPR, len(self.args)))
+        if (opt.popc == 0):
+            codes.append(m.Inst(opc.POP, self.nullarg))
         return m.Insts(mytype, codes)
 
 class If (AST):
@@ -539,16 +500,124 @@ class Assign (AST):
 
         return m.Insts(typ, codes)
 
-class Inc (UNIOP):
-    opI = opc.ADDI
-    opF = opc.ADDF
+class INV (AST):
 
-class Dec (UNIOP):
-    opI = opc.SUBI
-    opF = opc.SUBF
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
 
-class Inv: # TODO
-    pass
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, OPT(1, 'r'))
+
+        codes = right.bytecodes
+        codes.append(m.Inst(opc.INV, self.nullarg))
+
+        return m.Insts(right.typ, codes)
+
+class PRE_INC (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, OPT(1, 'r'))
+        codes = right.bytecodes
+        codes.append(m.Inst(opc.INC, self.nullarg))
+
+        typ = m.Types(m.BT.Void)
+
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+            typ = right.typ
+
+        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
+
+class PRE_DEC (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, OPT(1, 'r'))
+        codes = right.bytecodes
+        codes.append(m.Inst(opc.DEC, self.nullarg))
+
+        typ = m.Types(m.BT.Void)
+
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+            typ = right.typ
+
+        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
+
+class POST_INC (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, OPT(1, 'r'))
+        codes = right.bytecodes
+
+        typ = m.Types(m.BT.Void)
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+            typ = right.typ
+
+        codes.append(m.Inst(opc.INC, self.nullarg))
+        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
+
+
+class POST_DEC (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, OPT(1, 'r'))
+        codes = right.bytecodes
+
+        typ = m.Types(m.BT.Void)
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+            typ = right.typ
+
+        codes.append(m.Inst(opc.DEC, self.nullarg))
+        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
 
 class Add (BIOP):
     opI = opc.ADDI
@@ -597,11 +666,10 @@ class Symbol (AST):
 
     def gencode(self, env, opt):
 
-        if (result := self.assertOnlyPop1(env, opt)) is not None:
-            return result
-
         var = env.variableLookup(self.symbolname)
         if opt.lr == 'r':
+            if (result := self.assertOnlyPop1(env, opt)) is not None:
+                return result
             codes = [var.genLoadCode()]
             return m.Insts(var.typ, codes)
         else:

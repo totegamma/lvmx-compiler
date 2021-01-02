@@ -635,6 +635,22 @@ class Div (BIOP):
     opI = opc.DIVI
     opF = opc.DIVF
 
+class Mod (BIOP):
+    opI = opc.MODI
+    opF = opc.MODF
+
+class And (BIOP):
+    opI = opc.AND
+    opF = opc.AND
+
+class Or (BIOP):
+    opI = opc.OR
+    opF = opc.OR
+
+class Xor (BIOP):
+    opI = opc.XOR
+    opF = opc.XOR
+
 class Lt (BIOP):
     opI = opc.LTI
     opF = opc.LTF

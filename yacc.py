@@ -13,12 +13,15 @@ precedence = (
     ('left', 'THEN'),
     ('right', 'SIMPLE_ASSIGN'),
     ('right', 'TERNARY'),
+    ('left', '$'),
+    ('left', '^'),
+    ('left', '&'),
     ('left', 'EQ_OP', 'NE_OP'),
     ('left', '<', '>', 'LE_OP', 'GE_OP'),
     ('left', '+', '-'),
-    ('left', '*', '/'),
-    ('right', 'CAST', 'INDIRECT', 'ADDRESS'),
-    ('left', 'STRUCT_ACCESS')
+    ('left', '*', '/', '%'),
+    ('right', 'PRE_UNIOP', 'CAST', 'INDIRECT', 'ADDRESS'),
+    ('left', 'POST_UNIOP', 'STRUCT_ACCESS')
 )
 
 
@@ -290,11 +293,11 @@ def p_op(p):
 
 def p_uniop(p):
     '''
-    uniop : '!' expr
-          | INC_OP expr
-          | DEC_OP expr
-          | expr INC_OP
-          | expr DEC_OP
+    uniop : '!' expr        %prec PRE_UNIOP
+          | INC_OP expr     %prec PRE_UNIOP
+          | DEC_OP expr     %prec PRE_UNIOP
+          | expr INC_OP     %prec POST_UNIOP
+          | expr DEC_OP     %prec POST_UNIOP
     '''
     if (p[1] == '!'):
         p[0] = node.INV(genTokenInfo(p, 2), p[2])
@@ -313,6 +316,10 @@ def p_biop(p):
          | expr '-' expr
          | expr '*' expr
          | expr '/' expr
+         | expr '%' expr
+         | expr '&' expr
+         | expr '$' expr
+         | expr '^' expr
          | expr '<' expr
          | expr '>' expr
          | expr LE_OP expr
@@ -328,6 +335,14 @@ def p_biop(p):
         p[0] = node.Mul(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '/'):
         p[0] = node.Div(genTokenInfo(p, 2), p[1], p[3])
+    elif (p[2] == '%'):
+        p[0] = node.Mod(genTokenInfo(p, 2), p[1], p[3])
+    elif (p[2] == '&'):
+        p[0] = node.And(genTokenInfo(p, 2), p[1], p[3])
+    elif (p[2] == '$'):
+        p[0] = node.Or(genTokenInfo(p, 2), p[1], p[3])
+    elif (p[2] == '^'):
+        p[0] = node.Xor(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '<'):
         p[0] = node.Lt(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '<='):

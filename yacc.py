@@ -26,9 +26,7 @@ def p_basetype(p):
     '''
     basetype : BASETYPE
     '''
-    if p[1] == 'uint':
-        p[0] = m.BT.Uint
-    elif p[1] == 'int':
+    if p[1] == 'int':
         p[0] = m.BT.Int
     elif p[1] == 'float':
         p[0] = m.BT.Float

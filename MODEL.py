@@ -7,7 +7,6 @@ from mnemonic import mnemonic as opc
 class BT (IntEnum):
     Void = auto()
     Any = auto()
-    Uint  = auto()
     Int = auto()
     Float = auto()
 
@@ -47,9 +46,6 @@ class Types:
 
     def isAny(self):
         return self.basetype == BT.Any
-
-    def isUint(self):
-        return self.basetype == BT.Uint
 
     def isInt(self):
         return self.basetype == BT.Int
@@ -111,10 +107,7 @@ class Inst:
 
     def serialize(self):
         if isinstance(self.arg, int):
-            if self.arg > 2147483647: # uint
-                arg = format(self.arg, "08x")
-            else:
-                arg = format(struct.unpack('>I', struct.pack('>i', self.arg))[0], "08x")
+            arg = format(struct.unpack('>I', struct.pack('>i', self.arg))[0], "08x")
 
         elif isinstance(self.arg, float):
             arg = format(struct.unpack('>I', struct.pack('>f', self.arg))[0], "08x")

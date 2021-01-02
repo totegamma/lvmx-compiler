@@ -42,13 +42,9 @@ class AST (object):
         #elif (b == 'any'):
         #    return a
 
-        elif (a.isIndirect() and b.isUint()):
-            return a
         elif (a.isIndirect() and b.isInt()):
             return a
 
-        elif (a.isUint() and b.isUint()):
-            return m.Types(m.BT.Uint)
         elif (a.isInt() and b.isInt()):
             return m.Types(m.BT.Int)
         elif (a.isFloat() and b.isFloat()):
@@ -62,7 +58,6 @@ class DeclTypeException(Exception):
 
 class BIOP (AST):
 
-    opU = None
     opI = None
     opF = None
 
@@ -91,9 +86,7 @@ class BIOP (AST):
         code = right.bytecodes
         code.extend(left.bytecodes)
 
-        if typ.isUint():
-            code.append(m.Inst(self.opU, self.nullarg))
-        elif typ.isInt():
+        if typ.isInt():
             code.append(m.Inst(self.opI, self.nullarg))
         elif typ.isFloat():
             code.append(m.Inst(self.opF, self.nullarg))
@@ -106,7 +99,6 @@ class BIOP (AST):
 
 class UNIOP (AST):
 
-    opU = None
     opI = None
     opF = None
 
@@ -124,11 +116,7 @@ class UNIOP (AST):
         symbolname = var.name
         typ = var.typ
 
-        if typ.isUint():
-            code = [m.Inst(opc.PUSH, 1)]
-            code.append(env.variableLookup(symbolname).genLoadCode())
-            code.append(m.Inst(self.opU, self.nullarg))
-        elif typ.isInt():
+        if typ.isInt():
             code = [m.Inst(opc.PUSH, 1)]
             code.append(env.variableLookup(symbolname).genLoadCode())
             code.append(m.Inst(self.opI, self.nullarg))
@@ -494,33 +482,16 @@ class Cast (AST):
         body = self.body.gencode(env, OPT(1))
         codes = body.bytecodes
 
-        if body.typ.isUint():
-            if self.targetType == 'int':
-                codes.append(m.Inst(opc.UTOI, self.nullarg))
-                return m.Insts(m.Types(m.BT.Int), codes)
-            elif self.targetType == 'float':
-                codes.append(m.Inst(opc.UTOF, self.nullarg))
-                return m.Insts(m.Types(m.BT.Float), codes)
-            else:
-                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
-                return m.Insts()
-
-        elif body.typ.isInt():
+        if body.typ.isInt():
             if self.targetType == 'float':
                 codes.append(m.Inst(opc.ITOF, self.nullarg))
                 return m.Insts(m.Types(m.BT.Float), codes)
-            elif self.targetType == 'uint':
-                codes.append(m.Inst(opc.ITOU, self.nullarg))
-                return m.Insts(m.Types(m.BT.Uint), codes)
             else:
                 g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
                 return m.Insts()
 
         elif body.typ.isFloat():
-            if self.targetType == 'uint':
-                codes.append(m.Inst(opc.FTOU, self.nullarg))
-                return m.Insts(m.Types(m.BT.Uint), codes)
-            elif self.targetType == 'int':
+            if self.targetType == 'int':
                 codes.append(m.Inst(opc.FTOI, self.nullarg))
                 return m.Insts(m.Types(m.BT.Int), codes)
             else:
@@ -649,27 +620,6 @@ class Symbol (AST):
             codes = [var.genStoreCode()]
             return m.Insts(m.Types(m.BT.Void), codes)
 
-
-class NumberU (AST):
-    def __init__(self, tok, value):
-        self.tok = tok
-        if isinstance(value, str):
-            value = int(value.replace('u', ''))
-        self.value = value
-
-    def gencode(self, env, opt):
-
-        if (result := self.assertOnlyRValue(env, opt)) is not None:
-            return result
-        if (result := self.assertOnlyPop1(env, opt)) is not None:
-            return result
-
-        return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, self.value)])
-
-
-    def eval(self):
-        return self.value
-
 class NumberI (AST):
     def __init__(self, tok, value):
         self.tok = tok
@@ -721,7 +671,7 @@ class String (AST):
             return result
 
         strid = env.issueString(self.value)
-        return m.Insts(m.Types(m.BT.Uint), [m.Inst(opc.PUSH, strid)])
+        return m.Insts(m.Types(m.BT.Int), [m.Inst(opc.PUSH, strid)])
 
     def eval(self):
         return self.value

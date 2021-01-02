@@ -7,7 +7,6 @@ from tokens import tokens
 reserved = {
         'void': 'BASETYPE',
         'any': 'BASETYPE',
-        'uint': 'BASETYPE',
         'int': 'BASETYPE',
         'float': 'BASETYPE',
         'struct': 'STRUCT',

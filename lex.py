@@ -69,6 +69,54 @@ def t_NE_OP(t):
     r'!='
     return t
 
+def t_LEFT_OP(t):
+    r'<<'
+    return t
+
+def t_RIGHT_OP(t):
+    r'>>'
+    return t
+
+def t_MUL_ASSIGN(t):
+    r'\*='
+    return t
+
+def t_DIV_ASSIGN(t):
+    r'/='
+    return t
+
+def t_MOD_ASSIGN(t):
+    r'%='
+    return t
+
+def t_ADD_ASSIGN(t):
+    r'\+='
+    return t
+
+def t_SUB_ASSIGN(t):
+    r'-='
+    return t
+
+def t_LEFT_ASSIGN(t):
+    r'<<'
+    return t
+
+def t_RIGHT_ASSIGN(t):
+    r'>>'
+    return t
+
+def t_AND_ASSIGN(t):
+    r'&='
+    return t
+
+def t_XOR_ASSIGN(t):
+    r'^='
+    return t
+
+def t_OR_ASSIGN(t):
+    r'$='
+    return t
+
 def t_SYMBOL(t):
     r'[a-zA-Z_][a-zA-Z0-9_]*'
     t.type = reserved.get(t.value, 'SYMBOL')

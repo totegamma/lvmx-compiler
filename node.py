@@ -651,6 +651,14 @@ class Xor (BIOP):
     opI = opc.XOR
     opF = opc.XOR
 
+class LShift (BIOP):
+    opI = opc.LSHI
+    opF = opc.LSHI
+
+class RShift (BIOP):
+    opI = opc.RSHI
+    opF = opc.RSHI
+
 class Lt (BIOP):
     opI = opc.LTI
     opF = opc.LTF

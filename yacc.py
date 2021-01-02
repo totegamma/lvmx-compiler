@@ -322,6 +322,8 @@ def p_biop(p):
          | expr '^' expr
          | expr '<' expr
          | expr '>' expr
+         | expr LEFT_OP expr
+         | expr RIGHT_OP expr
          | expr LE_OP expr
          | expr GE_OP expr
          | expr EQ_OP expr
@@ -345,6 +347,10 @@ def p_biop(p):
         p[0] = node.Xor(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '<'):
         p[0] = node.Lt(genTokenInfo(p, 2), p[1], p[3])
+    elif (p[2] == '<<'):
+        p[0] = node.LShift(genTokenInfo(p, 2), p[1], p[3])
+    elif (p[2] == '>>'):
+        p[0] = node.RShift(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '<='):
         p[0] = node.Lte(genTokenInfo(p, 2), p[1], p[3])
     elif (p[2] == '>'):
@@ -359,9 +365,39 @@ def p_biop(p):
 def p_assign(p):
     '''
     assign : expr '=' expr %prec SIMPLE_ASSIGN
+           | expr MUL_ASSIGN expr
+           | expr DIV_ASSIGN expr
+           | expr MOD_ASSIGN expr
+           | expr ADD_ASSIGN expr
+           | expr SUB_ASSIGN expr
+           | expr LEFT_ASSIGN expr
+           | expr RIGHT_ASSIGN expr
+           | expr AND_ASSIGN expr
+           | expr XOR_ASSIGN expr
+           | expr OR_ASSIGN expr
     '''
     if (p[2] == '='):
         p[0] = node.Assign(genTokenInfo(p, 2), p[1], p[3])
+    elif (p[2] == '*='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.Mul(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '/='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.Div(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '%='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.Mod(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '+='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.Add(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '-='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.Sub(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '<<='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.LShift(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '>>='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.RShift(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '&='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.And(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '^='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.Xor(genTokenInfo(p, 2), p[1], p[3]))
+    elif (p[2] == '$='):
+        p[0] = node.Assign(genTokenInfo(p, 2), p[1], node.Or(genTokenInfo(p, 2), p[1], p[3]))
 
 
 def p_expr(p):

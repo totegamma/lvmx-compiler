@@ -66,6 +66,8 @@ class mnemonic (IntEnum):
     AND = 74
     OR = 75
     XOR = 76
+    LSHI = 77
+    RSHI = 78
 
     EQI = 80
     NEQI = 81

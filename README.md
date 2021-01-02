@@ -562,14 +562,14 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>77</td>
-			<td></td>
+			<td>LSHI</td>
 			<td></td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>78</td>
-			<td></td>
+			<td>RSHI</td>
 			<td></td>
 			<td></td>
 			<td></td>

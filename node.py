@@ -540,12 +540,10 @@ class Assign (AST):
         return m.Insts(typ, codes)
 
 class Inc (UNIOP):
-    opU = opc.ADDU
     opI = opc.ADDI
     opF = opc.ADDF
 
 class Dec (UNIOP):
-    opU = opc.SUBU
     opI = opc.SUBI
     opF = opc.SUBF
 
@@ -553,52 +551,42 @@ class Inv: # TODO
     pass
 
 class Add (BIOP):
-    opU = opc.ADDU
     opI = opc.ADDI
     opF = opc.ADDF
 
 class Sub (BIOP):
-    opU = opc.SUBU
     opI = opc.SUBI
     opF = opc.SUBF
 
 class Mul (BIOP):
-    opU = opc.MULU
     opI = opc.MULI
     opF = opc.MULF
 
 class Div (BIOP):
-    opU = opc.DIVU
     opI = opc.DIVI
     opF = opc.DIVF
 
 class Lt (BIOP):
-    opU = opc.LTU
     opI = opc.LTI
     opF = opc.LTF
 
 class Lte (BIOP):
-    opU = opc.LTEU
     opI = opc.LTEI
     opF = opc.LTEF
 
 class Gt (BIOP):
-    opU = opc.GTU
     opI = opc.GTI
     opF = opc.GTF
 
 class Gte (BIOP):
-    opU = opc.GTEU
     opI = opc.GTEI
     opF = opc.GTEF
 
 class Eq (BIOP):
-    opU = opc.EQU
     opI = opc.EQI
     opF = opc.EQF
 
 class Neq (BIOP):
-    opU = opc.NEQU
     opI = opc.NEQI
     opF = opc.NEQF
 

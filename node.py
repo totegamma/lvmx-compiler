@@ -152,7 +152,11 @@ class Struct (AST):
         self.members = members
 
     def gencode(self, env, opt):
-        env.addType(self.symbolname, m.Types(None, 0, len(self.members), self.members))
+        size = 0
+        for elem in self.members: # TODO 微妙
+            elem.typ.resolve(env)
+            size += elem.typ.size
+        env.addType(self.symbolname, m.Types(None, 0, size, self.members))
         return m.Insts(m.Types(m.BT.Void), [])
 
 class Func (AST):

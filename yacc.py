@@ -84,13 +84,22 @@ def p_struct_member_list(p):
     '''
     struct_member_list : type SYMBOL ';'
                        | struct_member_list type SYMBOL ';'
+                       | type SYMBOL '[' expr ']' ';'
+                       | struct_member_list type SYMBOL '[' expr ']' ';'
     '''
     if (len(p) == 4):
         p[0] = [m.Symbol(p[2], p[1])]
-    if (len(p) == 5):
+    elif (len(p) == 5):
         tmp = p[1]
         tmp.append(m.Symbol(p[3], p[2]))
         p[0] = tmp
+    elif (len(p) == 7):
+        p[0] = [m.Symbol(p[2], p[1].convertToArray(p[4]))]
+    elif (len(p) == 8):
+        tmp = p[1]
+        tmp.append(m.Symbol(p[3], p[2].convertToArray(p[5])))
+        p[0] = tmp
+
 
 
 def p_global_array(p):

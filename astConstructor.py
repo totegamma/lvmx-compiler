@@ -25,7 +25,7 @@ def projectAST(ast, scope = 0):
         pass
     elif isinstance(ast, c_ast.Cast): #TODO [to_type*, expr*]
         pass
-    elif isinstance(ast, c_ast.Compound): #TODO [block_items**]
+    elif isinstance(ast, c_ast.Compound): # [block_items**]
         return node.Block(a2t(ast), [projectAST(e, scope+1) for e in ast.block_items])
 
     elif isinstance(ast, c_ast.CompoundLiteral): #TODO [type*, init*]
@@ -43,7 +43,7 @@ def projectAST(ast, scope = 0):
 
         typ = projectAST(ast.type, scope)
 
-        if isinstance(ast.type, c_ast.TypeDecl):
+        if isinstance(ast.type, c_ast.TypeDecl) or isinstance(ast.type, c_ast.ArrayDecl):
             if (scope == 0):
                 return node.GlobalVar(a2t(ast), ast.name, projectAST(ast.type, scope), projectAST(ast.init, scope))
             else:
@@ -76,12 +76,11 @@ def projectAST(ast, scope = 0):
         pass
     elif isinstance(ast, c_ast.FuncCall): #TODO [name*, args*]
         pass
-    elif isinstance(ast, c_ast.FuncDecl): #TODO [args*, type*]
+    elif isinstance(ast, c_ast.FuncDecl): #XXX [args*, type*]
         return {"args": projectAST(ast.args, scope) if ast.args is not None else [],
                 "type": projectAST(ast.type, scope)}
 
-    elif isinstance(ast, c_ast.FuncDef): #TODO [args*, type*]
-        print(ast)
+    elif isinstance(ast, c_ast.FuncDef): #XXX [args*, type*]
         decl = projectAST(ast.decl, scope)
         return node.Func(a2t(ast), decl['type'].name, decl['type'], decl['args'], projectAST(ast.body, scope))
 
@@ -96,8 +95,8 @@ def projectAST(ast, scope = 0):
 
     elif isinstance(ast, c_ast.If): #TODO [cond*, iftrue*, iffalse*]
         pass
-    elif isinstance(ast, c_ast.InitList): #TODO [exprs**]
-        pass
+    elif isinstance(ast, c_ast.InitList): # [exprs**]
+        return [projectAST(e, scope) for e in ast.exprs]
     elif isinstance(ast, c_ast.Label): #TODO [name, stmt*]
         pass
     elif isinstance(ast, c_ast.NamedInitializer): #TODO [name**, expr*]

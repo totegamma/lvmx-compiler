@@ -47,6 +47,7 @@ class Type:
 
     def setLength(self, length):
         self.length = length
+        self.size = length #TODO
         return self
 
     def setName(self, name):

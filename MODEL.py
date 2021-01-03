@@ -10,6 +10,49 @@ class BT (IntEnum):
     Int = auto()
     Float = auto()
 
+
+class FuncDecl:
+    def __init__(self, name):
+        self.name = name
+        self.args = []
+        self.typ = None
+
+    def setArgs(self, args):
+        self.args = args
+        return self
+
+    def setType(self, typ):
+        self.typ = typ
+        return self
+
+class Type:
+    def __init__(self, basetype):
+        self.basetype = basetype
+        self.refcount = 0
+        self.length = 1
+        self.size = 1
+        self.quals = []
+        self.fields = []
+        self.name = None
+
+    def addRefcount(self, plus):
+        self.refcount += plus
+        return self
+
+    def addQuals(self, quals):
+        for elem in quals:
+            if elem not in self.quals:
+                self.quals.append(elem)
+        return self
+
+    def setLength(self, length):
+        self.length = length
+        return self
+
+    def setName(self, name):
+        self.name = name
+        return self
+
 class Types:
     def __init__(self, basetype, refcount = 0, size = 1, fields = []):
         self.basetype = basetype

@@ -1,4 +1,5 @@
-
+import json
+import node
 import glob as g
 import MODEL as m
 from pycparser import CParser, c_parser, c_ast, parse_file
@@ -21,7 +22,7 @@ def projectAST(ast):
     elif isinstance(ast, c_ast.Cast): #TODO
         pass
     elif isinstance(ast, c_ast.Compound): #TODO
-        return list(map(projectAST, ast.block_items))
+        pass
     elif isinstance(ast, c_ast.CompoundLiteral): #TODO
         pass
     elif isinstance(ast, c_ast.Constant): #TODO
@@ -29,7 +30,7 @@ def projectAST(ast):
     elif isinstance(ast, c_ast.Continue): #TODO
         pass
     elif isinstance(ast, c_ast.Decl): #TODO
-        return f"{ast.name} type: {projectAST(ast.type)} ({ast.coord.file}:{ast.coord.line}:{ast.coord.column})"
+        pass
     elif isinstance(ast, c_ast.DeclList): #TODO
         pass
     elif isinstance(ast, c_ast.Default): #TODO
@@ -48,8 +49,9 @@ def projectAST(ast):
         pass
     elif isinstance(ast, c_ast.ExprList): #TODO
         pass
-    elif isinstance(ast, c_ast.FileAST): #TODO
-        return list(map(projectAST, ast.ext))
+    elif isinstance(ast, c_ast.FileAST):
+        return node.Program(a2t(ast), list(map(projectAST, ast.ext)))
+
     elif isinstance(ast, c_ast.For): #TODO
         pass
     elif isinstance(ast, c_ast.FuncCall): #TODO
@@ -63,7 +65,7 @@ def projectAST(ast):
     elif isinstance(ast, c_ast.ID): #TODO
         pass
     elif isinstance(ast, c_ast.IdentifierType): #TODO
-        return f"{ast.names}"
+        pass
     elif isinstance(ast, c_ast.If): #TODO
         pass
     elif isinstance(ast, c_ast.InitList): #TODO
@@ -87,7 +89,7 @@ def projectAST(ast):
     elif isinstance(ast, c_ast.TernaryOp): #TODO
         pass
     elif isinstance(ast, c_ast.TypeDecl): #TODO
-        return f"{ast.declname}, {ast.quals}, {projectAST(ast.type)}"
+        pass
     elif isinstance(ast, c_ast.Typedef): #TODO
         pass
     elif isinstance(ast, c_ast.Typename): #TODO
@@ -101,7 +103,7 @@ def projectAST(ast):
     elif isinstance(ast, c_ast.Pragma): #TODO
         pass
     elif isinstance(ast, c_ast.Raw): #TODO
-        return(f"{ast}")
+        pass
     else:
         g.r.addReport(m.Report('fatal', a2t(ast), f"{type(ast)} is not listed!"))
         return
@@ -109,7 +111,11 @@ def projectAST(ast):
     g.r.addReport(m.Report('fatal', a2t(ast), f"{type(ast)} is not yet implemented!"))
 
 def a2t(ast):
-    return m.TokenInfo(ast.coord.line, ast.coord.column, ast.coord.file)
+    if (ast.coord is not None):
+        return m.TokenInfo(ast.coord.line, ast.coord.column, ast.coord.file)
+    else:
+        return m.TokenInfo(0, 0, '<ERROR>')
+
 
 def makeAST(code):
     try:
@@ -119,7 +125,11 @@ def makeAST(code):
         print(e)
         exit()
 
-    return projectAST(ast)
+    node = projectAST(ast)
+
+    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}))
+
+    return node
 
 
 

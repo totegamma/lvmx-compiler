@@ -1706,6 +1706,15 @@ class CParser(PLYParser):
         """
         p[0] = c_ast.CompoundLiteral(p[2], p[5])
 
+    def p_postfix_expression_7(self, p):
+        """ postfix_expression  : __RAW LPAREN type_name COMMA STRING_LITERAL COMMA constant_expression RPAREN
+                                | __RAW LPAREN type_name COMMA STRING_LITERAL COMMA constant_expression COMMA argument_expression_list RPAREN
+        """
+        if (len(p) == 9):
+            p[0] = c_ast.Raw(p[3], p[5], p[7], None, self._token_coord(p, 1))
+        else:
+            p[0] = c_ast.Raw(p[3], p[5], p[7], p[9], self._token_coord(p, 1))
+
     def p_primary_expression_1(self, p):
         """ primary_expression  : identifier """
         p[0] = p[1]

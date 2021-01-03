@@ -53,6 +53,11 @@ class Type:
         self.name = name
         return self
 
+    def resolve(self, env):
+        if isinstance(self.size, node.AST):
+            self.size = self.size.eval()
+
+
 class Types:
     def __init__(self, basetype, refcount = 0, size = 1, fields = []):
         self.basetype = basetype

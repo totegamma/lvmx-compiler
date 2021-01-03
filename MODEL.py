@@ -38,6 +38,8 @@ class Type:
         self.quals = []
         self.fields = []
         self.name = None
+        self.isStruct = False
+        self.isEnum = False
 
     def addRefcount(self, plus):
         self.refcount += plus
@@ -58,9 +60,19 @@ class Type:
         self.name = name
         return self
 
+    def setAsStruct(self):
+        self.isStruct = True
+        return self
+
     def resolve(self, env):
-        if isinstance(self.size, node.AST):
-            self.size = self.size.eval()
+        if (self.basetype == 'int' or self.basetype == 'float'):
+            if isinstance(self.size, node.AST):
+                self.size = self.size.eval()
+        else:
+            typ = env.resolveType(self.basetype)
+            self.basetype = typ.basetype
+            self.size = typ.size
+            self.fields = typ.fields
 
     def isArray(self):
         return self.length != 1
@@ -82,6 +94,16 @@ class Type:
 
     def isFloat(self):
         return self.basetype == 'float'
+
+    def getField(self, env, name):
+        offset = 0
+        for elem in self.fields:
+            elem.typ.resolve(env)
+            if (elem.name == name):
+                return StructField(elem.typ, offset)
+            offset += elem.typ.size
+
+        return None
 
 
 
@@ -400,6 +422,9 @@ class ErrorModule:
 
             print('\t' + line)
             print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
+
+        if (fatal == 0 and error == 0 and warning == 0):
+            return
 
         msg = ""
         if (warning != 0):

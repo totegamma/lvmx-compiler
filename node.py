@@ -129,6 +129,12 @@ class GlobalVar (AST):
                 init = self.body.eval()
         else:
 
+            if isinstance(self.body, String):
+                string = self.body.eval()
+                li = list(map(lambda a : int.from_bytes(a.encode('utf-32be'), byteorder='big'), string))
+                li.append(0)
+                self.body = li
+
             if (size is None):
                 size = len(self.body)
                 self.typ.size = size
@@ -139,7 +145,8 @@ class GlobalVar (AST):
                 if (size != len(self.body)):
                     g.r.addReport(m.Report('error', self.tok, 'Initializer list length is different from the declaration'))
                     return m.Insts()
-                init = list(map(lambda a : a.eval(), self.body))
+                #init = list(map(lambda a : a.eval(), self.body))
+                init = self.body
 
 
         env.addGlobal(m.Symbol(self.symbolname, self.typ, init))
@@ -216,6 +223,12 @@ class LocalVar (AST):
 
         self.typ.resolve(env)
 
+        if isinstance(self.init, String):
+            string = self.init.eval()
+            li = list(map(lambda a : int.from_bytes(a.encode('utf-32be'), byteorder='big'), string))
+            li.append(0)
+            self.init = li
+
         if (self.typ.size is None):
             if (self.init is None):
                 size = 1
@@ -246,7 +259,8 @@ class LocalVar (AST):
 
             codes = []
             for i, elem in enumerate(self.init):
-                codes.extend(elem.gencode(env, OPT(1)).bytecodes)
+                #codes.extend(elem.gencode(env, OPT(1)).bytecodes)
+                codes.append(m.Inst(opc.PUSH, elem))
                 codes.append(var.genAddrCode())
                 codes.append(m.Inst(opc.PUSH, i))
                 codes.append(m.Inst(opc.ADDI, self.nullarg))
@@ -500,7 +514,8 @@ class Raw (AST):
         insts = []
         for elem in reversed(self.bodys):
             insts.extend(elem.gencode(env, OPT(1)).bytecodes)
-        insts.append(m.Inst(opc[self.opc], self.arg.eval()))
+        #insts.append(m.Inst(opc[self.opc], self.arg.eval()))
+        insts.append(m.Inst(opc[self.opc], self.arg))
 
         return m.Insts(self.typ, insts)
 

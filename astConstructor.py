@@ -13,8 +13,9 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.ArrayDecl):
         return projectAST(ast.type, s).setLength(projectAST(ast.dim, s)) #MEMO dim_quals unused
 
-    elif isinstance(ast, c_ast.ArrayRef): #TODO [name*, subscript*]
-        pass
+    elif isinstance(ast, c_ast.ArrayRef): # [name*, subscript*]
+        return node.Indirect(a2t(ast), node.Add(a2t(ast), projectAST(ast.name, s), projectAST(ast.subscript, s)))
+
     elif isinstance(ast, c_ast.Assignment): # [op, lvalue*, rvalue*]
         if ast.op == '=':
             return node.Assign(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s))
@@ -78,12 +79,16 @@ def projectAST(ast, s = 0):
 
     elif isinstance(ast, c_ast.CompoundLiteral): #TODO [type*, init*]
         pass
-    elif isinstance(ast, c_ast.Constant):
+    elif isinstance(ast, c_ast.Constant): # [type, value]
         if (ast.type == 'int'):
             return node.NumberI(a2t(ast), ast.value)
         elif (ast.type == 'float'):
             return node.NumberF(a2t(ast), ast.value)
-        g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported constant type '{ast.value}'"))
+        elif (ast.type == 'char'):
+            return node.NumberI(a2t(ast), int.from_bytes(ast.value[0].encode('utf-32be'), byteorder='big'))
+        elif (ast.type == 'string'): #XXX
+            return node.String(a2t(ast), ast.value[1:-1])
+        g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported constant type '{ast.type}' for value '{ast.value}'"))
 
     elif isinstance(ast, c_ast.Continue): #TODO []
         pass
@@ -123,7 +128,7 @@ def projectAST(ast, s = 0):
         return node.Program(a2t(ast), [projectAST(e, s) for e in ast.ext])
 
     elif isinstance(ast, c_ast.For): # [init*, cond*, next*, stmt*]
-        return node.For(a2t(ast), projectAST(init, s), projectAST(cond, s), projectAST(next, s), projectAST(stmt, s))
+        return node.For(a2t(ast), projectAST(ast.init, s), projectAST(ast.cond, s), projectAST(ast.next, s), projectAST(ast.stmt, s))
 
     elif isinstance(ast, c_ast.FuncCall): # [name*, args*]
         return node.Funccall(a2t(ast), ast.name.name, projectAST(ast.args, s))
@@ -153,7 +158,7 @@ def projectAST(ast, s = 0):
             return node.Ifelse(a2t(ast), projectAST(ast.cond, s), projectAST(ast.iftrue, s), projectAST(ast.iffalse, s))
 
     elif isinstance(ast, c_ast.InitList): # [exprs**]
-        return [projectAST(e, s) for e in ast.exprs]
+        return [projectAST(e, s).eval() for e in ast.exprs] #XXX
 
     elif isinstance(ast, c_ast.Label): #TODO [name, stmt*]
         pass
@@ -170,16 +175,27 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.PtrDecl):
         return projectAST(ast.type, s).addQuals(ast.quals).addRefcount(1)
 
-    elif isinstance(ast, c_ast.Raw): #TODO [type*, opc, arg, exprs**]
-        pass
+    elif isinstance(ast, c_ast.Raw): # [type*, opc, arg, exprs**]
+        return node.Raw(a2t(ast), projectAST(ast.type, s), ast.opc[1:-1], ast.arg.value, [projectAST(e, s) for e in ast.exprs])
+
     elif isinstance(ast, c_ast.Return): # [expr*]
         return node.Return(a2t(ast), projectAST(ast.expr, s))
 
-    elif isinstance(ast, c_ast.Struct):
-        return node.Struct(a2t(ast), ast.name, [projectAST(e, s) for e in ast.decls])
+    elif isinstance(ast, c_ast.Struct): # [name, decls**]
+        if ast.decls is None: # is type define
+            return m.Type(ast.name).setAsStruct()
+        else: # is Struct define
 
-    elif isinstance(ast, c_ast.StructRef): #TODO [name*, type, filed*]
-        pass
+            tmp = []
+            for elem in ast.decls:
+                typ = projectAST(elem.type, s)
+                tmp.append(m.Symbol(typ.name, typ)) #TODO ParamListと合成・リファクタ・関数化
+
+            return node.Struct(a2t(ast), ast.name, tmp)
+
+    elif isinstance(ast, c_ast.StructRef): #TODO [name*, type, filed*] type unused
+        return node.Indirect(a2t(ast), node.FieldAccess(a2t(ast), projectAST(ast.name, s), ast.field.name))
+
     elif isinstance(ast, c_ast.Switch): #TODO [cond*, stmt*]
         pass
     elif isinstance(ast, c_ast.TernaryOp): #TODO [cond*, ifture*, iffalse*]
@@ -189,9 +205,10 @@ def projectAST(ast, s = 0):
 
     elif isinstance(ast, c_ast.Typedef): #TODO [name, equals, storage, type*]
         pass
-    elif isinstance(ast, c_ast.Typename): #TODO [name, quals, type*]
-        pass
-    elif isinstance(ast, c_ast.UnaryOp): #TODO [op, expr*]
+    elif isinstance(ast, c_ast.Typename): # [name, quals, type*]
+        return projectAST(ast.type, s).setName(ast.name).addQuals(ast.quals)
+
+    elif isinstance(ast, c_ast.UnaryOp): # [op, expr*]
         if ast.op == '!':
             return node.Inv(a2t(ast), projectAST(ast.expr, s))
         elif ast.op == '++':
@@ -202,6 +219,10 @@ def projectAST(ast, s = 0):
             return node.Post_inc(a2t(ast), projectAST(ast.expr, s))
         elif ast.op == 'p--':
             return node.Post_dec(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == '*':
+            return node.Indirect(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == '&':
+            return node.Address(a2t(ast), projectAST(ast.expr, s))
         else:
             g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported unary op '{ast.op}'"))
             return
@@ -238,7 +259,7 @@ def makeAST(code):
 
     node = projectAST(ast)
 
-    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
+    #print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
 
     return node
 

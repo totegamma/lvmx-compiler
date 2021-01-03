@@ -103,10 +103,13 @@ def projectAST(ast):
     elif isinstance(ast, c_ast.Raw):
         return(f"{ast}")
     else:
-        g.r.addReport(m.Report('fatal', m.TokenInfo(ast.coord.line, ast.coord.column, ast.coord.file), f"{type(ast)} is not listed!"))
+        g.r.addReport(m.Report('fatal', a2t(ast), f"{type(ast)} is not listed!"))
         return
 
-    g.r.addReport(m.Report('fatal', m.TokenInfo(ast.coord.line, ast.coord.column, ast.coord.file), f"{type(ast)} is not yet implemented!"))
+    g.r.addReport(m.Report('fatal', a2t(ast), f"{type(ast)} is not yet implemented!"))
+
+def a2t(ast):
+    return m.TokenInfo(ast.coord.line, ast.coord.column, ast.coord.file)
 
 def makeAST(code):
     try:

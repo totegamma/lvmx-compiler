@@ -846,6 +846,30 @@ class PtrDecl(Node):
 
     attr_names = ('quals', )
 
+class Raw(Node):
+    __slots__ = ('type', 'opc', 'arg', 'exprs', 'coord', '__weakref__')
+    def __init__(self, type, opc, arg, exprs, coord=None):
+        self.type = type
+        self.opc = opc
+        self.arg = arg
+        self.exprs = exprs
+        self.coord = coord
+
+    def children(self):
+        nodelist = []
+        if self.type is not None: nodelist.append(("type", self.type))
+        for i, child in enumerate(self.exprs or []):
+            nodelist.append(("exprs[%d]" % i, child))
+        return tuple(nodelist)
+
+    def __iter__(self):
+        if self.type is not None:
+            yield self.type
+        for child in (self.exprs or []):
+            yield child
+
+    attr_names = ('opc', 'arg', )
+
 class Return(Node):
     __slots__ = ('expr', 'coord', '__weakref__')
     def __init__(self, expr, coord=None):

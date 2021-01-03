@@ -15,8 +15,13 @@ def projectAST(ast, scope = 0):
 
     elif isinstance(ast, c_ast.ArrayRef): #TODO [name*, subscript*]
         pass
-    elif isinstance(ast, c_ast.Assignment): #TODO [op, lvalue*, rvalue*]
-        pass
+    elif isinstance(ast, c_ast.Assignment): # [op, lvalue*, rvalue*]
+        if ast.op == '=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, scope), projectAST(ast.rvalue, scope))
+        else:
+            g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported assignment op '{ast.op}'"))
+            return
+
     elif isinstance(ast, c_ast.BinaryOp): #TODO [op, left* right*]
         pass
     elif isinstance(ast, c_ast.Break): #TODO []
@@ -35,7 +40,7 @@ def projectAST(ast, scope = 0):
             return node.NumberI(a2t(ast), ast.value)
         elif (ast.type == 'float'):
             return node.NumberF(a2t(ast), ast.value)
-        g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported constant type {ast.value}"))
+        g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported constant type '{ast.value}'"))
 
     elif isinstance(ast, c_ast.Continue): #TODO []
         pass
@@ -86,8 +91,9 @@ def projectAST(ast, scope = 0):
 
     elif isinstance(ast, c_ast.Goto): #TODO [name]
         pass
-    elif isinstance(ast, c_ast.ID): #TODO [name]
-        pass
+    elif isinstance(ast, c_ast.ID): # [name]
+        return node.Symbol(a2t(ast), ast.name)
+
     elif isinstance(ast, c_ast.IdentifierType):
         if len(ast.names) == 1:
             return  m.Type(ast.names[0])

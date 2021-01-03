@@ -525,7 +525,7 @@ class Assign (AST):
 
         return m.Insts(typ, codes)
 
-class INV (AST):
+class Inv (AST):
 
     def __init__(self, tok, right):
         self.tok = tok
@@ -545,7 +545,7 @@ class INV (AST):
 
         return m.Insts(right.typ, codes)
 
-class PRE_INC (AST):
+class Pre_inc (AST):
 
     def __init__(self, tok, right):
         self.tok = tok
@@ -570,7 +570,7 @@ class PRE_INC (AST):
 
         return m.Insts(typ, codes)
 
-class PRE_DEC (AST):
+class Pre_dec (AST):
 
     def __init__(self, tok, right):
         self.tok = tok
@@ -595,7 +595,7 @@ class PRE_DEC (AST):
 
         return m.Insts(typ, codes)
 
-class POST_INC (AST):
+class Post_inc (AST):
 
     def __init__(self, tok, right):
         self.tok = tok
@@ -620,7 +620,7 @@ class POST_INC (AST):
         return m.Insts(typ, codes)
 
 
-class POST_DEC (AST):
+class Post_dec (AST):
 
     def __init__(self, tok, right):
         self.tok = tok

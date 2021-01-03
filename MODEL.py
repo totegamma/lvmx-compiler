@@ -58,6 +58,9 @@ class Type:
         if isinstance(self.size, node.AST):
             self.size = self.size.eval()
 
+    def isArray(self):
+        return self.length != 1
+
 
 class Types:
     def __init__(self, basetype, refcount = 0, size = 1, fields = []):

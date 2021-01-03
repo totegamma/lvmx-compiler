@@ -5,33 +5,76 @@ import MODEL as m
 from pycparser import CParser, c_parser, c_ast, parse_file
 
 
-def projectAST(ast, scope = 0):
+def projectAST(ast, s = 0):
 
     if (ast is None):
         return None
 
     elif isinstance(ast, c_ast.ArrayDecl):
-        return projectAST(ast.type, scope).setLength(projectAST(ast.dim, scope)) #MEMO dim_quals unused
+        return projectAST(ast.type, s).setLength(projectAST(ast.dim, s)) #MEMO dim_quals unused
 
     elif isinstance(ast, c_ast.ArrayRef): #TODO [name*, subscript*]
         pass
     elif isinstance(ast, c_ast.Assignment): # [op, lvalue*, rvalue*]
         if ast.op == '=':
-            return node.Assign(a2t(ast), projectAST(ast.lvalue, scope), projectAST(ast.rvalue, scope))
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s))
         else:
             g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported assignment op '{ast.op}'"))
             return
 
     elif isinstance(ast, c_ast.BinaryOp): #TODO [op, left* right*]
-        pass
+        if ast.op == '+':
+            return node.Add(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '-':
+            return node.Sub(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '*':
+            return node.Mul(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '/':
+            return node.Div(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '%':
+            return node.Mod(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '<<':
+            return node.LShift(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '>>':
+            return node.RShift(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '&':
+            return node.And(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '|':
+            return node.Or(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '^':
+            return node.Xor(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '<':
+            return node.Lt(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '<=':
+            return node.Lte(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '>':
+            return node.Gt(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '>=':
+            return node.Gte(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '==':
+            return node.Eq(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '!=':
+            return node.Neq(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '&&':
+            return node.Gte(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '||':
+            return node.Eq(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        elif ast.op == '!=':
+            return node.Neq(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+        else:
+            g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported binary op '{ast.op}'"))
+            return
+
+
     elif isinstance(ast, c_ast.Break): #TODO []
         pass
     elif isinstance(ast, c_ast.Case): #TODO [expr*, stmts**]
         pass
-    elif isinstance(ast, c_ast.Cast): #TODO [to_type*, expr*]
-        pass
+    elif isinstance(ast, c_ast.Cast): # [to_type*, expr*]
+        return node.Cast(a2t(ast), projectAST(ast.to_type, s), projectAST(ast.expr, s))
+
     elif isinstance(ast, c_ast.Compound): # [block_items**]
-        return node.Block(a2t(ast), [projectAST(e, scope+1) for e in ast.block_items])
+        return node.Block(a2t(ast), [projectAST(e, s+1) for e in ast.block_items])
 
     elif isinstance(ast, c_ast.CompoundLiteral): #TODO [type*, init*]
         pass
@@ -46,22 +89,23 @@ def projectAST(ast, scope = 0):
         pass
     elif isinstance(ast, c_ast.Decl): #TODO [name, quals, storage, funcspec, type*, init*, bitsize*]
 
-        typ = projectAST(ast.type, scope)
+        typ = projectAST(ast.type, s)
 
         if isinstance(ast.type, c_ast.TypeDecl) or isinstance(ast.type, c_ast.ArrayDecl):
-            if (scope == 0):
-                return node.GlobalVar(a2t(ast), ast.name, projectAST(ast.type, scope), projectAST(ast.init, scope))
+            if (s == 0):
+                return node.GlobalVar(a2t(ast), ast.name, projectAST(ast.type, s), projectAST(ast.init, s))
             else:
-                return node.LocalVar(a2t(ast), ast.name, projectAST(ast.type, scope), projectAST(ast.init, scope))
+                return node.LocalVar(a2t(ast), ast.name, projectAST(ast.type, s), projectAST(ast.init, s))
         else:
-            return projectAST(ast.type, scope)
+            return projectAST(ast.type, s)
 
     elif isinstance(ast, c_ast.DeclList): #TODO [decls**]
         pass
     elif isinstance(ast, c_ast.Default): #TODO [stmts**]
         pass
-    elif isinstance(ast, c_ast.DoWhile): #TODO [cond*, stmt*]
-        pass
+    elif isinstance(ast, c_ast.DoWhile): # [cond*, stmt*]
+        return node.DoWhile(a2t(ast), projectAST(ast.stmt, s), projectAST(ast.cond, s))
+
     elif isinstance(ast, c_ast.EllipsisParam): #TODO []
         pass
     elif isinstance(ast, c_ast.EmptyStatement): #TODO []
@@ -75,19 +119,21 @@ def projectAST(ast, scope = 0):
     elif isinstance(ast, c_ast.ExprList): #TODO [exprs**]
         pass
     elif isinstance(ast, c_ast.FileAST):
-        return node.Program(a2t(ast), [projectAST(e, scope) for e in ast.ext])
+        return node.Program(a2t(ast), [projectAST(e, s) for e in ast.ext])
 
-    elif isinstance(ast, c_ast.For): #TODO [init*, cond*, next*, stmt*]
-        pass
-    elif isinstance(ast, c_ast.FuncCall): #TODO [name*, args*]
-        pass
+    elif isinstance(ast, c_ast.For): # [init*, cond*, next*, stmt*]
+        return node.For(a2t(ast), projectAST(init, s), projectAST(cond, s), projectAST(next, s), projectAST(stmt, s))
+
+    elif isinstance(ast, c_ast.FuncCall): # [name*, args*]
+        return node.Funccall(a2t(ast), projectAST(ast.name, s), projectAST(ast.args, s))
+
     elif isinstance(ast, c_ast.FuncDecl): #XXX [args*, type*]
-        return {"args": projectAST(ast.args, scope) if ast.args is not None else [],
-                "type": projectAST(ast.type, scope)}
+        return {"args": projectAST(ast.args, s) if ast.args is not None else [],
+                "type": projectAST(ast.type, s)}
 
     elif isinstance(ast, c_ast.FuncDef): #XXX [args*, type*]
-        decl = projectAST(ast.decl, scope)
-        return node.Func(a2t(ast), decl['type'].name, decl['type'], decl['args'], projectAST(ast.body, scope))
+        decl = projectAST(ast.decl, s)
+        return node.Func(a2t(ast), decl['type'].name, decl['type'], decl['args'], projectAST(ast.body, s))
 
     elif isinstance(ast, c_ast.Goto): #TODO [name]
         pass
@@ -99,10 +145,15 @@ def projectAST(ast, scope = 0):
             return  m.Type(ast.names[0])
         g.r.addReport(m.Report('fatal', a2t(ast), f"program error while processing IdentifierType"))
 
-    elif isinstance(ast, c_ast.If): #TODO [cond*, iftrue*, iffalse*]
-        pass
+    elif isinstance(ast, c_ast.If): # [cond*, iftrue*, iffalse*]
+        if ast.iffalse is None:
+            return node.If(a2t(ast), projectAST(ast.cond, s), projectAST(ast.iftrue, s))
+        else:
+            return node.Ifelse(a2t(ast), projectAST(ast.cond, s), projectAST(ast.iftrue, s), projectAST(ast.iffalse, s))
+
     elif isinstance(ast, c_ast.InitList): # [exprs**]
-        return [projectAST(e, scope) for e in ast.exprs]
+        return [projectAST(e, s) for e in ast.exprs]
+
     elif isinstance(ast, c_ast.Label): #TODO [name, stmt*]
         pass
     elif isinstance(ast, c_ast.NamedInitializer): #TODO [name**, expr*]
@@ -110,14 +161,15 @@ def projectAST(ast, scope = 0):
     elif isinstance(ast, c_ast.ParamList): #TODO [params**]
         pass
     elif isinstance(ast, c_ast.PtrDecl):
-        return projectAST(ast.type, scope).addQuals(ast.quals).addRefcount(1)
+        return projectAST(ast.type, s).addQuals(ast.quals).addRefcount(1)
 
     elif isinstance(ast, c_ast.Raw): #TODO [type*, opc, arg, exprs**]
         pass
-    elif isinstance(ast, c_ast.Return): #TODO [expr*]
-        pass
+    elif isinstance(ast, c_ast.Return): # [expr*]
+        return node.Return(a2t(ast), projectAST(ast.expr, s))
+
     elif isinstance(ast, c_ast.Struct):
-        return node.Struct(a2t(ast), ast.name, [projectAST(e, scope) for e in ast.decls])
+        return node.Struct(a2t(ast), ast.name, [projectAST(e, s) for e in ast.decls])
 
     elif isinstance(ast, c_ast.StructRef): #TODO [name*, type, filed*]
         pass
@@ -126,18 +178,32 @@ def projectAST(ast, scope = 0):
     elif isinstance(ast, c_ast.TernaryOp): #TODO [cond*, ifture*, iffalse*]
         pass
     elif isinstance(ast, c_ast.TypeDecl):
-        return projectAST(ast.type, scope).addQuals(ast.quals).setName(ast.declname)
+        return projectAST(ast.type, s).addQuals(ast.quals).setName(ast.declname)
 
     elif isinstance(ast, c_ast.Typedef): #TODO [name, equals, storage, type*]
         pass
     elif isinstance(ast, c_ast.Typename): #TODO [name, quals, type*]
         pass
     elif isinstance(ast, c_ast.UnaryOp): #TODO [op, expr*]
-        pass
+        if ast.op == '!':
+            return node.Inv(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == '++':
+            return node.Pre_inc(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == '--':
+            return node.Pre_dec(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == 'p++':
+            return node.Post_inc(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == 'p--':
+            return node.Post_dec(a2t(ast), projectAST(ast.expr, s))
+        else:
+            g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported unary op '{ast.op}'"))
+            return
+
     elif isinstance(ast, c_ast.Union): #TODO [name, decls**]
         pass
-    elif isinstance(ast, c_ast.While): #TODO [cond*, stmt*]
-        pass
+    elif isinstance(ast, c_ast.While): # [cond*, stmt*]
+        return node.While(a2t(ast), projectAST(ast.cond, s), projectAST(ast.stmt, s))
+
     elif isinstance(ast, c_ast.Pragma): #TODO [string]
         pass
     else:
@@ -161,11 +227,11 @@ def makeAST(code):
         print(e)
         exit()
 
-    ast.show()
+    #ast.show()
 
     node = projectAST(ast)
 
-    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
+    #print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
 
     return node
 

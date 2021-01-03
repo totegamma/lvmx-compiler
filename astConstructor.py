@@ -117,7 +117,8 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.EnumeratorList): #TODO [enumerators**]
         pass
     elif isinstance(ast, c_ast.ExprList): #TODO [exprs**]
-        pass
+        return [projectAST(e, s) for e in ast.exprs]
+
     elif isinstance(ast, c_ast.FileAST):
         return node.Program(a2t(ast), [projectAST(e, s) for e in ast.ext])
 
@@ -125,7 +126,7 @@ def projectAST(ast, s = 0):
         return node.For(a2t(ast), projectAST(init, s), projectAST(cond, s), projectAST(next, s), projectAST(stmt, s))
 
     elif isinstance(ast, c_ast.FuncCall): # [name*, args*]
-        return node.Funccall(a2t(ast), projectAST(ast.name, s), projectAST(ast.args, s))
+        return node.Funccall(a2t(ast), ast.name.name, projectAST(ast.args, s))
 
     elif isinstance(ast, c_ast.FuncDecl): #XXX [args*, type*]
         return {"args": projectAST(ast.args, s) if ast.args is not None else [],
@@ -159,7 +160,13 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.NamedInitializer): #TODO [name**, expr*]
         pass
     elif isinstance(ast, c_ast.ParamList): #TODO [params**]
-        pass
+        #return [m.Symbol(, projectAST(e.type, s)) for e in ast.params]
+        tmp = []
+        for elem in ast.params:
+            typ = projectAST(elem.type, s)
+            tmp.append(m.Symbol(typ.name, typ))
+        return tmp
+
     elif isinstance(ast, c_ast.PtrDecl):
         return projectAST(ast.type, s).addQuals(ast.quals).addRefcount(1)
 
@@ -231,7 +238,7 @@ def makeAST(code):
 
     node = projectAST(ast)
 
-    #print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
+    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
 
     return node
 

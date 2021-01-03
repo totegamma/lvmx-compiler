@@ -715,7 +715,12 @@ class Symbol (AST):
 
     def gencode(self, env, opt):
 
-        var = env.variableLookup(self.symbolname)
+        try:
+            var = env.variableLookup(self.symbolname)
+        except m.SymbolNotFoundException as e:
+            g.r.addReport(m.Report('error', self.tok, f'{e} not found'))
+            return m.Inst()
+
         if opt.lr == 'r':
             if (result := self.assertOnlyPop1(env, opt)) is not None:
                 return result

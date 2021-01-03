@@ -4,6 +4,10 @@ import node
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
 
+
+class SymbolNotFoundException (Exception):
+    pass
+
 class BT (IntEnum):
     Void = auto()
     Any = auto()
@@ -60,6 +64,25 @@ class Type:
 
     def isArray(self):
         return self.length != 1
+
+    def isBaseType(self):
+        return isinstance(self.basetype, BT)
+
+    def isIndirect(self):
+        return self.refcount != 0
+
+    def isVoid(self):
+        return self.basetype == 'void'
+
+    def isAny(self):
+        return self.basetype == 'any'
+
+    def isInt(self):
+        return self.basetype == 'int'
+
+    def isFloat(self):
+        return self.basetype == 'float'
+
 
 
 class Types:
@@ -240,7 +263,7 @@ class Env:
         for elem in self.functions:
             if (elem.symbolname == name):
                 return elem
-        #glob.compileerrors += f"コンパイルエラー: 関数{name=}が見つかりません"
+        raise SymbolNotFoundException(f"function '{name=}'")
 
     def variableLookup(self, name):
         for scope in reversed(self.locals):
@@ -255,7 +278,7 @@ class Env:
         for elem in self.globals:
             if (elem.name == name):
                 return elem
-        #glob.compileerrors += f"コンパイルエラー: 変数{name=}が見つかりません"
+        raise SymbolNotFoundException(f"variable '{name=}'")
 
     def stringLookup(self, string):
         return self.strings[string]

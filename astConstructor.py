@@ -85,8 +85,10 @@ def projectAST(ast, s = 0):
         elif (ast.type == 'float'):
             return node.NumberF(a2t(ast), ast.value)
         elif (ast.type == 'char'):
-            return node.NumberI(a2t(ast), int.from_bytes(ast.value[0].encode('utf-32be'), byteorder='big'))
-        elif (ast.type == 'string'): #XXX
+            ast.value = ast.value.replace(r'\n', '\n') #TODO エスケープ文字処理関数を作る
+            return node.NumberI(a2t(ast), int.from_bytes(ast.value[1].encode('utf-32be'), byteorder='big'))
+        elif (ast.type == 'string'):
+            ast.value = ast.value.replace(r'\n', '\n') #TODO エスケープ文字処理関数を作る
             return node.String(a2t(ast), ast.value[1:-1])
         g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported constant type '{ast.type}' for value '{ast.value}'"))
 

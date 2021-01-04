@@ -192,7 +192,7 @@ def projectAST(ast, s = 0):
 
     elif isinstance(ast, c_ast.Struct): # [name, decls**]
         if ast.decls is None: # is type define
-            return m.Type(ast.name).setAsStruct()
+            return m.Type(ast.name).setHint('struct')
         else: # is Struct define
 
             tmp = []
@@ -264,7 +264,7 @@ def makeAST(code):
         print(e)
         exit()
 
-    ast.show()
+    #ast.show()
 
     node = projectAST(ast)
 

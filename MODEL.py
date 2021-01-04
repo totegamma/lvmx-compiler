@@ -28,11 +28,12 @@ class Type:
     def __init__(self, basetype = 'void'):
         self.basetype = basetype
         self.refcount = 0
-        self.length = 1
-        self.size = 1
+        self.length = 1 if basetype in ['int', 'float'] else 0
+        self.size = 1 if basetype in ['int', 'float'] else 0
         self.quals = []
-        self.fields = []
+        self.members = []
         self.name = None
+        self.hint = None
 
     def __str__(self):
         buff = self.basetype.name
@@ -55,6 +56,10 @@ class Type:
                 self.quals.append(elem)
         return self
 
+    def setHint(self, hint):
+        self.hint = hint
+        return self
+
     def setLength(self, length):
         self.length = length
         self.size = length #TODO
@@ -64,6 +69,10 @@ class Type:
         self.name = name
         return self
 
+    def addMember(self, member):
+        self.members.append(member)
+        self.size += member.typ.size
+
     def isResolved(self):
         return (self.basetype in BASETYPE) and isinstance(self.refcount, int) and isinstance(self.length, int)
 
@@ -71,11 +80,17 @@ class Type:
         if self.isResolved():
             return
 
+        if self.hint == 'struct':
+            typ = env.getStruct(self.basetype)
+            self.basetype = typ.basetype
+            self.size = typ.size
+            self.members = typ.members
+
         if not (self.basetype in BASETYPE):
             typ = env.getTypeInfo(self.basetype)
             self.basetype = typ.basetype
             self.size = typ.size
-            self.fields = typ.fields
+            self.members = typ.members
         elif not isinstance(self.refcount, int):
             self.refcount = self.refcount.eval()
         elif not isinstance(self.length, int):
@@ -104,7 +119,6 @@ class Type:
     def isFloat(self):
         return self.basetype == 'float'
 
-
     def isScalar(self):
         return (self.basetype == 'int' or self.basetype == 'float') and self.length == 1
 
@@ -118,7 +132,7 @@ class Type:
 
     def getField(self, env, name):
         offset = 0
-        for elem in self.fields:
+        for elem in self.members:
             elem.typ.resolve(env)
             if (elem.name == name):
                 return StructField(elem.typ, offset)
@@ -290,7 +304,6 @@ class Env:
 
     def addLocal(self, symbol):
         symbol.setRegion(VarRegion.LOCAL)
-        newid = self.localItr
         symbol.setID(self.localItr)
         self.localItr += symbol.typ.size
         self.scopeStack[-1].variables.append(symbol)
@@ -325,6 +338,15 @@ class Env:
 
     def getTypeInfo(self, name):
         return self.types[name]
+
+    def getStruct(self, name):
+        for scope in reversed(self.scopeStack):
+            if name in scope.structs:
+                return scope.structs[name]
+
+#           for elem in scope.structs:
+#               if (elem.name == name):
+#                   return elem
 
     def getFrameSize(self):
         return self.localItr

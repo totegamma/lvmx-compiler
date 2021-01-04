@@ -46,9 +46,9 @@ class AST (object):
             return a
 
         elif (a.isInt() and b.isInt()):
-            return m.Types(m.BT.Int)
+            return m.Type('int')
         elif (a.isFloat() and b.isFloat()):
-            return m.Types(m.BT.Float)
+            return m.Type('float')
         raise DeclTypeException(f"invalid operands to binary expression('{a}' and '{b}')")
 
 class DeclTypeException(Exception):
@@ -108,8 +108,8 @@ class Program (AST):
     def gencode(self, env, opt):
         for elem in self.body:
             dumps = elem.gencode(env, OPT(0))
-        env.addGlobal(m.Symbol("__MAGIC_RETADDR__", m.Types(m.BT.Void, 0, 1), 0))
-        env.addGlobal(m.Symbol("__MAGIC_RETFP__", m.Types(m.BT.Void, 0, 1), 0))
+        env.addStatic(m.Symbol("__MAGIC_RETADDR__", m.Type(), 0))
+        env.addStatic(m.Symbol("__MAGIC_RETFP__", m.Type(), 0))
         return env
 
 class GlobalVar (AST):
@@ -121,36 +121,57 @@ class GlobalVar (AST):
 
     def gencode(self, env, opt):
         self.typ.resolve(env)
-        size = self.typ.size
 
-        if (size == 1):
-            init = 0
-            if (self.body is not None):
+        # スカラーか配列かstructかenumが入ってくる
+
+        if self.typ.isScalar():
+            if self.body is None:
+                init = 0
+            else:
                 init = self.body.eval()
+        elif self.typ.isArray():
+            if self.body is None:
+                init = [0] * self.typ.length
+            else:
+                init = list(map(lambda a : a.eval(), self.body))
         else:
+            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while processing GlobalVar'))
 
-            if isinstance(self.body, String):
-                string = self.body.eval()
-                li = list(map(lambda a : int.from_bytes(a.encode('utf-32be'), byteorder='big'), string))
-                li.append(0)
-                self.body = li
-
-            if (size is None):
-                size = len(self.body)
-                self.typ.size = size
-
-            init = [0] * size
-
-            if (self.body is not None):
-                if (size != len(self.body)):
-                    g.r.addReport(m.Report('error', self.tok, 'Initializer list length is different from the declaration'))
-                    return m.Insts()
-                #init = list(map(lambda a : a.eval(), self.body))
-                init = self.body
-
-
-        env.addGlobal(m.Symbol(self.symbolname, self.typ, init))
+        env.addStatic(m.Symbol(self.symbolname, self.typ, init))
         return env
+
+
+#       self.typ.resolve(env)
+#       size = self.typ.size
+
+#       if (size == 1):
+#           init = 0
+#           if (self.body is not None):
+#               init = self.body.eval()
+#       else:
+
+#           if isinstance(self.body, String):
+#               string = self.body.eval()
+#               li = list(map(lambda a : int.from_bytes(a.encode('utf-32be'), byteorder='big'), string))
+#               li.append(0)
+#               self.body = li
+
+#           if (size is None):
+#               size = len(self.body)
+#               self.typ.size = size
+
+#           init = [0] * size
+
+#           if (self.body is not None):
+#               if (size != len(self.body)):
+#                   g.r.addReport(m.Report('error', self.tok, 'Initializer list length is different from the declaration'))
+#                   return m.Insts()
+#               #init = list(map(lambda a : a.eval(), self.body))
+#               init = self.body
+
+
+#       env.addStatic(m.Symbol(self.symbolname, self.typ, init))
+#       return env
 
 class Struct (AST):
     def __init__(self, tok, symbolname, members):
@@ -164,7 +185,7 @@ class Struct (AST):
             elem.typ.resolve(env)
             size += elem.typ.size
         env.addType(self.symbolname, m.Types(None, 0, size, self.members))
-        return m.Insts(m.Types(m.BT.Void), [])
+        return m.Insts(m.Type(), [])
 
 class Func (AST):
     def __init__(self, tok, symbolname, typ, args, body):
@@ -175,6 +196,7 @@ class Func (AST):
         self.body = body
 
     def gencode(self, env, opt):
+        self.typ.resolve(env)
 
         env.resetFrame()
 
@@ -185,7 +207,7 @@ class Func (AST):
 
         insts = []
         insts.append(m.Inst(opc.ENTRY, self.symbolname))
-        insts.append(m.Inst(opc.FRAME, env.getLocalCount()))
+        insts.append(m.Inst(opc.FRAME, env.getFrameSize()))
         insts.extend(codes)
         if (insts[-1].opc is not opc.RET):
             insts.append(m.Inst(opc.PUSH, 0))
@@ -203,14 +225,14 @@ class Block (AST):
         self.body = body
 
     def gencode(self, env, opt):
-        env.pushLocal()
+        env.pushScope()
 
         insts = []
         for elem in self.body:
             insts.extend(elem.gencode(env, OPT(0)).bytecodes)
 
-        env.popLocal()
-        return m.Insts(m.Types(m.BT.Void), insts)
+        env.popScope()
+        return m.Insts(m.Type(), insts)
 
 class LocalVar (AST):
     def __init__(self, tok, symbolname, typ, init = None):
@@ -220,8 +242,9 @@ class LocalVar (AST):
         self.init = init 
 
     def gencode(self, env, opt):
+        self.type.resolve(env)
 
-        self.typ.resolve(env)
+        #self.typ.resolve(env)
 
         if isinstance(self.init, String):
             string = self.init.eval()
@@ -249,7 +272,7 @@ class LocalVar (AST):
         var = env.addLocal(m.Symbol(self.symbolname, self.typ))
 
         if (self.init is None):
-            return m.Insts(m.Types(m.BT.Void), [])
+            return m.Insts(m.Type(), [])
 
         if (isinstance(self.init, list)):
 
@@ -265,11 +288,11 @@ class LocalVar (AST):
                 codes.append(m.Inst(opc.PUSH, i))
                 codes.append(m.Inst(opc.ADDI, self.nullarg))
                 codes.append(m.Inst(opc.STOREP, self.nullarg))
-            return m.Insts(m.Types(m.BT.Void), codes)
+            return m.Insts(m.Type(), codes)
         else:
             codes = self.init.gencode(env, OPT(1)).bytecodes
             codes.append(m.Inst(opc.STOREL, var.id))
-            return m.Insts(m.Types(m.BT.Void), codes)
+            return m.Insts(m.Type(), codes)
 
 class Indirect (AST):
     def __init__(self, tok, body):
@@ -331,7 +354,7 @@ class Return (AST): #TODO 自分の型とのチェック
     def gencode(self, env, opt):
         codes = self.body.gencode(env, OPT(1)).bytecodes
         codes.append(m.Inst(opc.RET, self.nullarg))
-        return m.Insts(m.Types(m.BT.Void), codes)
+        return m.Insts(m.Type(), codes)
 
 class Funccall (AST):
     def __init__(self, tok, name, args):
@@ -369,7 +392,7 @@ class If (AST):
         codes.append(m.Inst(opc.JIF0, l0))
         codes.extend(then)
         codes.append(m.Inst(opc.LABEL, l0))
-        return m.Insts(m.Types(m.BT.Void), codes)
+        return m.Insts(m.Type(), codes)
 
 class Ifelse (AST):
     def __init__(self, tok, cond, then, elst):
@@ -393,7 +416,7 @@ class Ifelse (AST):
         codes.append(m.Inst(opc.LABEL, l0))
         codes.extend(elst)
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types(m.BT.Void), codes)
+        return m.Insts(m.Type(), codes)
 
 class DoWhile (AST):
     def __init__(self, tok, body, cond):
@@ -413,7 +436,7 @@ class DoWhile (AST):
         codes.append(m.Inst(opc.INV, self.nullarg))
         codes.append(m.Inst(opc.JIF0, l0))
 
-        return m.Insts(m.Types(m.BT.Void), codes)
+        return m.Insts(m.Type(), codes)
 
 
 class While (AST):
@@ -435,7 +458,7 @@ class While (AST):
         codes.extend(body)
         codes.append(m.Inst(opc.JUMP, l0))
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types(m.BT.Void), codes)
+        return m.Insts(m.Type(), codes)
 
 
 
@@ -464,7 +487,7 @@ class For (AST):
         codes.extend(loop)
         codes.append(m.Inst(opc.JUMP, l0))
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types(m.BT.Void), codes)
+        return m.Insts(m.Type(), codes)
 
 # -- Lv.2 modules --
 
@@ -485,7 +508,7 @@ class Cast (AST):
         if body.typ.isInt():
             if self.targetType == 'float':
                 codes.append(m.Inst(opc.ITOF, self.nullarg))
-                return m.Insts(m.Types(m.BT.Float), codes)
+                return m.Insts(m.Type('float'), codes)
             else:
                 g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
                 return m.Insts()
@@ -493,7 +516,7 @@ class Cast (AST):
         elif body.typ.isFloat():
             if self.targetType == 'int':
                 codes.append(m.Inst(opc.FTOI, self.nullarg))
-                return m.Insts(m.Types(m.BT.Int), codes)
+                return m.Insts(m.Type('int'), codes)
             else:
                 g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
                 return m.Insts()
@@ -511,6 +534,7 @@ class Raw (AST):
         self.bodys = bodys
 
     def gencode(self, env, opt):
+        self.type.resolve(env)
         insts = []
         for elem in reversed(self.bodys):
             insts.extend(elem.gencode(env, OPT(1)).bytecodes)
@@ -530,7 +554,7 @@ class Assign (AST):
         right = self.right.gencode(env, OPT(1))
         left = self.left.gencode(env, OPT(1, 'l'))
 
-        typ = m.Types(m.BT.Void)
+        typ = m.Type()
 
         codes = right.bytecodes
         if opt.popc == 1:
@@ -575,7 +599,7 @@ class Pre_inc (AST):
         codes = right.bytecodes
         codes.append(m.Inst(opc.INC, self.nullarg))
 
-        typ = m.Types(m.BT.Void)
+        typ = m.Type()
 
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
@@ -600,7 +624,7 @@ class Pre_dec (AST):
         codes = right.bytecodes
         codes.append(m.Inst(opc.DEC, self.nullarg))
 
-        typ = m.Types(m.BT.Void)
+        typ = m.Type()
 
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
@@ -624,7 +648,7 @@ class Post_inc (AST):
         right = self.right.gencode(env, OPT(1, 'r'))
         codes = right.bytecodes
 
-        typ = m.Types(m.BT.Void)
+        typ = m.Type()
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
             typ = right.typ
@@ -649,7 +673,7 @@ class Post_dec (AST):
         right = self.right.gencode(env, OPT(1, 'r'))
         codes = right.bytecodes
 
-        typ = m.Types(m.BT.Void)
+        typ = m.Type()
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
             typ = right.typ
@@ -743,7 +767,7 @@ class Symbol (AST):
             return m.Insts(var.typ, codes)
         else:
             codes = [var.genStoreCode()]
-            return m.Insts(m.Types(m.BT.Void), codes)
+            return m.Insts(m.Type(), codes)
 
 class NumberI (AST):
     def __init__(self, tok, value):
@@ -759,7 +783,7 @@ class NumberI (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        return m.Insts(m.Types(m.BT.Int), [m.Inst(opc.PUSH, self.value)])
+        return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
@@ -778,7 +802,7 @@ class NumberF (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        return m.Insts(m.Types(m.BT.Float), [m.Inst(opc.PUSH, self.value)])
+        return m.Insts(m.Type('float'), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
@@ -796,7 +820,7 @@ class String (AST):
             return result
 
         strid = env.issueString(self.value)
-        return m.Insts(m.Types(m.BT.Int), [m.Inst(opc.PUSH, strid)])
+        return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, strid)])
 
     def eval(self):
         return self.value

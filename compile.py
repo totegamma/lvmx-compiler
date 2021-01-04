@@ -64,7 +64,7 @@ def dumpjson(code):
         elem.opc = elem.opc.name
 
     data = []
-    for elem in env.globals:
+    for elem in env.statics:
         if isinstance(elem, m.Symbol):
             if isinstance(elem.initvalue, list):
                 for value in elem.initvalue:

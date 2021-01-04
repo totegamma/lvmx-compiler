@@ -99,10 +99,17 @@ def projectAST(ast, s = 0):
         typ = projectAST(ast.type, s)
 
         if isinstance(ast.type, c_ast.TypeDecl) or isinstance(ast.type, c_ast.ArrayDecl):
+            init = projectAST(ast.init, s)
+            if isinstance(init, node.String): # 初期化がstirngだった場合、リストに展開
+                string = init.eval()
+                li = list(map(lambda a : node.NumberI(a2t(ast), int.from_bytes(a.encode('utf-32be'), byteorder='big')), string))
+                li.append(node.NumberI(a2t(ast), 0))
+                init = li
+
             if (s == 0):
-                return node.GlobalVar(a2t(ast), ast.name, projectAST(ast.type, s), projectAST(ast.init, s))
+                return node.GlobalVar(a2t(ast), ast.name, projectAST(ast.type, s), init)
             else:
-                return node.LocalVar(a2t(ast), ast.name, projectAST(ast.type, s), projectAST(ast.init, s))
+                return node.LocalVar(a2t(ast), ast.name, projectAST(ast.type, s), init)
         else:
             return projectAST(ast.type, s)
 
@@ -160,7 +167,7 @@ def projectAST(ast, s = 0):
             return node.Ifelse(a2t(ast), projectAST(ast.cond, s), projectAST(ast.iftrue, s), projectAST(ast.iffalse, s))
 
     elif isinstance(ast, c_ast.InitList): # [exprs**]
-        return [projectAST(e, s).eval() for e in ast.exprs] #XXX
+        return [projectAST(e, s) for e in ast.exprs] #XXX
 
     elif isinstance(ast, c_ast.Label): #TODO [name, stmt*]
         pass
@@ -257,7 +264,7 @@ def makeAST(code):
         print(e)
         exit()
 
-    #ast.show()
+    ast.show()
 
     node = projectAST(ast)
 

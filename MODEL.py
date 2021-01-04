@@ -5,15 +5,10 @@ from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
 
 
+BASETYPE = ['void', 'int', 'float', 'struct', 'enum']
+
 class SymbolNotFoundException (Exception):
     pass
-
-class BT (IntEnum):
-    Void = auto()
-    Any = auto()
-    Int = auto()
-    Float = auto()
-
 
 class FuncDecl:
     def __init__(self, name):
@@ -30,7 +25,7 @@ class FuncDecl:
         return self
 
 class Type:
-    def __init__(self, basetype):
+    def __init__(self, basetype = 'void'):
         self.basetype = basetype
         self.refcount = 0
         self.length = 1
@@ -38,8 +33,17 @@ class Type:
         self.quals = []
         self.fields = []
         self.name = None
-        self.isStruct = False
-        self.isEnum = False
+
+    def __str__(self):
+        buff = self.basetype.name
+        buff += ' '
+        buff += '*' * self.refcount
+        if (self.isArray()):
+            buff += '['
+            buff += str(self.size)
+            buff += ']'
+
+        return buff
 
     def addRefcount(self, plus):
         self.refcount += plus
@@ -60,19 +64,24 @@ class Type:
         self.name = name
         return self
 
-    def setAsStruct(self):
-        self.isStruct = True
-        return self
+    def isResolved(self):
+        return (self.basetype in BASETYPE) and isinstance(self.refcount, int) and isinstance(self.length, int)
 
     def resolve(self, env):
-        if (self.basetype == 'int' or self.basetype == 'float'):
-            if isinstance(self.size, node.AST):
-                self.size = self.size.eval()
-        else:
-            typ = env.resolveType(self.basetype)
+        if self.isResolved():
+            return
+
+        if not (self.basetype in BASETYPE):
+            typ = env.getTypeInfo(self.basetype)
             self.basetype = typ.basetype
             self.size = typ.size
             self.fields = typ.fields
+        elif not isinstance(self.refcount, int):
+            self.refcount = self.refcount.eval()
+        elif not isinstance(self.length, int):
+            self.length = self.length.eval()
+            self.size = self.length #XXX
+            #env.getTypeInfo(self.basetype)
 
     def isArray(self):
         return self.length != 1
@@ -95,73 +104,16 @@ class Type:
     def isFloat(self):
         return self.basetype == 'float'
 
-    def getField(self, env, name):
-        offset = 0
-        for elem in self.fields:
-            elem.typ.resolve(env)
-            if (elem.name == name):
-                return StructField(elem.typ, offset)
-            offset += elem.typ.size
 
-        return None
-
-
-
-class Types:
-    def __init__(self, basetype, refcount = 0, size = 1, fields = []):
-        self.basetype = basetype
-        self.refcount = refcount
-        self.size = size
-        self.fields = fields
-
-    def __str__(self):
-        buff = self.basetype.name
-        buff += ' '
-        buff += '*' * self.refcount
-        if (self.isArray()):
-            buff += '['
-            buff += str(self.size)
-            buff += ']'
-
-        return buff
-
-    def convertToArray(self, size):
-        self.size = size
-        return self
-
-    def isBaseType(self):
-        return isinstance(self.basetype, BT)
-
-    def isIndirect(self):
-        return self.refcount != 0
+    def isScalar(self):
+        return (self.basetype == 'int' or self.basetype == 'float') and self.length == 1
 
     def isArray(self):
-        return self.size != 1
+        return self.length > 1
 
-    def isVoid(self):
-        return self.basetype == BT.Void
-
-    def isAny(self):
-        return self.basetype == BT.Any
-
-    def isInt(self):
-        return self.basetype == BT.Int
-
-    def isFloat(self):
-        return self.basetype == BT.Float
-
-    def addRefcount(self, delta):
-        self.refcount += delta
-
-    def resolve(self, env):
-        if isinstance(self.basetype, BT):
-            if isinstance(self.size, node.AST):
-                self.size = self.size.eval()
-        else:
-            typ = env.resolveType(self.basetype)
-            self.basetype = typ.basetype
-            self.size = typ.size
-            self.fields = typ.fields
+# isStruct
+# isEnum
+# isArray
 
 
     def getField(self, env, name):
@@ -173,6 +125,7 @@ class Types:
             offset += elem.typ.size
 
         return None
+
 
 class StructField:
     def __init__ (self, typ, offset):
@@ -219,7 +172,7 @@ class Inst:
         return f'{self.opc.name} {self.arg}'
 
 class Insts:
-    def __init__(self, typ = BT.Void, bytecodes = []):
+    def __init__(self, typ = Type(), bytecodes = []):
         self.typ = typ
         self.bytecodes = bytecodes
 
@@ -268,18 +221,28 @@ class Symbol:
         else:
             print("PROGRAM ERROR GENLOADCODE")
 
+class scopedEnv:
+    def __init__(self):
+        self.variables = []
+        self.structs = {}
+        self.enums = {}
+        self.enumMembers = {}
+        self.types = {}
+
 class Env:
     def __init__(self):
         self.functions = []
-        self.strings = {}
-        self.globals = []
-        self.globalcount = 0
-        self.args = []
-        self.locals = []
-        self.localcount = 0
         self.labelitr = 0
-        self.types = {}
-        self.reports = []
+
+        self.statics = []
+        self.strings = [] # string重複時にIDを読み出すためだけに使う
+        self.staticItr = 0
+        self.scopeStack = [scopedEnv()]
+
+        self.args = []
+        self.argItr = 0
+        self.localItr = 0
+
 
     def functionLookup(self, name):
         for elem in self.functions:
@@ -288,8 +251,8 @@ class Env:
         raise SymbolNotFoundException(f"function '{name=}'")
 
     def variableLookup(self, name):
-        for scope in reversed(self.locals):
-            for elem in scope:
+        for scope in reversed(self.scopeStack):
+            for elem in scope.variables:
                 if (elem.name == name):
                     return elem
 
@@ -302,58 +265,46 @@ class Env:
                 return elem
         raise SymbolNotFoundException(f"variable '{name=}'")
 
-    def stringLookup(self, string):
-        return self.strings[string]
-
     def issueString(self, string):
         if (string not in self.strings):
-            self.strings[string] = self.globalcount
-            self.globals.append(string)
-            self.globalcount += len(string) + 1
+            self.strings[string] = self.staticItr
+            self.statics.append(string)
+            self.staticItr += len(string) + 1
 
         return self.strings[string]
 
     def addFunction(self, function):
         self.functions.append(function)
 
-    def addGlobal(self, symbol):
+    def addStatic(self, symbol):
         symbol.setRegion(VarRegion.GLOBAL)
-        symbol.setID(self.globalcount)
-        self.globalcount += symbol.typ.size
-        self.globals.append(symbol)
+        symbol.setID(self.staticItr)
+        self.staticItr += symbol.typ.size
+        self.statics.append(symbol)
 
     def addArg(self, symbol):
         symbol.setRegion(VarRegion.ARGUMENT)
-        symbol.setID(len(self.args))
+        symbol.setID(self.argItr)
+        self.argItr += symbol.typ.size
         self.args.append(symbol)
 
     def addLocal(self, symbol):
         symbol.setRegion(VarRegion.LOCAL)
-        newid = self.localcount
-        symbol.setID(newid)
-        self.localcount += symbol.typ.size
-        self.locals[-1].append(symbol)
+        newid = self.localItr
+        symbol.setID(self.localItr)
+        self.localItr += symbol.typ.size
+        self.scopeStack[-1].variables.append(symbol)
         return symbol
 
-    def pushLocal(self):
-        self.locals.append([])
+    def pushScope(self):
+        self.scopeStack.append(scopedEnv())
 
-    def popLocal(self):
-        self.locals.pop()
+    def popScope(self):
+        self.scopeStack.pop()
 
     def resetFrame(self):
-        self.localcount = 0
+        self.localItr = 0
         self.args.clear()
-        self.locals.clear()
-
-    def getGlobalCount(self):
-        return len(self.globals)
-
-    def getArgCount(self):
-        return len(self.args)
-
-    def getLocalCount(self):
-        return self.localcount
 
     def issueLabel(self):
         newlabel = self.labelitr
@@ -361,10 +312,22 @@ class Env:
         return newlabel
 
     def addType(self, name, typ): # TODO Type Name X is already exists!
-        self.types[name] = typ
+        self.scopeStack[-1].types[name] = typ
 
-    def resolveType(self, name):
+    def addStruct(self, name, typ):
+        self.scopeStack[-1].structs[name] = typ
+
+    def addEnum(self, name, typ):
+        self.scopeStack[-1].enums[name] = typ
+
+    def addEnumMember(self, name, value):
+        self.scopeStack[-1].enumMembers[name] = value
+
+    def getTypeInfo(self, name):
         return self.types[name]
+
+    def getFrameSize(self):
+        return self.localItr
 
 class TokenInfo:
     def __init__(self, lineno, colno, filename = "input.c"):

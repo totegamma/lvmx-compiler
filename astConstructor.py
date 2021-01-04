@@ -258,7 +258,8 @@ def a2t(ast):
 
 def makeAST(code):
     try:
-        parser = CParser(lex_optimize=False, yacc_optimize=False)
+        #parser = CParser(lex_optimize=False, yacc_optimize=False)
+        parser = CParser()
         ast = parser.parse(code, filename='<none>')
     except Exception as e:
         print(e)
@@ -268,7 +269,7 @@ def makeAST(code):
 
     node = projectAST(ast)
 
-    #print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
+    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
 
     return node
 

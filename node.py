@@ -140,39 +140,6 @@ class GlobalVar (AST):
         env.addStatic(m.Symbol(self.symbolname, self.typ, init))
         return env
 
-
-#       self.typ.resolve(env)
-#       size = self.typ.size
-
-#       if (size == 1):
-#           init = 0
-#           if (self.body is not None):
-#               init = self.body.eval()
-#       else:
-
-#           if isinstance(self.body, String):
-#               string = self.body.eval()
-#               li = list(map(lambda a : int.from_bytes(a.encode('utf-32be'), byteorder='big'), string))
-#               li.append(0)
-#               self.body = li
-
-#           if (size is None):
-#               size = len(self.body)
-#               self.typ.size = size
-
-#           init = [0] * size
-
-#           if (self.body is not None):
-#               if (size != len(self.body)):
-#                   g.r.addReport(m.Report('error', self.tok, 'Initializer list length is different from the declaration'))
-#                   return m.Insts()
-#               #init = list(map(lambda a : a.eval(), self.body))
-#               init = self.body
-
-
-#       env.addStatic(m.Symbol(self.symbolname, self.typ, init))
-#       return env
-
 class Struct (AST):
     def __init__(self, tok, symbolname, members):
         self.tok = tok
@@ -247,75 +214,24 @@ class LocalVar (AST):
 
         # スカラーか配列かstructかenumが入ってくる
 
-#       if self.typ.isScalar():
-#           if self.body is None:
-#               init = 0
-#           else:
-#               init = self.body.eval()
-#       elif self.typ.isArray():
-#           if self.body is None:
-#               init = [0] * self.typ.length
-#           else:
-#               init = list(map(lambda a : a.eval(), self.body))
-#       else:
-#           g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while processing GlobalVar'))
-
         var = env.addLocal(m.Symbol(self.symbolname, self.typ))
-        return m.Insts(m.Type(), [])
-#       return env
 
+        if self.init is None:
+            return m.Insts()
+        elif isinstance(self.init, list):
+            codes = []
+            for i, elem in enumerate(self.init):
+                codes.extend(elem.gencode(env, OPT(1)).bytecodes)
+                codes.append(var.genAddrCode())
+                codes.append(m.Inst(opc.PUSH, i))
+                codes.append(m.Inst(opc.ADDI, self.nullarg))
+                codes.append(m.Inst(opc.STOREP, self.nullarg))
+            return m.Insts(m.Type(), codes)
+        else:
+            codes = self.init.gencode(env, OPT(1)).bytecodes
+            codes.append(m.Inst(opc.STOREL, var.id))
 
-#       self.type.resolve(env)
-
-#       #self.typ.resolve(env)
-
-#       if isinstance(self.init, String):
-#           string = self.init.eval()
-#           li = list(map(lambda a : int.from_bytes(a.encode('utf-32be'), byteorder='big'), string))
-#           li.append(0)
-#           self.init = li
-
-#       if (self.typ.size is None):
-#           if (self.init is None):
-#               size = 1
-#           else:
-#               size = len(self.init)
-#               self.typ.size = size
-#       elif (isinstance(self.typ.size, AST)):
-#           size = self.typ.size.eval()
-#       elif (type(self.typ.size) == int or float): # XXX
-#           size = self.typ.size
-#       else:
-#           g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'LocalVar\''))
-#           return m.Insts()
-
-#       if (size > 1):
-#           self.typ.isarray = 1
-
-#       var = env.addLocal(m.Symbol(self.symbolname, self.typ))
-
-#       if (self.init is None):
-#           return m.Insts(m.Type(), [])
-
-#       if (isinstance(self.init, list)):
-
-#           if (size != len(self.init)):
-#               g.r.addReport(m.Report('error', self.tok, 'Initializer list length is different from the declaration'))
-#               return m.Insts()
-
-#           codes = []
-#           for i, elem in enumerate(self.init):
-#               #codes.extend(elem.gencode(env, OPT(1)).bytecodes)
-#               codes.append(m.Inst(opc.PUSH, elem))
-#               codes.append(var.genAddrCode())
-#               codes.append(m.Inst(opc.PUSH, i))
-#               codes.append(m.Inst(opc.ADDI, self.nullarg))
-#               codes.append(m.Inst(opc.STOREP, self.nullarg))
-#           return m.Insts(m.Type(), codes)
-#       else:
-#           codes = self.init.gencode(env, OPT(1)).bytecodes
-#           codes.append(m.Inst(opc.STOREL, var.id))
-#           return m.Insts(m.Type(), codes)
+        return m.Insts(m.Type(), codes)
 
 class Indirect (AST):
     def __init__(self, tok, body):

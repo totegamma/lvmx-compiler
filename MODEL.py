@@ -125,6 +125,9 @@ class Type:
     def isArray(self):
         return self.length > 1
 
+    def isStruct(self):
+        return self.basetype == 'struct' or self.hint == 'struct'
+
 # isStruct
 # isEnum
 # isArray
@@ -213,7 +216,7 @@ class Symbol:
             print("PROGRAM ERROR GENSTORECODE")
 
     def genLoadCode(self):
-        if (self.typ.isArray()):
+        if (self.typ.isArray() or self.typ.isStruct()):
             return self.genAddrCode()
 
         if (self.region == VarRegion.GLOBAL):

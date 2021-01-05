@@ -76,7 +76,12 @@ class Type:
     def isResolved(self):
         return (self.basetype in BASETYPE) and isinstance(self.refcount, int) and isinstance(self.length, int)
 
-    def resolve(self, env):
+    def resolve(self, env, length=None):
+
+        if length is not None:
+            self.length = length
+            self.size = length #XXX
+
         if self.isResolved():
             return
 
@@ -91,8 +96,10 @@ class Type:
             self.basetype = typ.basetype
             self.size = typ.size
             self.members = typ.members
+
         elif not isinstance(self.refcount, int):
             self.refcount = self.refcount.eval()
+
         elif not isinstance(self.length, int):
             self.length = self.length.eval()
             self.size = self.length #XXX
@@ -252,7 +259,7 @@ class Env:
         self.labelitr = 0
 
         self.statics = []
-        self.strings = [] # string重複時にIDを読み出すためだけに使う
+        self.strings = {} # string重複時にIDを読み出すためだけに使う
         self.staticItr = 0
         self.scopeStack = [scopedEnv()]
 
@@ -277,7 +284,7 @@ class Env:
             if (elem.name == name):
                 return elem
 
-        for elem in self.globals:
+        for elem in self.statics:
             if (elem.name == name):
                 return elem
         raise SymbolNotFoundException(f"variable '{name=}'")

@@ -120,7 +120,10 @@ class GlobalVar (AST):
         self.body = body
 
     def gencode(self, env, opt):
-        self.typ.resolve(env)
+        if isinstance(self.body, list):
+            self.typ.resolve(env, length=len(self.body))
+        else:
+            self.typ.resolve(env)
 
         # スカラーか配列かstructかenumが入ってくる
 
@@ -135,7 +138,8 @@ class GlobalVar (AST):
             else:
                 init = list(map(lambda a : a.eval(), self.body))
         else:
-            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while processing GlobalVar'))
+            init = 0
+            #g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while processing GlobalVar'))
 
         env.addStatic(m.Symbol(self.symbolname, self.typ, init))
         return env
@@ -210,7 +214,10 @@ class LocalVar (AST):
 
     def gencode(self, env, opt):
 
-        self.typ.resolve(env)
+        if isinstance(self.init, list):
+            self.typ.resolve(env, length=len(self.init))
+        else:
+            self.typ.resolve(env)
 
         # スカラーか配列かstructかenumが入ってくる
 
@@ -473,7 +480,7 @@ class Raw (AST):
         self.bodys = bodys
 
     def gencode(self, env, opt):
-        self.type.resolve(env)
+        self.typ.resolve(env)
         insts = []
         for elem in reversed(self.bodys):
             insts.extend(elem.gencode(env, OPT(1)).bytecodes)

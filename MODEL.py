@@ -327,6 +327,7 @@ class Env:
 
     def resetFrame(self):
         self.localItr = 0
+        self.argItr = 0
         self.args.clear()
 
     def issueLabel(self):

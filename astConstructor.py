@@ -185,7 +185,7 @@ def projectAST(ast, s = 0):
         return projectAST(ast.type, s).addQuals(ast.quals).addRefcount(1)
 
     elif isinstance(ast, c_ast.Raw): # [type*, opc, arg, exprs**]
-        return node.Raw(a2t(ast), projectAST(ast.type, s), ast.opc[1:-1], ast.arg.value, [projectAST(e, s) for e in ast.exprs])
+        return node.Raw(a2t(ast), projectAST(ast.type, s), ast.opc[1:-1], int(ast.arg.value), [projectAST(e, s) for e in ast.exprs])
 
     elif isinstance(ast, c_ast.Return): # [expr*]
         return node.Return(a2t(ast), projectAST(ast.expr, s))

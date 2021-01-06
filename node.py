@@ -5,9 +5,11 @@ from mnemonic import mnemonic as opc
 # -= :: TOP MODELS :: =-
 
 class OPT:
-    def __init__(self, popc = 0, lr = 'r'):
+    def __init__(self, popc = 0, lr = 'r', bp = None, cp = None):
         self.popc = popc
         self.lr = lr
+        self.bp = bp
+        self.cp = cp
 
 class AST (object):
 
@@ -452,6 +454,65 @@ class For (AST):
         codes.append(m.Inst(opc.JUMP, l0))
         codes.append(m.Inst(opc.LABEL, l1))
         return m.Insts(m.Type(), codes)
+
+
+class Switch(AST):
+    def __init__(self, tok, cond, cases):
+        self.tok = tok
+        self.cond = cond
+        self.cases = cases
+
+    def gencode(self, env, opt):
+
+        tableCodes = self.cond.gencode(env, OPT(1)).bytecodes
+        bodyCodes = []
+        end = env.issueLabel()
+        default = None
+
+        for elem in self.cases:
+            label = env.issueLabel()
+            if elem[0] == 'default':
+                default = label
+                bodyCodes.append(m.Inst(opc.LABEL, label))
+                for e in elem[1]:
+                    bodyCodes.extend(e.gencode(env, OPT(1, bp = end)).bytecodes)
+                #bodyCodes.extend([e.gencode(env, OPT(1, bp = end)).bytecodes for e in elem[1]])
+            else:
+                tableCodes.append(m.Inst(opc.DUP, 1))
+                tableCodes.extend(elem[0].gencode(env, OPT(1)).bytecodes)
+                tableCodes.append(m.Inst(opc.NEQI, self.nullarg)) #TODO Int以外にも対応させる
+                tableCodes.append(m.Inst(opc.JIF0, label))
+
+                bodyCodes.append(m.Inst(opc.LABEL, label))
+#                bodyCodes.extend([e.gencode(env, OPT(1, bp = end)).bytecodes for e in elem[1]])
+                for e in elem[1]:
+                    bodyCodes.extend(e.gencode(env, OPT(1, bp = end)).bytecodes)
+
+        if default is not None:
+            tableCodes.append(m.Inst(opc.JUMP, default))
+        else:
+            tableCodes.append(m.Inst(opc.JUMP, end))
+
+        bodyCodes.append(m.Inst(opc.LABEL, end))
+        bodyCodes.append(m.Inst(opc.POP, self.nullarg))
+
+        codes = tableCodes
+        codes.extend(bodyCodes)
+
+        return m.Insts(m.Type(), codes)
+
+class Break(AST):
+    def __init__(self, tok):
+        self.tok = tok
+
+    def gencode(self, env, opt):
+        if opt.bp is None:
+            g.r.addReport(m.Report('error', self.tok, 'break in unbreakable point'))
+            return m.Insts()
+        else:
+            return m.Insts(m.Type(), [m.Inst(opc.JUMP, opt.bp)])
+
+
 
 # -- Lv.2 modules --
 

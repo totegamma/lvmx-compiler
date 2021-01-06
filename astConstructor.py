@@ -68,9 +68,11 @@ def projectAST(ast, s = 0):
 
 
     elif isinstance(ast, c_ast.Break): #TODO []
-        pass
-    elif isinstance(ast, c_ast.Case): #TODO [expr*, stmts**]
-        pass
+        return node.Break(a2t(ast))
+
+    elif isinstance(ast, c_ast.Case): # [expr*, stmts**]
+        return [projectAST(ast.expr, s), [projectAST(e, s+1) for e in ast.stmts]]
+
     elif isinstance(ast, c_ast.Cast): # [to_type*, expr*]
         return node.Cast(a2t(ast), projectAST(ast.to_type, s), projectAST(ast.expr, s))
 
@@ -115,8 +117,9 @@ def projectAST(ast, s = 0):
 
     elif isinstance(ast, c_ast.DeclList): #TODO [decls**]
         pass
-    elif isinstance(ast, c_ast.Default): #TODO [stmts**]
-        pass
+    elif isinstance(ast, c_ast.Default): # [stmts**]
+        return ['default', [projectAST(e, s+1) for e in ast.stmts]]
+
     elif isinstance(ast, c_ast.DoWhile): # [cond*, stmt*]
         return node.DoWhile(a2t(ast), projectAST(ast.stmt, s), projectAST(ast.cond, s))
 
@@ -216,8 +219,9 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.StructRef): #TODO [name*, type, filed*] type unused
         return node.Indirect(a2t(ast), node.FieldAccess(a2t(ast), projectAST(ast.name, s), ast.field.name))
 
-    elif isinstance(ast, c_ast.Switch): #TODO [cond*, stmt*]
-        pass
+    elif isinstance(ast, c_ast.Switch): # [cond*, stmt*]
+        return node.Switch(a2t(ast), projectAST(ast.cond, s), [projectAST(e, s+1) for e in ast.stmt.block_items])
+
     elif isinstance(ast, c_ast.TernaryOp): #TODO [cond*, ifture*, iffalse*]
         pass
     elif isinstance(ast, c_ast.TypeDecl):

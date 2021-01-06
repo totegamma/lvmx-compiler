@@ -66,8 +66,7 @@ def projectAST(ast, s = 0):
             g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported binary op '{ast.op}'"))
             return
 
-
-    elif isinstance(ast, c_ast.Break): #TODO []
+    elif isinstance(ast, c_ast.Break): # []
         return node.Break(a2t(ast))
 
     elif isinstance(ast, c_ast.Case): # [expr*, stmts**]
@@ -94,9 +93,10 @@ def projectAST(ast, s = 0):
             return node.String(a2t(ast), ast.value[1:-1])
         g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported constant type '{ast.type}' for value '{ast.value}'"))
 
-    elif isinstance(ast, c_ast.Continue): #TODO []
-        pass
-    elif isinstance(ast, c_ast.Decl): #TODO [name, quals, storage, funcspec, type*, init*, bitsize*]
+    elif isinstance(ast, c_ast.Continue): # []
+        return node.Continue(a2t(ast))
+
+    elif isinstance(ast, c_ast.Decl): # [name, quals, storage, funcspec, type*, init*, bitsize*]
 
         typ = projectAST(ast.type, s)
 
@@ -127,13 +127,13 @@ def projectAST(ast, s = 0):
         pass
     elif isinstance(ast, c_ast.EmptyStatement): #TODO []
         pass
-    elif isinstance(ast, c_ast.Enum): #TODO [name, values*]
+    elif isinstance(ast, c_ast.Enum): # [name, values*]
         if ast.values is None: # is type define
             return m.Type(ast.name).setHint('enum')
         else: # is enum define
             return node.Enum(a2t(ast), ast.name, projectAST(ast.values, s))
 
-    elif isinstance(ast, c_ast.Enumerator): #TODO [name, value*]
+    elif isinstance(ast, c_ast.Enumerator): # [name, value*]
         if ast.value is None:
             return [ast.name, None]
         else:
@@ -164,8 +164,9 @@ def projectAST(ast, s = 0):
         decl = projectAST(ast.decl, s)
         return node.Func(a2t(ast), decl['type'].name, decl['type'], decl['args'], projectAST(ast.body, s))
 
-    elif isinstance(ast, c_ast.Goto): #TODO [name]
-        pass
+    elif isinstance(ast, c_ast.Goto): # [name]
+        return node.Goto(a2t(ast), ast.name)
+
     elif isinstance(ast, c_ast.ID): # [name]
         return node.Symbol(a2t(ast), ast.name)
 
@@ -183,12 +184,12 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.InitList): # [exprs**]
         return [projectAST(e, s) for e in ast.exprs] #XXX
 
-    elif isinstance(ast, c_ast.Label): #TODO [name, stmt*]
-        pass
+    elif isinstance(ast, c_ast.Label): # [name, stmt*]
+        return node.Label(a2t(ast), ast.name, projectAST(ast.stmt))
+
     elif isinstance(ast, c_ast.NamedInitializer): #TODO [name**, expr*]
         pass
-    elif isinstance(ast, c_ast.ParamList): #TODO [params**]
-        #return [m.Symbol(, projectAST(e.type, s)) for e in ast.params]
+    elif isinstance(ast, c_ast.ParamList): # [params**]
         tmp = []
         for elem in ast.params:
             typ = projectAST(elem.type, s)

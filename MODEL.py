@@ -274,6 +274,8 @@ class Env:
         self.argItr = 0
         self.localItr = 0
 
+        self.currentFuncName = '__DEFAULT'
+
 
     def functionLookup(self, name):
         for elem in self.functions:
@@ -339,10 +341,11 @@ class Env:
     def popScope(self):
         self.scopeStack.pop()
 
-    def resetFrame(self):
+    def resetFrame(self, funcname):
         self.localItr = 0
         self.argItr = 0
         self.args.clear()
+        currentFuncName = funcname
 
     def issueLabel(self):
         newlabel = self.labelitr

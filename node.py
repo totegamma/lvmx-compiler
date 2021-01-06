@@ -189,7 +189,7 @@ class Func (AST):
     def gencode(self, env, opt):
         self.typ.resolve(env)
 
-        env.resetFrame()
+        env.resetFrame(self.symbolname)
 
         for elem in self.args:
             env.addArg(elem)
@@ -456,7 +456,7 @@ class For (AST):
         return m.Insts(m.Type(), codes)
 
 
-class Switch(AST):
+class Switch (AST):
     def __init__(self, tok, cond, cases):
         self.tok = tok
         self.cond = cond
@@ -501,7 +501,7 @@ class Switch(AST):
 
         return m.Insts(m.Type(), codes)
 
-class Break(AST):
+class Break (AST):
     def __init__(self, tok):
         self.tok = tok
 
@@ -512,6 +512,40 @@ class Break(AST):
         else:
             return m.Insts(m.Type(), [m.Inst(opc.JUMP, opt.bp)])
 
+class Continue (AST):
+    def __init__(self, tok):
+        self.tok = tok
+
+    def gencode(self, env, opt):
+        if opt.cp is None:
+            g.r.addReport(m.Report('error', self.tok, 'to continue, you need extra gem! (you can\'t continue here.)'))
+            return m.Insts()
+        else:
+            return m.Insts(m.Type(), [m.Inst(opc.JUMP, opt.cp)])
+
+class Label (AST):
+    def __init__(self, tok, name, expr):
+        self.tok = tok
+        self.name = name
+        self.expr = expr
+
+    def gencode(self, env, opt):
+        label = env.currentFuncName + self.name
+        expr = self.expr.gencode(env, OPT(0))
+
+        codes = [m.Inst(opc.LABEL, label)]
+        codes.extend(expr.bytecodes)
+
+        return m.Insts(expr.typ, codes)
+
+class Goto (AST):
+    def __init__(self, tok, name):
+        self.tok = tok
+        self.name = name
+
+    def gencode(self, env, opt):
+        label = env.currentFuncName + self.name
+        return m.Insts(m.Type(), [m.Inst(opc.JUMP, label)])
 
 
 # -- Lv.2 modules --

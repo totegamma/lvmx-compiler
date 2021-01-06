@@ -90,6 +90,13 @@ class Type:
             self.basetype = typ.basetype
             self.size = typ.size
             self.members = typ.members
+            return
+
+        elif self.hint == 'enum':
+            self.baestype = 'int'
+            self.size = 1
+            self.length = 1
+            return
 
         if not (self.basetype in BASETYPE):
             typ = env.getTypeInfo(self.basetype)
@@ -249,7 +256,7 @@ class scopedEnv:
     def __init__(self):
         self.variables = []
         self.structs = {}
-        self.enums = {}
+        self.enums = []
         self.enumMembers = {}
         self.types = {}
 
@@ -288,6 +295,13 @@ class Env:
             if (elem.name == name):
                 return elem
         raise SymbolNotFoundException(f"variable '{name=}'")
+
+    def enumLookup(self, name):
+        for scope in reversed(self.scopeStack):
+            if name in scope.enumMembers:
+                return scope.enumMembers[name]
+        raise SymbolNotFoundException(f"variable '{name=}'")
+
 
     def issueString(self, string):
         if (string not in self.strings):
@@ -341,8 +355,8 @@ class Env:
     def addStruct(self, name, typ):
         self.scopeStack[-1].structs[name] = typ
 
-    def addEnum(self, name, typ):
-        self.scopeStack[-1].enums[name] = typ
+    def addEnum(self, name):
+        self.scopeStack[-1].enums.append(name)
 
     def addEnumMember(self, name, value):
         self.scopeStack[-1].enumMembers[name] = value

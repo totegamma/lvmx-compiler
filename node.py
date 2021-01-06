@@ -158,6 +158,24 @@ class Struct (AST):
         env.addStruct(self.symbolname, typ)
         return m.Insts(m.Type(), [])
 
+class Enum (AST):
+    def __init__(self, tok, symbolname, members):
+        self.tok = tok
+        self.symbolname = symbolname
+        self.members = members
+
+    def gencode(self, env, opt):
+        enumitr = 0
+        for elem in self.members:
+            if elem[1] is None:
+                env.addEnumMember(elem[0], enumitr)
+                enumitr += 1
+            else:
+                env.addEnumMember(elem[0], elem[1])
+                enumitr = elem[1]
+        env.addEnum(self.symbolname)
+        return m.Insts(m.Type(), [])
+
 class Func (AST):
     def __init__(self, tok, symbolname, typ, args, body):
         self.tok = tok
@@ -703,8 +721,20 @@ class Symbol (AST):
         try:
             var = env.variableLookup(self.symbolname)
         except m.SymbolNotFoundException as e:
-            g.r.addReport(m.Report('error', self.tok, f'{e} not found'))
-            return m.Inst()
+
+            # 変数が見つからなかったら、Enumとして解決を試みる
+            try:
+                value = env.enumLookup(self.symbolname)
+            except m.SymbolNotFoundException as e:
+                g.r.addReport(m.Report('error', self.tok, f'{e} not found'))
+                return m.Inst()
+
+            if (result := self.assertOnlyRValue(env, opt)) is not None:
+                return result
+            if (result := self.assertOnlyPop1(env, opt)) is not None:
+                return result
+
+            return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, value)])
 
         if opt.lr == 'r':
             if (result := self.assertOnlyPop1(env, opt)) is not None:

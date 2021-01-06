@@ -125,12 +125,23 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.EmptyStatement): #TODO []
         pass
     elif isinstance(ast, c_ast.Enum): #TODO [name, values*]
-        pass
+        if ast.values is None: # is type define
+            return m.Type(ast.name).setHint('enum')
+        else: # is enum define
+            return node.Enum(a2t(ast), ast.name, projectAST(ast.values, s))
+
     elif isinstance(ast, c_ast.Enumerator): #TODO [name, value*]
-        pass
+        if ast.value is None:
+            return [ast.name, None]
+        else:
+            if ast.value.type != 'int':
+                g.r.addReport(m.Report('fatal', a2t(ast), f"enum must be \'int\'"))
+            return [ast.name, int(ast.value.value)]
+
     elif isinstance(ast, c_ast.EnumeratorList): #TODO [enumerators**]
-        pass
-    elif isinstance(ast, c_ast.ExprList): #TODO [exprs**]
+        return [projectAST(e, s) for e in ast.enumerators]
+
+    elif isinstance(ast, c_ast.ExprList): #[exprs**]
         return [projectAST(e, s) for e in ast.exprs]
 
     elif isinstance(ast, c_ast.FileAST):

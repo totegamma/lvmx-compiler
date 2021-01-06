@@ -365,16 +365,14 @@ class Env:
         self.scopeStack[-1].enumMembers[name] = value
 
     def getTypeInfo(self, name):
-        return self.types[name]
+        for scope in reversed(self.scopeStack):
+            if name in scope.types:
+                return scope.types[name]
 
     def getStruct(self, name):
         for scope in reversed(self.scopeStack):
             if name in scope.structs:
                 return scope.structs[name]
-
-#           for elem in scope.structs:
-#               if (elem.name == name):
-#                   return elem
 
     def getFrameSize(self):
         return self.localItr

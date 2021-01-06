@@ -23,7 +23,7 @@ def projectAST(ast, s = 0):
             g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported assignment op '{ast.op}'"))
             return
 
-    elif isinstance(ast, c_ast.BinaryOp): #TODO [op, left* right*]
+    elif isinstance(ast, c_ast.BinaryOp): # [op, left* right*]
         if ast.op == '+':
             return node.Add(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
         elif ast.op == '-':
@@ -141,7 +141,7 @@ def projectAST(ast, s = 0):
                 g.r.addReport(m.Report('fatal', a2t(ast), f"enum must be \'int\'"))
             return [ast.name, int(ast.value.value)]
 
-    elif isinstance(ast, c_ast.EnumeratorList): #TODO [enumerators**]
+    elif isinstance(ast, c_ast.EnumeratorList): # [enumerators**]
         return [projectAST(e, s) for e in ast.enumerators]
 
     elif isinstance(ast, c_ast.ExprList): #[exprs**]
@@ -226,10 +226,19 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.TernaryOp): #TODO [cond*, ifture*, iffalse*]
         pass
     elif isinstance(ast, c_ast.TypeDecl):
-        return projectAST(ast.type, s).addQuals(ast.quals).setName(ast.declname)
+        typ = projectAST(ast.type, s)
+        if isinstance(typ, m.Type):
+            return typ.addQuals(ast.quals).setName(ast.declname)
+        else:
+            return typ
 
-    elif isinstance(ast, c_ast.Typedef): #TODO [name, equals, storage, type*]
-        pass
+    elif isinstance(ast, c_ast.Typedef): # [name, quals, storage, type*]
+        typ = projectAST(ast.type, s)
+        if isinstance(typ, node.Struct) or isinstance(typ, node.Enum):
+            return typ.markTypedef(ast.name)
+        else:
+            return node.Typedef(a2t(ast), ast.name, typ.addQuals(ast.quals))
+
     elif isinstance(ast, c_ast.Typename): # [name, quals, type*]
         return projectAST(ast.type, s).setName(ast.name).addQuals(ast.quals)
 

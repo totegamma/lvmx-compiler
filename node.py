@@ -78,6 +78,9 @@ class BIOP (AST):
         left = self.left.gencode(env, OPT(1))
         right = self.right.gencode(env, OPT(1))
 
+        left.typ.resolve(env)
+        right.typ.resolve(env)
+
         try:
             typ = self.decideType(left.typ, right.typ)
         except DeclTypeException as e:

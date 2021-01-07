@@ -332,9 +332,9 @@ class Indirect (AST):
             return m.Insts(body.typ, codes) # TODO typeのrefcountを増減する必要があるかも
 
 class Address (AST):
-    def __init__(self, tok, symbol):
+    def __init__(self, tok, body):
         self.tok = tok
-        self.symbol = symbol
+        self.body = body
 
     def gencode(self, env, opt):
 
@@ -343,9 +343,19 @@ class Address (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        var = env.variableLookup(self.symbol.symbolname)
-        codes = [var.genAddrCode()]
-        return m.Insts(var.typ, codes)
+        if isinstance(self.body, Symbol):
+            var = env.variableLookup(self.body.symbolname)
+            codes = [var.genAddrCode()]
+            return m.Insts(var.typ, codes)
+
+        elif isinstance(self.body, Indirect):
+            return self.body.body.gencode(env, OPT(1))
+
+        else:
+            g.r.addReport(m.Report('error', self.tok, f"cannot get address"))
+
+
+
 
 class FieldAccess (AST):
     def __init__(self, tok, left, fieldname):

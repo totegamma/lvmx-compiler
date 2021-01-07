@@ -41,6 +41,9 @@ def dumpjson(code):
 # add others
     for elem in env.functions:
         if (elem.symbolname != 'main'):
+            if elem.insts is None:
+                g.r.addReport(m.Report('error', None, f"function '{elem.symbolname}' is not implemented"))
+                return
             middlecode.extend(elem.insts)
 
 # locate func & labels

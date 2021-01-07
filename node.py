@@ -214,24 +214,38 @@ class Func (AST):
     def gencode(self, env, opt):
         self.typ.resolve(env)
 
-        env.resetFrame(self.symbolname)
+        if self.body is None:
+            try:
+                env.addFunction(m.Function(self.symbolname, self.typ, self.args, None))
+            except m.SymbolRedefineException:
+                g.r.addReport(m.Report('error', self.tok, f"Redefined function '{self.symbolname}'"))
+            return env
+        else:
+            env.resetFrame(self.symbolname)
 
-        for elem in self.args:
-            env.addArg(elem)
+            for elem in self.args:
+                env.addArg(elem)
 
-        codes = self.body.gencode(env, OPT(0)).bytecodes
+            codes = self.body.gencode(env, OPT(0)).bytecodes
 
-        insts = []
-        insts.append(m.Inst(opc.ENTRY, self.symbolname))
-        insts.append(m.Inst(opc.FRAME, env.getFrameSize()))
-        insts.extend(codes)
-        if (insts[-1].opc is not opc.RET):
-            insts.append(m.Inst(opc.PUSH, 0))
-            insts.append(m.Inst(opc.RET, self.nullarg))
+            insts = []
+            insts.append(m.Inst(opc.ENTRY, self.symbolname))
+            insts.append(m.Inst(opc.FRAME, env.getFrameSize()))
+            insts.extend(codes)
+            if (insts[-1].opc is not opc.RET):
+                insts.append(m.Inst(opc.PUSH, 0))
+                insts.append(m.Inst(opc.RET, self.nullarg))
 
-        env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
+            try:
+                env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
+            except m.SymbolRedefineException:
+                g.r.addReport(m.Report('error', self.tok, f"Redefined function '{self.symbolname}'"))
 
-        return env
+            return env
+
+    def setBody(self, body):
+        self.body = body
+        return self
 
 
 class Typedef (AST):

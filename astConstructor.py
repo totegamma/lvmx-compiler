@@ -98,8 +98,6 @@ def projectAST(ast, s = 0):
 
     elif isinstance(ast, c_ast.Decl): # [name, quals, storage, funcspec, type*, init*, bitsize*]
 
-        typ = projectAST(ast.type, s)
-
         if isinstance(ast.type, c_ast.TypeDecl) or isinstance(ast.type, c_ast.ArrayDecl) or isinstance(ast.type, c_ast.PtrDecl):
             init = projectAST(ast.init, s)
             if isinstance(init, node.String): # 初期化がstirngだった場合、リストに展開
@@ -112,6 +110,11 @@ def projectAST(ast, s = 0):
                 return node.GlobalVar(a2t(ast), ast.name, projectAST(ast.type, s), init)
             else:
                 return node.LocalVar(a2t(ast), ast.name, projectAST(ast.type, s), init)
+
+        elif isinstance(ast.type, c_ast.FuncDecl): # 関数定義
+            decl = projectAST(ast.type, s)
+            return node.Func(a2t(ast), decl['type'].name, decl['type'], decl['args'], None)
+
         else:
             return projectAST(ast.type, s)
 
@@ -156,13 +159,12 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.FuncCall): # [name*, args*]
         return node.Funccall(a2t(ast), ast.name.name, projectAST(ast.args, s))
 
-    elif isinstance(ast, c_ast.FuncDecl): #XXX [args*, type*]
+    elif isinstance(ast, c_ast.FuncDecl): # [args*, type*]
         return {"args": projectAST(ast.args, s) if ast.args is not None else [],
                 "type": projectAST(ast.type, s)}
 
-    elif isinstance(ast, c_ast.FuncDef): #XXX [args*, type*]
-        decl = projectAST(ast.decl, s)
-        return node.Func(a2t(ast), decl['type'].name, decl['type'], decl['args'], projectAST(ast.body, s))
+    elif isinstance(ast, c_ast.FuncDef): # [args*, type*]
+        return projectAST(ast.decl, s).setBody(projectAST(ast.body, s))
 
     elif isinstance(ast, c_ast.Goto): # [name]
         return node.Goto(a2t(ast), ast.name)

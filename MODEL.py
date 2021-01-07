@@ -1,6 +1,7 @@
 import struct
 import glob as g
 import node
+from functools import reduce
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
 
@@ -8,6 +9,9 @@ from mnemonic import mnemonic as opc
 BASETYPE = ['void', 'int', 'float', 'struct', 'enum']
 
 class SymbolNotFoundException (Exception):
+    pass
+
+class SymbolRedefineException (Exception):
     pass
 
 class FuncDecl:
@@ -314,6 +318,14 @@ class Env:
         return self.strings[string]
 
     def addFunction(self, function):
+        #if reduce(lambda sigma, x: sigma+1 if x.symbolname == function.symbolname else sigma, self.functions, 0) > 0:
+        for elem in self.functions:
+            if elem.symbolname == function.symbolname:
+                if elem.insts is None and function.insts is not None:
+                    elem.insts = function.insts
+                else:
+                    raise SymbolRedefineException()
+                return
         self.functions.append(function)
 
     def addStatic(self, symbol):
@@ -424,15 +436,19 @@ class ErrorModule:
                 level = '\033[33mwarning\033[0m'
                 warning += 1
 
-            print(f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m")
 
-            rawline = g.source.split("\n")[elem.tok.lineno - 1]
-            line = rawline.lstrip()
+            if elem.tok is None:
+                print(f"\033[1m<position info not available>: {level}\033[1m: {elem.message}\033[0m")
+            else:
 
-            deleted = len(rawline) - len(line)
+                print(f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m")
+                rawline = g.source.split("\n")[elem.tok.lineno - 1]
+                line = rawline.lstrip()
 
-            print('\t' + line)
-            print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
+                deleted = len(rawline) - len(line)
+
+                print('\t' + line)
+                print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
 
         if (fatal == 0 and error == 0 and warning == 0):
             return

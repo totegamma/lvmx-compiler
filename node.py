@@ -586,6 +586,35 @@ class Goto (AST):
 
 # -- Lv.2 modules --
 
+class Ternary (AST):
+    def __init__(self, tok, cond, then, elst):
+        self.tok = tok
+        self.cond = cond
+        self.then = then
+        self.elst = elst
+
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, OPT(1))
+        then = self.then.gencode(env, OPT(1))
+        elst = self.elst.gencode(env, OPT(1))
+
+        # TODO check if then.typ != elst.typ
+
+        l0 = env.issueLabel()
+        l1 = env.issueLabel()
+
+        codes = cond.bytecodes
+        codes.append(m.Inst(opc.JIF0, l0))
+        codes.extend(then.bytecodes)
+        codes.append(m.Inst(opc.JUMP, l1))
+        codes.append(m.Inst(opc.LABEL, l0))
+        codes.extend(elst.bytecodes)
+        codes.append(m.Inst(opc.LABEL, l1))
+
+        return m.Insts(then.typ, codes)
+
+
+
 class Cast (AST):
     def __init__(self, tok, targetType, body):
         self.tok = tok

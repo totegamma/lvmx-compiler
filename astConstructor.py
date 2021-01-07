@@ -228,8 +228,9 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.Switch): # [cond*, stmt*]
         return node.Switch(a2t(ast), projectAST(ast.cond, s), [projectAST(e, s+1) for e in ast.stmt.block_items])
 
-    elif isinstance(ast, c_ast.TernaryOp): #TODO [cond*, ifture*, iffalse*]
-        pass
+    elif isinstance(ast, c_ast.TernaryOp): # [cond*, ifture*, iffalse*]
+        return node.Ternary(a2t(ast), projectAST(ast.cond, s), projectAST(ast.iftrue, s), projectAST(ast.iffalse, s))
+
     elif isinstance(ast, c_ast.TypeDecl):
         typ = projectAST(ast.type, s)
         if isinstance(typ, m.Type):

@@ -100,7 +100,7 @@ def projectAST(ast, s = 0):
 
         typ = projectAST(ast.type, s)
 
-        if isinstance(ast.type, c_ast.TypeDecl) or isinstance(ast.type, c_ast.ArrayDecl):
+        if isinstance(ast.type, c_ast.TypeDecl) or isinstance(ast.type, c_ast.ArrayDecl) or isinstance(ast.type, c_ast.PtrDecl):
             init = projectAST(ast.init, s)
             if isinstance(init, node.String): # 初期化がstirngだった場合、リストに展開
                 string = init.eval()
@@ -217,8 +217,13 @@ def projectAST(ast, s = 0):
 
             return node.Struct(a2t(ast), ast.name, tmp)
 
-    elif isinstance(ast, c_ast.StructRef): #TODO [name*, type, filed*] type unused
-        return node.Indirect(a2t(ast), node.FieldAccess(a2t(ast), projectAST(ast.name, s), ast.field.name))
+    elif isinstance(ast, c_ast.StructRef): # [name*, type, filed*] type unused
+        if ast.type == '.':
+            return node.Indirect(a2t(ast), node.FieldAccess(a2t(ast), node.Address(a2t(ast), projectAST(ast.name, s)), ast.field.name))
+        elif ast.type == '->':
+            return node.Indirect(a2t(ast), node.FieldAccess(a2t(ast), projectAST(ast.name, s), ast.field.name))
+        else:
+            g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported field access type '{ast.type}'"))
 
     elif isinstance(ast, c_ast.Switch): # [cond*, stmt*]
         return node.Switch(a2t(ast), projectAST(ast.cond, s), [projectAST(e, s+1) for e in ast.stmt.block_items])

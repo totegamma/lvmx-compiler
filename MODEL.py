@@ -230,7 +230,7 @@ class Symbol:
             print("PROGRAM ERROR GENSTORECODE")
 
     def genLoadCode(self):
-        if (self.typ.isArray() or self.typ.isStruct()):
+        if (self.typ.isArray()):
             return self.genAddrCode()
 
         if (self.region == VarRegion.GLOBAL):

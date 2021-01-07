@@ -326,7 +326,7 @@ class Address (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        var = env.variableLookup(self.symbol)
+        var = env.variableLookup(self.symbol.symbolname)
         codes = [var.genAddrCode()]
         return m.Insts(var.typ, codes)
 
@@ -340,6 +340,7 @@ class FieldAccess (AST):
         left = self.left.gencode(env, OPT(1))
         codes = left.bytecodes
 
+        left.typ.resolve(env)
         field = left.typ.getField(env, self.fieldname)
         codes.append(m.Inst(opc.PUSH, field.offset))
         codes.append(m.Inst(opc.ADDI, self.nullarg))

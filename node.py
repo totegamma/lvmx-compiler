@@ -319,12 +319,11 @@ class Indirect (AST):
 
     def gencode(self, env, opt):
 
-        if (result := self.assertOnlyPop1(env, opt)) is not None:
-            return result
-
         body = self.body.gencode(env, OPT(1))
         codes = body.bytecodes
         if opt.lr == 'r':
+            if (result := self.assertOnlyPop1(env, opt)) is not None:
+                return result
             codes.append(m.Inst(opc.LOADP, self.nullarg))
             return m.Insts(body.typ, codes) # TODO typeのrefcountを増減する必要があるかも
         else:

@@ -1,6 +1,7 @@
+import node
 import struct
 import glob as g
-import node
+import linecache
 from functools import reduce
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
@@ -380,6 +381,7 @@ class Env:
         for scope in reversed(self.scopeStack):
             if name in scope.types:
                 return scope.types[name]
+        print(f"type '{name}' not found")
 
     def getStruct(self, name):
         for scope in reversed(self.scopeStack):
@@ -442,8 +444,8 @@ class ErrorModule:
             else:
 
                 print(f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m")
-                rawline = g.source.split("\n")[elem.tok.lineno - 1]
-                line = rawline.lstrip()
+                rawline = linecache.getline(elem.tok.filename, elem.tok.lineno)
+                line = rawline.strip()
 
                 deleted = len(rawline) - len(line)
 

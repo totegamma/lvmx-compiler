@@ -91,8 +91,6 @@ if __name__ == '__main__':
     argparser = ArgumentParser()
 
     argparser.add_argument('filename',type=str,
-                           nargs='?',
-                           default="test.c",
                            help='target source file')
 
     argparser.add_argument('-j', '--json',
@@ -101,7 +99,6 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
 
-    rawinput = ""
     with open(args.filename, mode="r") as f:
         rawinput = f.read()
 
@@ -111,7 +108,7 @@ if __name__ == '__main__':
     tmpf = io.StringIO("")
     cpp.write(tmpf)
 
-    g.init(tmpf.getvalue())
+    g.init(args.filename, tmpf.getvalue())
 
     try:
         if args.json:

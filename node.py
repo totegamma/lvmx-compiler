@@ -96,8 +96,8 @@ class BIOP (AST):
         elif typ.isFloat():
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            g.r.addReport(m.Report('fatal', self.tok, 'Type inference failed'))
-            return m.Insts()
+            g.r.addReport(m.Report('warning', self.tok, 'Type inference failed. resolve as int'))
+            code.append(m.Inst(self.opI, self.nullarg))
 
         return m.Insts(typ, code)
 
@@ -500,7 +500,10 @@ class For (AST):
         self.body = body
 
     def gencode(self, env, opt):
-        init = self.init.gencode(env, OPT(0)).bytecodes
+        if self.init is None: # TODO 1ライン化するか関数化して全部に適用
+            init = []
+        else:
+            init = self.init.gencode(env, OPT(0)).bytecodes
         cond = self.cond.gencode(env, OPT(1)).bytecodes
         loop = self.loop.gencode(env, OPT(0)).bytecodes
         body = self.body.gencode(env, OPT(0)).bytecodes

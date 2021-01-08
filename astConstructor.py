@@ -295,7 +295,7 @@ def makeAST(code):
     try:
         parser = CParser(lex_optimize=False, yacc_optimize=False)
         #parser = CParser()
-        ast = parser.parse(code, filename='<none>')
+        ast = parser.parse(code, filename=g.filename)
     except Exception as e:
         print(e)
         exit()

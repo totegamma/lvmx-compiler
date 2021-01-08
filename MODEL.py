@@ -41,7 +41,10 @@ class Type:
         self.hint = None
 
     def __str__(self):
-        buff = self.basetype.name
+        if isinstance(self.basetype, str):
+            buff = self.basetype
+        else:
+            buff = self.basetype.name
         buff += ' '
         buff += '*' * self.refcount
         if (self.isArray()):
@@ -445,9 +448,9 @@ class ErrorModule:
 
                 print(f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m")
                 rawline = linecache.getline(elem.tok.filename, elem.tok.lineno)
-                line = rawline.strip()
-
+                line = rawline.lstrip()
                 deleted = len(rawline) - len(line)
+                line = line.rstrip()
 
                 print('\t' + line)
                 print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')

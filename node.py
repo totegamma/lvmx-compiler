@@ -11,6 +11,15 @@ class OPT:
         self.bp = bp
         self.cp = cp
 
+    def reset(self, popc, lr ='r', bp = None, cp = None):
+        self.popc = popc
+        self.lr = lr
+        if bp is not None:
+            self.bp = bp
+        if cp is not None:
+            self.cp = cp
+        return self
+
 class AST (object):
 
     nullarg = 0
@@ -75,8 +84,8 @@ class BIOP (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        left = self.left.gencode(env, OPT(1))
-        right = self.right.gencode(env, OPT(1))
+        left = self.left.gencode(env, opt.reset(1))
+        right = self.right.gencode(env, opt.reset(1))
 
         left.typ.resolve(env)
         right.typ.resolve(env)
@@ -112,7 +121,7 @@ class Program (AST):
 
     def gencode(self, env, opt):
         for elem in self.body:
-            dumps = elem.gencode(env, OPT(0))
+            dumps = elem.gencode(env, opt.reset(0))
         env.addStatic(m.Symbol("__MAGIC_RETADDR__", m.Type(), 0))
         env.addStatic(m.Symbol("__MAGIC_RETFP__", m.Type(), 0))
         return env
@@ -226,7 +235,7 @@ class Func (AST):
             for elem in self.args:
                 env.addArg(elem)
 
-            codes = self.body.gencode(env, OPT(0)).bytecodes
+            codes = self.body.gencode(env, opt.reset(0)).bytecodes
 
             insts = []
             insts.append(m.Inst(opc.ENTRY, self.symbolname))
@@ -272,7 +281,7 @@ class Block (AST):
 
         insts = []
         for elem in self.body:
-            insts.extend(elem.gencode(env, OPT(0)).bytecodes)
+            insts.extend(elem.gencode(env, opt.reset(0)).bytecodes)
 
         env.popScope()
         return m.Insts(m.Type(), insts)
@@ -300,14 +309,14 @@ class LocalVar (AST):
         elif isinstance(self.init, list):
             codes = []
             for i, elem in enumerate(self.init):
-                codes.extend(elem.gencode(env, OPT(1)).bytecodes)
+                codes.extend(elem.gencode(env, opt.reset(1)).bytecodes)
                 codes.append(var.genAddrCode())
                 codes.append(m.Inst(opc.PUSH, i))
                 codes.append(m.Inst(opc.ADDI, self.nullarg))
                 codes.append(m.Inst(opc.STOREP, self.nullarg))
             return m.Insts(m.Type(), codes)
         else:
-            codes = self.init.gencode(env, OPT(1)).bytecodes
+            codes = self.init.gencode(env, opt.reset(1)).bytecodes
             codes.append(m.Inst(opc.STOREL, var.id))
 
         return m.Insts(m.Type(), codes)
@@ -319,7 +328,7 @@ class Indirect (AST):
 
     def gencode(self, env, opt):
 
-        body = self.body.gencode(env, OPT(1))
+        body = self.body.gencode(env, opt.reset(1))
         codes = body.bytecodes
         if opt.lr == 'r':
             if (result := self.assertOnlyPop1(env, opt)) is not None:
@@ -348,7 +357,7 @@ class Address (AST):
             return m.Insts(var.typ, codes)
 
         elif isinstance(self.body, Indirect):
-            return self.body.body.gencode(env, OPT(1))
+            return self.body.body.gencode(env, opt.reset(1))
 
         else:
             g.r.addReport(m.Report('error', self.tok, f"cannot get address"))
@@ -363,11 +372,14 @@ class FieldAccess (AST):
         self.fieldname = fieldname
 
     def gencode(self, env, opt):
-        left = self.left.gencode(env, OPT(1))
+        left = self.left.gencode(env, opt.reset(1))
         codes = left.bytecodes
 
         left.typ.resolve(env)
         field = left.typ.getField(env, self.fieldname)
+        if field is None:
+            g.r.addReport(m.Report('error', self.tok, f"cannot get field '{self.fieldname}' of type '{left.typ}'"))
+            return m.Insts()
         codes.append(m.Inst(opc.PUSH, field.offset))
         codes.append(m.Inst(opc.ADDI, self.nullarg))
 
@@ -380,7 +392,7 @@ class Return (AST): #TODO 自分の型とのチェック
         self.body = body
 
     def gencode(self, env, opt):
-        codes = self.body.gencode(env, OPT(1)).bytecodes
+        codes = self.body.gencode(env, opt.reset(1)).bytecodes
         codes.append(m.Inst(opc.RET, self.nullarg))
         return m.Insts(m.Type(), codes)
 
@@ -398,7 +410,7 @@ class Funccall (AST):
         mytype = env.functionLookup(self.name).typ
         codes = []
         for elem in reversed(self.args):
-            codes.extend(elem.gencode(env, OPT(1)).bytecodes) # TODO 型チェック
+            codes.extend(elem.gencode(env, opt.reset(1)).bytecodes) # TODO 型チェック
         codes.append(m.Inst(opc.CALL, self.name))
         codes.append(m.Inst(opc.POPR, len(self.args)))
         if (opt.popc == 0):
@@ -412,8 +424,8 @@ class If (AST):
         self.then = then
 
     def gencode(self, env, opt):
-        cond = self.cond.gencode(env, OPT(1)).bytecodes
-        then = self.then.gencode(env, OPT(0)).bytecodes
+        cond = self.cond.gencode(env, opt.reset(1)).bytecodes
+        then = self.then.gencode(env, opt.reset(0)).bytecodes
 
         l0 = env.issueLabel()
         codes = cond
@@ -430,9 +442,9 @@ class Ifelse (AST):
         self.elst = elst
 
     def gencode(self, env, opt):
-        cond = self.cond.gencode(env, OPT(1)).bytecodes
-        then = self.then.gencode(env, OPT(0)).bytecodes
-        elst = self.elst.gencode(env, OPT(0)).bytecodes
+        cond = self.cond.gencode(env, opt.reset(1)).bytecodes
+        then = self.then.gencode(env, opt.reset(0)).bytecodes
+        elst = self.elst.gencode(env, opt.reset(0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -453,8 +465,8 @@ class DoWhile (AST):
         self.cond = cond
 
     def gencode(self, env, opt):
-        body = self.body.gencode(env, OPT(0)).bytecodes
-        cond = self.cond.gencode(env, OPT(1)).bytecodes
+        body = self.body.gencode(env, opt.reset(0)).bytecodes
+        cond = self.cond.gencode(env, opt.reset(1)).bytecodes
 
         l0 = env.issueLabel()
 
@@ -474,8 +486,8 @@ class While (AST):
         self.body = body
 
     def gencode(self, env, opt):
-        cond = self.cond.gencode(env, OPT(1)).bytecodes
-        body = self.body.gencode(env, OPT(0)).bytecodes
+        cond = self.cond.gencode(env, opt.reset(1)).bytecodes
+        body = self.body.gencode(env, opt.reset(0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -502,10 +514,10 @@ class For (AST):
         if self.init is None: # TODO 1ライン化するか関数化して全部に適用
             init = []
         else:
-            init = self.init.gencode(env, OPT(0)).bytecodes
-        cond = self.cond.gencode(env, OPT(1)).bytecodes
-        loop = self.loop.gencode(env, OPT(0)).bytecodes
-        body = self.body.gencode(env, OPT(0)).bytecodes
+            init = self.init.gencode(env, opt.reset(0)).bytecodes
+        cond = self.cond.gencode(env, opt.reset(1)).bytecodes
+        loop = self.loop.gencode(env, opt.reset(0)).bytecodes
+        body = self.body.gencode(env, opt.reset(0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -529,7 +541,7 @@ class Switch (AST):
 
     def gencode(self, env, opt):
 
-        tableCodes = self.cond.gencode(env, OPT(1)).bytecodes
+        tableCodes = self.cond.gencode(env, opt.reset(1)).bytecodes
         bodyCodes = []
         end = env.issueLabel()
         default = None
@@ -540,18 +552,16 @@ class Switch (AST):
                 default = label
                 bodyCodes.append(m.Inst(opc.LABEL, label))
                 for e in elem[1]:
-                    bodyCodes.extend(e.gencode(env, OPT(1, bp = end)).bytecodes)
-                #bodyCodes.extend([e.gencode(env, OPT(1, bp = end)).bytecodes for e in elem[1]])
+                    bodyCodes.extend(e.gencode(env, opt.reset(1, bp = end)).bytecodes)
             else:
                 tableCodes.append(m.Inst(opc.DUP, 1))
-                tableCodes.extend(elem[0].gencode(env, OPT(1)).bytecodes)
+                tableCodes.extend(elem[0].gencode(env, opt.reset(1)).bytecodes)
                 tableCodes.append(m.Inst(opc.NEQI, self.nullarg)) #TODO Int以外にも対応させる
                 tableCodes.append(m.Inst(opc.JIF0, label))
 
                 bodyCodes.append(m.Inst(opc.LABEL, label))
-#                bodyCodes.extend([e.gencode(env, OPT(1, bp = end)).bytecodes for e in elem[1]])
                 for e in elem[1]:
-                    bodyCodes.extend(e.gencode(env, OPT(1, bp = end)).bytecodes)
+                    bodyCodes.extend(e.gencode(env, opt.reset(1, bp = end)).bytecodes)
 
         if default is not None:
             tableCodes.append(m.Inst(opc.JUMP, default))
@@ -596,7 +606,7 @@ class Label (AST):
 
     def gencode(self, env, opt):
         label = env.currentFuncName + self.name
-        expr = self.expr.gencode(env, OPT(0))
+        expr = self.expr.gencode(env, opt.reset(0))
 
         codes = [m.Inst(opc.LABEL, label)]
         codes.extend(expr.bytecodes)
@@ -623,9 +633,9 @@ class Ternary (AST):
         self.elst = elst
 
     def gencode(self, env, opt):
-        cond = self.cond.gencode(env, OPT(1))
-        then = self.then.gencode(env, OPT(1))
-        elst = self.elst.gencode(env, OPT(1))
+        cond = self.cond.gencode(env, opt.reset(1))
+        then = self.then.gencode(env, opt.reset(1))
+        elst = self.elst.gencode(env, opt.reset(1))
 
         # TODO check if then.typ != elst.typ
 
@@ -655,7 +665,7 @@ class Cast (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        body = self.body.gencode(env, OPT(1))
+        body = self.body.gencode(env, opt.reset(1))
         codes = body.bytecodes
 
         if body.typ.isInt():
@@ -690,7 +700,7 @@ class Raw (AST):
         self.typ.resolve(env)
         insts = []
         for elem in reversed(self.bodys):
-            insts.extend(elem.gencode(env, OPT(1)).bytecodes)
+            insts.extend(elem.gencode(env, opt.reset(1)).bytecodes)
         #insts.append(m.Inst(opc[self.opc], self.arg.eval()))
         insts.append(m.Inst(opc[self.opc], self.arg))
 
@@ -704,8 +714,8 @@ class Assign (AST):
 
     def gencode(self, env, opt):
 
-        right = self.right.gencode(env, OPT(1))
-        left = self.left.gencode(env, OPT(1, 'l'))
+        right = self.right.gencode(env, opt.reset(1))
+        left = self.left.gencode(env, opt.reset(1, 'l'))
 
         typ = m.Type()
 
@@ -730,7 +740,7 @@ class Inv (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        right = self.right.gencode(env, OPT(1, 'r'))
+        right = self.right.gencode(env, opt.reset(1, 'r'))
 
         codes = right.bytecodes
         codes.append(m.Inst(opc.INV, self.nullarg))
@@ -748,7 +758,7 @@ class Pre_inc (AST):
         if (result := self.assertOnlyRValue(env, opt)) is not None:
             return result
 
-        right = self.right.gencode(env, OPT(1, 'r'))
+        right = self.right.gencode(env, opt.reset(1, 'r'))
         codes = right.bytecodes
         codes.append(m.Inst(opc.INC, self.nullarg))
 
@@ -758,7 +768,7 @@ class Pre_inc (AST):
             codes.append(m.Inst(opc.DUP, self.nullarg))
             typ = right.typ
 
-        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+        codes.extend(self.right.gencode(env, opt.reset(0, 'l')).bytecodes)
 
         return m.Insts(typ, codes)
 
@@ -773,7 +783,7 @@ class Pre_dec (AST):
         if (result := self.assertOnlyRValue(env, opt)) is not None:
             return result
 
-        right = self.right.gencode(env, OPT(1, 'r'))
+        right = self.right.gencode(env, opt.reset(1, 'r'))
         codes = right.bytecodes
         codes.append(m.Inst(opc.DEC, self.nullarg))
 
@@ -783,7 +793,7 @@ class Pre_dec (AST):
             codes.append(m.Inst(opc.DUP, self.nullarg))
             typ = right.typ
 
-        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+        codes.extend(self.right.gencode(env, opt.reset(0, 'l')).bytecodes)
 
         return m.Insts(typ, codes)
 
@@ -798,7 +808,7 @@ class Post_inc (AST):
         if (result := self.assertOnlyRValue(env, opt)) is not None:
             return result
 
-        right = self.right.gencode(env, OPT(1, 'r'))
+        right = self.right.gencode(env, opt.reset(1, 'r'))
         codes = right.bytecodes
 
         typ = m.Type()
@@ -807,7 +817,7 @@ class Post_inc (AST):
             typ = right.typ
 
         codes.append(m.Inst(opc.INC, self.nullarg))
-        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+        codes.extend(self.right.gencode(env, opt.reset(0, 'l')).bytecodes)
 
         return m.Insts(typ, codes)
 
@@ -823,7 +833,7 @@ class Post_dec (AST):
         if (result := self.assertOnlyRValue(env, opt)) is not None:
             return result
 
-        right = self.right.gencode(env, OPT(1, 'r'))
+        right = self.right.gencode(env, opt.reset(1, 'r'))
         codes = right.bytecodes
 
         typ = m.Type()
@@ -832,7 +842,7 @@ class Post_dec (AST):
             typ = right.typ
 
         codes.append(m.Inst(opc.DEC, self.nullarg))
-        codes.extend(self.right.gencode(env, OPT(0, 'l')).bytecodes)
+        codes.extend(self.right.gencode(env, opt.reset(0, 'l')).bytecodes)
 
         return m.Insts(typ, codes)
 

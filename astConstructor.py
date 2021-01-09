@@ -19,6 +19,26 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.Assignment): # [op, lvalue*, rvalue*]
         if ast.op == '=':
             return node.Assign(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s))
+        elif ast.op == '+=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.Add(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '-=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.Sub(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '*=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.Mul(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '/=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.Div(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '%=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.Mod(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '<<=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.LShift(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '>>=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.RShift(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '&=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.And(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '|=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.Or(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
+        elif ast.op == '^=':
+            return node.Assign(a2t(ast), projectAST(ast.lvalue, s), node.Xor(a2t(ast), projectAST(ast.lvalue, s), projectAST(ast.rvalue, s)))
         else:
             g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported assignment op '{ast.op}'"))
             return
@@ -57,11 +77,9 @@ def projectAST(ast, s = 0):
         elif ast.op == '!=':
             return node.Neq(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
         elif ast.op == '&&':
-            return node.Gte(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+            return node.And(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
         elif ast.op == '||':
-            return node.Eq(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
-        elif ast.op == '!=':
-            return node.Neq(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
+            return node.Or(a2t(ast), projectAST(ast.left, s), projectAST(ast.right, s))
         else:
             g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported binary op '{ast.op}'"))
             return
@@ -253,6 +271,8 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.UnaryOp): # [op, expr*]
         if ast.op == '!':
             return node.Inv(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == '+':
+            return projectAST(ast.expr, s)
         elif ast.op == '-':
             return node.Mul(a2t(ast), node.NumberI(a2t(ast), -1), projectAST(ast.expr, s))
         elif ast.op == '++':

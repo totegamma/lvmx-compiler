@@ -263,6 +263,8 @@ def projectAST(ast, s = 0):
         typ = projectAST(ast.type, s)
         if isinstance(typ, m.Type):
             return typ.addQuals(ast.quals).setName(ast.declname)
+        elif type(typ) in (node.Struct, node.Enum):
+            return typ.typ
         else:
             return typ
 
@@ -328,12 +330,12 @@ def makeAST(code):
         print(e)
         exit()
 
-    ast.show()
+    #ast.show()
 
     node = projectAST(ast)
 
-    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
-    g.r.addReport(m.Report('fatal', a2t(ast), f"debugmode"))
+    #print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
+    #g.r.addReport(m.Report('fatal', a2t(ast), f"debugmode"))
     return node
 
 

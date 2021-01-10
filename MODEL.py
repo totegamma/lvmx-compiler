@@ -15,6 +15,9 @@ class SymbolNotFoundException (Exception):
 class SymbolRedefineException (Exception):
     pass
 
+class TypeRedefineException (Exception):
+    pass
+
 
 class Type:
     def __init__(self, basetype = 'void'):
@@ -31,8 +34,8 @@ class Type:
         if self.refcount > 0 or self.length > 1:
             buff += ' '
         buff += '*' * self.refcount
-        if (self.isArray()):
-            buff += f'[{self.size}]'
+        if (self.length > 1):
+            buff += f'[{self.length}]'
         return buff
 
     def addRefcount(self, plus):
@@ -266,19 +269,33 @@ class Env:
         self.labelitr += 1
         return newlabel
 
-    def addType(self, name, typ): # TODO Type Name X is already exists!
-        self.scopeStack[-1].types[name] = typ
+    def addType(self, name, typ):
+        target = self.scopeStack[-1].types
+        if name in target:
+            raise TypeRedefineException(f"Redefined Type '{name}'")
+        target[name] = typ
 
     def addStruct(self, name, typ):
-        self.scopeStack[-1].structs[name] = typ
+        target = self.scopeStack[-1].structs
+        if name in target:
+            raise TypeRedefineException(f"Redefined Struct '{name}'")
+        target[name] = typ
 
-    def addEnum(self, name):
-        self.scopeStack[-1].enums.append(name)
+    def addEnum(self, name, typ):
+        target = self.scopeStack[-1].enums
+        if name in target:
+            raise TypeRedefineException(f"Redefined Struct '{name}'")
 
-    def addEnumMember(self, name, value):
-        self.scopeStack[-1].enumMembers[name] = value
+        for elem in typ.members:
+            self.scopedStack[-1].enumMembers[elem[0]] = elem[1]
 
-    def getTypeInfo(self, name):
+        target[name] = typ
+
+    def getType(self, name, hint):
+
+        if hint == 'struct':
+            return self.getStruct(name)
+
         for scope in reversed(self.scopeStack):
             if name in scope.types:
                 return scope.types[name]
@@ -291,6 +308,33 @@ class Env:
 
     def getFrameSize(self):
         return self.localItr
+
+    def calcTypeSize(self, typ, hint=None):
+
+        # 前準備
+        if typ.length is None:
+            if isinstance(hint, list):
+                length = len(hint)
+                typ.length = length
+            else:
+                print('fatal calcTypesize 1')
+        else:
+            length = typ.length
+
+        if isinstance(typ.length, node.AST):
+            length = typ.length.eval()
+            typ.length = length
+
+        if typ.refcount > 0:
+            return length
+
+        if typ.basetype in ('void', 'int', 'float', 'enum'):
+            return length
+
+        if len(typ.members) == 0:
+            return self.calcTypeSize(self.getType(typ.basetype, typ.hint)) * length
+        else:
+            return reduce(lambda sigma, e: sigma + self.calcTypeSize(e[1]), typ.members, 0) * length
 
 class TokenInfo:
     def __init__(self, lineno, colno, filename = "input.c"):

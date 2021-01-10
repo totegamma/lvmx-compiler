@@ -85,8 +85,8 @@ class BIOP (AST):
         left = self.left.gencode(env, newopt(opt, 1))
         right = self.right.gencode(env, newopt(opt, 1))
 
-        left.typ.resolve(env)
-        right.typ.resolve(env)
+#        left.typ.resolve(env)
+#        right.typ.resolve(env)
 
         try:
             typ = self.decideType(left.typ, right.typ)
@@ -132,12 +132,15 @@ class GlobalVar (AST):
         self.body = body
 
     def gencode(self, env, opt):
-        if isinstance(self.body, list):
-            self.typ.resolve(env, length=len(self.body))
-        else:
-            self.typ.resolve(env)
+#        if isinstance(self.body, list):
+#            self.typ.resolve(env, length=len(self.body))
+#        else:
+#            self.typ.resolve(env)
 
         # スカラーか配列かstructかenumが入ってくる
+
+        size = env.calcTypeSize(self.typ, self.body)
+        print(f'{size=}')
 
         if self.typ.isScalar():
             if self.body is None:
@@ -209,7 +212,6 @@ class Func (AST):
         self.body = body
 
     def gencode(self, env, opt):
-        self.typ.resolve(env)
 
         if self.body is None:
             try:
@@ -283,10 +285,10 @@ class LocalVar (AST):
 
     def gencode(self, env, opt):
 
-        if isinstance(self.init, list):
-            self.typ.resolve(env, length=len(self.init))
-        else:
-            self.typ.resolve(env)
+#        if isinstance(self.init, list):
+#            self.typ.resolve(env, length=len(self.init))
+#        else:
+#            self.typ.resolve(env)
 
         # スカラーか配列かstructかenumが入ってくる
 
@@ -363,7 +365,7 @@ class FieldAccess (AST):
         left = self.left.gencode(env, newopt(opt, 1))
         codes = left.bytecodes
 
-        left.typ.resolve(env)
+#        left.typ.resolve(env)
         field = left.typ.getField(env, self.fieldname)
         if field is None:
             g.r.addReport(m.Report('error', self.tok, f"cannot get field '{self.fieldname}' of type '{left.typ}'"))
@@ -685,7 +687,7 @@ class Raw (AST):
         self.bodys = bodys
 
     def gencode(self, env, opt):
-        self.typ.resolve(env)
+#        self.typ.resolve(env)
         insts = []
         for elem in reversed(self.bodys):
             insts.extend(elem.gencode(env, newopt(opt, 1)).bytecodes)

@@ -18,7 +18,7 @@ int strcmp(int* p1, int* p2) {
 int memcmp(int* p1, int* p2, int len) {
 	int i;
 	for (i = 0; i < len; ++i) {
-		if (*p1++ != *p2++) return *p1 - *p2;
+		if (*p1++ != *p2++) return 1;
 	}
 	return 0;
 }

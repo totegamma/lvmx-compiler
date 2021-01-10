@@ -125,36 +125,24 @@ class Program (AST):
         return env
 
 class GlobalVar (AST):
-    def __init__(self, tok, symbolname, typ, body = None):
+    def __init__(self, tok, symbolname, typ, init = None):
         self.tok = tok
         self.typ = typ
         self.symbolname = symbolname
-        self.body = body
+        self.init = init
 
     def gencode(self, env, opt):
-#        if isinstance(self.body, list):
-#            self.typ.resolve(env, length=len(self.body))
-#        else:
-#            self.typ.resolve(env)
 
-        # スカラーか配列かstructかenumが入ってくる
+        size = env.calcTypeSize(self.typ, self.init)
 
-        size = env.calcTypeSize(self.typ, self.body)
-        print(f'{size=}')
+        init = [0] * size
 
-        if self.typ.isScalar():
-            if self.body is None:
-                init = 0
-            else:
-                init = self.body.eval()
-        elif self.typ.isArray():
-            if self.body is None:
-                init = [0] * self.typ.length
-            else:
-                init = list(map(lambda a : a.eval(), self.body))
-        else:
-            init = 0
-            #g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while processing GlobalVar'))
+        if isinstance(self.init, AST):
+            init[0] = self.init.eval()
+
+        elif isinstance(self.init, list):
+            for i, elem in enumerate(self.init):
+                init[i] = self.init[i].eval()
 
         env.addStatic(m.Symbol(self.symbolname, self.typ, init))
         return env
@@ -285,13 +273,6 @@ class LocalVar (AST):
 
     def gencode(self, env, opt):
 
-#        if isinstance(self.init, list):
-#            self.typ.resolve(env, length=len(self.init))
-#        else:
-#            self.typ.resolve(env)
-
-        # スカラーか配列かstructかenumが入ってくる
-
         var = env.addLocal(m.Symbol(self.symbolname, self.typ))
 
         if self.init is None:
@@ -365,15 +346,13 @@ class FieldAccess (AST):
         left = self.left.gencode(env, newopt(opt, 1))
         codes = left.bytecodes
 
-#        left.typ.resolve(env)
-        field = left.typ.getField(env, self.fieldname)
-        if field is None:
-            g.r.addReport(m.Report('error', self.tok, f"cannot get field '{self.fieldname}' of type '{left.typ}'"))
-            return m.Insts()
-        codes.append(m.Inst(opc.PUSH, field.offset))
+        field = env.getField(left.typ, self.fieldname) # TODO handle exception
+#            g.r.addReport(m.Report('error', self.tok, f"cannot get field '{self.fieldname}' of type '{left.typ}'"))
+#            return m.Insts()
+        codes.append(m.Inst(opc.PUSH, field[0]))
         codes.append(m.Inst(opc.ADDI, self.nullarg))
 
-        return m.Insts(field.typ, codes)
+        return m.Insts(field[1], codes)
 
 
 class Return (AST): #TODO 自分の型とのチェック

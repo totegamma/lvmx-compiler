@@ -223,7 +223,6 @@ class Env:
         return self.strings[string]
 
     def addFunction(self, function):
-        #if reduce(lambda sigma, x: sigma+1 if x.symbolname == function.symbolname else sigma, self.functions, 0) > 0:
         for elem in self.functions:
             if elem.symbolname == function.symbolname:
                 if elem.insts is None and function.insts is not None:
@@ -236,19 +235,19 @@ class Env:
     def addStatic(self, symbol):
         symbol.setRegion(VarRegion.GLOBAL)
         symbol.setID(self.staticItr)
-        self.staticItr += symbol.typ.size
+        self.staticItr += self.calcTypeSize(symbol.typ)
         self.statics.append(symbol)
 
     def addArg(self, symbol):
         symbol.setRegion(VarRegion.ARGUMENT)
         symbol.setID(self.argItr)
-        self.argItr += symbol.typ.size
+        self.argItr += self.calcTypeSize(symbol.typ)
         self.args.append(symbol)
 
     def addLocal(self, symbol):
         symbol.setRegion(VarRegion.LOCAL)
         symbol.setID(self.localItr)
-        self.localItr += symbol.typ.size
+        self.localItr += self.calcTypeSize(symbol.typ)
         self.scopeStack[-1].variables.append(symbol)
         return symbol
 
@@ -308,6 +307,19 @@ class Env:
 
     def getFrameSize(self):
         return self.localItr
+
+    def getField(self, typ, field):
+        if len(typ.members) == 0:
+            typ = self.getType(typ.basetype, typ.hint)
+
+        offset = 0
+        for elem in typ.members:
+            if elem[0] == field:
+                return (offset, elem[1])
+            offset += self.calcTypeSize(elem[1])
+
+        print('field not found exception')
+
 
     def calcTypeSize(self, typ, hint=None):
 

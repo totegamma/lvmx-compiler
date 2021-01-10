@@ -18,6 +18,9 @@ class SymbolRedefineException (Exception):
 class TypeRedefineException (Exception):
     pass
 
+class SymbolLengthNotSpecifiedException (Exception):
+    pass
+
 
 class Type:
     def __init__(self, basetype = 'void'):
@@ -63,8 +66,6 @@ class Type:
     def addMember(self, member):
         self.members.append(member)
         return self
-
-
 
 
 class StructField:
@@ -139,9 +140,6 @@ class Symbol:
             print("PROGRAM ERROR GENSTORECODE")
 
     def genLoadCode(self):
-        if (self.typ.isArray()):
-            return self.genAddrCode()
-
         if (self.region == VarRegion.GLOBAL):
             return Inst(opc.LOADG, self.id)
         elif (self.region == VarRegion.ARGUMENT):
@@ -329,7 +327,8 @@ class Env:
                 length = len(hint)
                 typ.length = length
             else:
-                print('fatal calcTypesize 1')
+                print(hint)
+                raise SymbolLengthNotSpecifiedException
         else:
             length = typ.length
 

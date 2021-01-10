@@ -42,23 +42,19 @@ class AST (object):
         return None
 
     def decideType(self, a, b):
-        if (a.isVoid() or b.isVoid()):
-            return MODEL.Types.Void
-        #elif (a == 'any' and b == 'any'):
-        #    return 'any'
-        #elif (a == 'any'):
-        #    return b
-        #elif (b == 'any'):
-        #    return a
 
-        elif (a.isIndirect() and b.isInt()):
-            return a
+        if (a.length > 1 or a.refcount > 0) and (b.length == 1 and b.refcount == 0):
+            return m.Type(a.basetype).addRefcount(a.refcount + 1 if a.length > 1 else 0)
 
-        elif (a.isInt() and b.isInt()):
+        if (a.basetype  == 'int') and (b.basetype == 'int'):
             return m.Type('int')
-        elif (a.isFloat() and b.isFloat()):
+
+        if (a.basetype == 'float') and (b.basetype == 'float'):
             return m.Type('float')
-        raise DeclTypeException(f"invalid operands to binary expression('{a}' and '{b}')")
+
+        return m.Type('int')
+
+        #raise DeclTypeException(f"invalid operands to binary expression('{a}' and '{b}')")
 
 class DeclTypeException(Exception):
     pass
@@ -85,25 +81,18 @@ class BIOP (AST):
         left = self.left.gencode(env, newopt(opt, 1))
         right = self.right.gencode(env, newopt(opt, 1))
 
-#        left.typ.resolve(env)
-#        right.typ.resolve(env)
-
         try:
             typ = self.decideType(left.typ, right.typ)
         except DeclTypeException as e:
             g.r.addReport(m.Report('error', self.tok, e))
             return m.Insts()
 
-
         code = right.bytecodes
         code.extend(left.bytecodes)
 
-        if typ.isInt():
-            code.append(m.Inst(self.opI, self.nullarg))
-        elif typ.isFloat():
+        if typ.basetype == 'float':
             code.append(m.Inst(self.opF, self.nullarg))
         else:
-            g.r.addReport(m.Report('warning', self.tok, 'Type inference failed. resolve as int'))
             code.append(m.Inst(self.opI, self.nullarg))
 
         return m.Insts(typ, code)
@@ -273,6 +262,7 @@ class LocalVar (AST):
 
     def gencode(self, env, opt):
 
+        env.calcTypeSize(self.typ, self.init)
         var = env.addLocal(m.Symbol(self.symbolname, self.typ))
 
         if self.init is None:
@@ -907,7 +897,10 @@ class Symbol (AST):
         if opt.lr == 'r':
             if (result := self.assertOnlyPop1(env, opt)) is not None:
                 return result
-            codes = [var.genLoadCode()]
+            if var.typ.basetype in ('void', 'int', 'float', 'enum') and var.typ.length == 1: # XXX
+                codes = [var.genLoadCode()]
+            else:
+                codes = [var.genAddrCode()]
             return m.Insts(var.typ, codes)
         else:
             codes = [var.genStoreCode()]

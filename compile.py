@@ -99,13 +99,13 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
 
-    with open(args.filename, mode="r") as f:
-        rawinput = f.read()
-
     cpp = Preprocessor()
     cpp.add_path(os.getcwd() + "/lvmxlib")
-    cpp.parse(rawinput)
     tmpf = io.StringIO("")
+
+    with open(args.filename, mode="r") as f:
+        cpp.parse(f)
+
     cpp.write(tmpf)
 
     g.init(args.filename, tmpf.getvalue())

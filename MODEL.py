@@ -15,43 +15,24 @@ class SymbolNotFoundException (Exception):
 class SymbolRedefineException (Exception):
     pass
 
-class FuncDecl:
-    def __init__(self, name):
-        self.name = name
-        self.args = []
-        self.typ = None
-
-    def setArgs(self, args):
-        self.args = args
-        return self
-
-    def setType(self, typ):
-        self.typ = typ
-        return self
 
 class Type:
     def __init__(self, basetype = 'void'):
         self.basetype = basetype
         self.refcount = 0
-        self.length = 1 if basetype in ['int', 'float'] else 0
-        self.size = 1 if basetype in ['int', 'float'] else 0
+        self.length = 1
         self.quals = []
         self.members = []
         self.name = None
         self.hint = None
 
     def __str__(self):
-        if isinstance(self.basetype, str):
-            buff = self.basetype
-        else:
-            buff = self.basetype.name
-        buff += ' '
+        buff = self.basetype
+        if self.refcount > 0 or self.length > 1:
+            buff += ' '
         buff += '*' * self.refcount
         if (self.isArray()):
-            buff += '['
-            buff += str(self.size)
-            buff += ']'
-
+            buff += f'[{self.size}]'
         return buff
 
     def addRefcount(self, plus):
@@ -70,7 +51,6 @@ class Type:
 
     def setLength(self, length):
         self.length = length
-        self.size = length #TODO
         return self
 
     def setName(self, name):
@@ -79,91 +59,9 @@ class Type:
 
     def addMember(self, member):
         self.members.append(member)
-        self.size += member.typ.size
-
-    def isResolved(self):
-        return (self.basetype in BASETYPE) and isinstance(self.refcount, int) and isinstance(self.length, int)
-
-    def resolve(self, env, length=None):
-
-        if length is not None:
-            self.length = length
-            self.size = length #XXX
-
-        if self.isResolved():
-            return
-
-        if self.hint == 'struct':
-            typ = env.getStruct(self.basetype)
-            self.basetype = typ.basetype
-            self.size = typ.size
-            self.members = typ.members
-            return
-
-        elif self.hint == 'enum':
-            self.baestype = 'int'
-            self.size = 1
-            self.length = 1
-            return
-
-        if not (self.basetype in BASETYPE):
-            typ = env.getTypeInfo(self.basetype)
-            self.basetype = typ.basetype
-            self.size = typ.size
-            self.members = typ.members
-
-        elif not isinstance(self.refcount, int):
-            self.refcount = self.refcount.eval()
-
-        elif not isinstance(self.length, int):
-            self.length = self.length.eval()
-            self.size = self.length #XXX
-            #env.getTypeInfo(self.basetype)
-
-    def isArray(self):
-        return self.length != 1
-
-    def isBaseType(self):
-        return isinstance(self.basetype, BT)
-
-    def isIndirect(self):
-        return self.refcount != 0
-
-    def isVoid(self):
-        return self.basetype == 'void'
-
-    def isAny(self):
-        return self.basetype == 'any'
-
-    def isInt(self):
-        return self.basetype == 'int'
-
-    def isFloat(self):
-        return self.basetype == 'float'
-
-    def isScalar(self):
-        return (self.basetype == 'int' or self.basetype == 'float') and self.length == 1
-
-    def isArray(self):
-        return self.length > 1
-
-    def isStruct(self):
-        return self.basetype == 'struct' or self.hint == 'struct'
-
-# isStruct
-# isEnum
-# isArray
+        return self
 
 
-    def getField(self, env, name):
-        offset = 0
-        for elem in self.members:
-            elem.typ.resolve(env)
-            if (elem.name == name):
-                return StructField(elem.typ, offset)
-            offset += elem.typ.size
-
-        return None
 
 
 class StructField:

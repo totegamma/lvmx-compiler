@@ -116,7 +116,7 @@ def projectAST(ast, s = 0):
 
     elif isinstance(ast, c_ast.Decl): # [name, quals, storage, funcspec, type*, init*, bitsize*]
 
-        if isinstance(ast.type, c_ast.TypeDecl) or isinstance(ast.type, c_ast.ArrayDecl) or isinstance(ast.type, c_ast.PtrDecl):
+        if type(ast.type) in (c_ast.TypeDecl, c_ast.PtrDecl, c_ast.ArrayDecl):
             init = projectAST(ast.init, s)
             if isinstance(init, node.String): # 初期化がstirngだった場合、リストに展開
                 string = init.eval()
@@ -156,14 +156,25 @@ def projectAST(ast, s = 0):
 
     elif isinstance(ast, c_ast.Enumerator): # [name, value*]
         if ast.value is None:
-            return [ast.name, None]
+            return (ast.name, None)
         else:
             if ast.value.type != 'int':
                 g.r.addReport(m.Report('fatal', a2t(ast), f"enum must be \'int\'"))
-            return [ast.name, int(ast.value.value)]
+            return (ast.name, int(ast.value.value))
 
     elif isinstance(ast, c_ast.EnumeratorList): # [enumerators**]
-        return [projectAST(e, s) for e in ast.enumerators]
+        itr = 0
+        typ = m.Type('enum')
+        for elem in ast.enumerators:
+            tmp  = projectAST(elem, s)
+            if tmp[1] is None:
+                typ.addMember((tmp[0], itr))
+                itr += 1
+            else:
+                typ.addMember(tmp)
+                itr = tmp[1] + 1
+
+        return typ
 
     elif isinstance(ast, c_ast.ExprList): #[exprs**]
         return [projectAST(e, s) for e in ast.exprs]
@@ -226,16 +237,13 @@ def projectAST(ast, s = 0):
         return node.Return(a2t(ast), projectAST(ast.expr, s))
 
     elif isinstance(ast, c_ast.Struct): # [name, decls**]
-        if ast.decls is None: # is type define
+        if ast.decls is None:
             return m.Type(ast.name).setHint('struct')
-        else: # is Struct define
-
-            tmp = []
+        else:
+            typ = m.Type('struct')
             for elem in ast.decls:
-                typ = projectAST(elem.type, s)
-                tmp.append(m.Symbol(typ.name, typ)) #TODO ParamListと合成・リファクタ・関数化
-
-            return node.Struct(a2t(ast), ast.name, tmp)
+                typ.addMember((elem.name, projectAST(elem.type)))
+            return node.Struct(a2t(ast), ast.name, typ)
 
     elif isinstance(ast, c_ast.StructRef): # [name*, type, filed*] type unused
         if ast.type == '.':
@@ -261,12 +269,12 @@ def projectAST(ast, s = 0):
     elif isinstance(ast, c_ast.Typedef): # [name, quals, storage, type*]
         typ = projectAST(ast.type, s)
         if isinstance(typ, node.Struct) or isinstance(typ, node.Enum):
-            return typ.markTypedef(ast.name)
+            return node.Typedef(a2t(ast), ast.name, typ.typ.addQuals(ast.quals))
         else:
             return node.Typedef(a2t(ast), ast.name, typ.addQuals(ast.quals))
 
     elif isinstance(ast, c_ast.Typename): # [name, quals, type*]
-        return projectAST(ast.type, s).setName(ast.name).addQuals(ast.quals)
+        return projectAST(ast.type, s).addQuals(ast.quals)
 
     elif isinstance(ast, c_ast.UnaryOp): # [op, expr*]
         if ast.op == '!':
@@ -320,12 +328,12 @@ def makeAST(code):
         print(e)
         exit()
 
-    #ast.show()
+    ast.show()
 
     node = projectAST(ast)
 
-    #print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
-
+    print(json.dumps(node, default=lambda x: {x.__class__.__name__: x.__dict__}, indent=2))
+    g.r.addReport(m.Report('fatal', a2t(ast), f"debugmode"))
     return node
 
 

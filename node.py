@@ -157,22 +157,19 @@ class GlobalVar (AST):
         return env
 
 class Struct (AST):
-    def __init__(self, tok, symbolname, members):
+    def __init__(self, tok, symbolname, typ):
         self.tok = tok
         self.symbolname = symbolname
-        self.members = members
+        self.typ = typ
         self.mark = False
         self.name = None
 
     def gencode(self, env, opt):
-        typ = m.Type('struct')
-        for elem in self.members:
-            typ.addMember(elem)
 
-        env.addStruct(self.symbolname, typ)
+        env.addStruct(self.symbolname, self.typ)
 
         if self.mark:
-            env.addType(self.name, typ)
+            env.addType(self.name, self.typ)
 
         return m.Insts(m.Type(), [])
 
@@ -182,23 +179,16 @@ class Struct (AST):
         return self
 
 class Enum (AST):
-    def __init__(self, tok, symbolname, members):
+    def __init__(self, tok, symbolname, typ):
         self.tok = tok
         self.symbolname = symbolname
-        self.members = members
+        self.typ = typ 
         self.mark = False
         self.name = None
 
     def gencode(self, env, opt):
-        enumitr = 0
-        for elem in self.members:
-            if elem[1] is None:
-                env.addEnumMember(elem[0], enumitr)
-                enumitr += 1
-            else:
-                env.addEnumMember(elem[0], elem[1])
-                enumitr = elem[1]
-        env.addEnum(self.symbolname)
+
+        env.addEnum(self.symbolname, self.typ)
 
         if self.mark:
             env.addType(self.name, m.Type('int'))

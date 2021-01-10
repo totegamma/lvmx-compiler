@@ -52,9 +52,7 @@ class AST (object):
         if (a.basetype == 'float') and (b.basetype == 'float'):
             return m.Type('float')
 
-        return m.Type('int')
-
-        #raise DeclTypeException(f"invalid operands to binary expression('{a}' and '{b}')")
+        raise DeclTypeException(f"invalid operands to binary expression('{a}' and '{b}')")
 
 class DeclTypeException(Exception):
     pass
@@ -295,10 +293,10 @@ class Indirect (AST):
             if (result := self.assertOnlyPop1(env, opt)) is not None:
                 return result
             codes.append(m.Inst(opc.LOADP, self.nullarg))
-            return m.Insts(body.typ, codes) # TODO typeのrefcountを増減する必要があるかも
+            return m.Insts(body.typ.addRefcount(-1), codes)
         else:
             codes.append(m.Inst(opc.STOREP, self.nullarg))
-            return m.Insts(body.typ, codes) # TODO typeのrefcountを増減する必要があるかも
+            return m.Insts(body.typ.addRefcount(-1), codes)
 
 class Address (AST):
     def __init__(self, tok, body):
@@ -315,7 +313,7 @@ class Address (AST):
         if isinstance(self.body, Symbol):
             var = env.variableLookup(self.body.symbolname)
             codes = [var.genAddrCode()]
-            return m.Insts(var.typ, codes)
+            return m.Insts(var.typ.addRefcount(1), codes)
 
         elif isinstance(self.body, Indirect):
             return self.body.body.gencode(env, newopt(opt, 1))
@@ -897,11 +895,12 @@ class Symbol (AST):
         if opt.lr == 'r':
             if (result := self.assertOnlyPop1(env, opt)) is not None:
                 return result
-            if var.typ.basetype in ('void', 'int', 'float', 'enum') and var.typ.length == 1: # XXX
+            if ('void', 'int', 'float', 'enum') and var.typ.length == 1:
                 codes = [var.genLoadCode()]
+                return m.Insts(var.typ.setLength(1).addRefcount(1), codes) # 配列からポインタにキャスト
             else:
                 codes = [var.genAddrCode()]
-            return m.Insts(var.typ, codes)
+                return m.Insts(var.typ, codes)
         else:
             codes = [var.genStoreCode()]
             return m.Insts(m.Type(), codes)

@@ -49,13 +49,13 @@ int main() {
 	localStruct.fieldB = 0;
 
 
-	judge = memcmp(globalStruct, localStruct, 2);
+	judge = memcmp(&globalStruct, &localStruct, 2);
 	print1(judge + '0');
 
-	judge = memcmp(globalStruct, testLocalE, 2);
+	judge = memcmp(&globalStruct, testLocalE, 2);
 	print1(judge + '0');
 
-	judge = memcmp(localStruct, testGlobalE, 2);
+	judge = memcmp(&localStruct, testGlobalE, 2);
 	print1(judge + '0');
 
 	judge = memcmp(testLocalZ, testGlobalF, 5);

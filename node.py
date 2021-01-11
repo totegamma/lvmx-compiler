@@ -818,8 +818,6 @@ class Post_dec (AST):
         return m.Insts(typ, codes)
 
 class Add (AST):
-    opI = opc.ADDI
-    opF = opc.ADDF
 
     def __init__(self, tok, left, right):
         self.tok = tok
@@ -868,9 +866,53 @@ class Add (AST):
         return m.Insts(typ, code)
 
 
-class Sub (BIOP):
-    opI = opc.SUBI
-    opF = opc.SUBF
+class Sub (AST):
+
+    def __init__(self, tok, left, right):
+        self.tok = tok
+        self.left = left
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        left = self.left.gencode(env, newopt(opt, 1))
+        right = self.right.gencode(env, newopt(opt, 1))
+
+        code = right.bytecodes
+
+        if (left.typ.length > 1 or left.typ.refcount > 0) and (right.typ.length == 1 and right.typ.refcount == 0):
+            typ = copy(left.typ)
+            if typ.length > 1:
+                typ.setLength(1).addRefcount(1)
+
+            size = env.calcPointeredSize(typ)
+
+            if size > 1:
+                code.append(m.Inst(opc.PUSH, size))
+                code.append(m.Inst(opc.MULI, self.nullarg))
+
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.SUBI, self.nullarg))
+
+        elif (left.typ.basetype  == 'int') and (right.typ.basetype == 'int'):
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.SUBI, self.nullarg))
+            typ = m.Type('int')
+
+        elif (left.typ.basetype == 'float') and (right.typ.basetype == 'float'):
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.SUBF, self.nullarg))
+            typ = m.Type('float')
+
+        else:
+            g.r.addReport(m.Report('fatal', self.tok, f'fatal error in node.Sub'))
+
+        return m.Insts(typ, code)
 
 class Mul (BIOP):
     opI = opc.MULI

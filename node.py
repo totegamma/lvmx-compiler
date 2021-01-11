@@ -42,28 +42,13 @@ class AST (object):
     def eval(self):
         return None
 
-    def decideType(self, a, b):
-
-        if (a.length > 1 or a.refcount > 0) and (b.length == 1 and b.refcount == 0):
-            return m.Type(a.basetype).addRefcount(a.refcount + 1 if a.length > 1 else 0)
-
-        if (a.basetype  == 'int') and (b.basetype == 'int'):
-            return m.Type('int')
-
-        if (a.basetype == 'float') and (b.basetype == 'float'):
-            return m.Type('float')
-
-        raise DeclTypeException(f"invalid operands to binary expression('{a}' and '{b}')")
-
-class DeclTypeException(Exception):
-    pass
-
 # -= :: Inherited MODEL :: =-
 
 class BIOP (AST):
 
     opI = None
     opF = None
+    isCompOP = False
 
     def __init__(self, tok, left, right):
         self.tok = tok
@@ -80,19 +65,29 @@ class BIOP (AST):
         left = self.left.gencode(env, newopt(opt, 1))
         right = self.right.gencode(env, newopt(opt, 1))
 
-        try:
-            typ = self.decideType(left.typ, right.typ)
-        except DeclTypeException as e:
-            g.r.addReport(m.Report('error', self.tok, e))
-            return m.Insts()
-
         code = right.bytecodes
         code.extend(left.bytecodes)
 
-        if typ.basetype == 'float':
-            code.append(m.Inst(self.opF, self.nullarg))
-        else:
+        if self.isCompOP: # 比較演算子ならポインタ同士の演算が可能
+            if left.typ.isPointer() and right.typ.isPointer():
+                code.append(m.Inst(self.opI, self.nullarg))
+                return m.Insts(m.Type('int'), code)
+        else: # そうでないならスカラーしか演算できない
+            if not (left.typ.isScalar() and right.typ.isScalar()):
+                g.r.addReport(m.Report('error', self.tok, f"invalid operands to binary expression('{left.typ}' and '{right.typ}')"))
+                return m.Insts()
+
+        if left.typ.basetype == 'int' and right.typ.basetype == 'int':
             code.append(m.Inst(self.opI, self.nullarg))
+            typ = m.Type('int')
+
+        elif left.typ.basetype == 'float' and right.typ.basetype == 'float':
+            code.append(m.Inst(self.opF, self.nullarg))
+            typ = m.Type('float')
+
+        else:
+            g.r.addReport(m.Report('error', self.tok, f"invalid operands to binary expression('{left.typ}' and '{right.typ}')"))
+            return m.Insts()
 
         return m.Insts(typ, code)
 
@@ -894,26 +889,32 @@ class RShift (BIOP):
 class Lt (BIOP):
     opI = opc.LTI
     opF = opc.LTF
+    isCompOP = True
 
 class Lte (BIOP):
     opI = opc.LTEI
     opF = opc.LTEF
+    isCompOP = True
 
 class Gt (BIOP):
     opI = opc.GTI
     opF = opc.GTF
+    isCompOP = True
 
 class Gte (BIOP):
     opI = opc.GTEI
     opF = opc.GTEF
+    isCompOP = True
 
 class Eq (BIOP):
     opI = opc.EQI
     opF = opc.EQF
+    isCompOP = True
 
 class Neq (BIOP):
     opI = opc.NEQI
     opF = opc.NEQF
+    isCompOP = True
 
 class Symbol (AST):
     def __init__(self, tok, symbolname):

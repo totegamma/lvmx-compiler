@@ -67,6 +67,12 @@ class Type:
         self.members.append(member)
         return self
 
+    def isScalar(self):
+        return self.basetype in ('int', 'float', 'enum') and self.refcount == 0 and self.length == 1
+
+    def isPointer(self):
+        return self.refcount > 1 and self.length == 1
+
 
 class StructField:
     def __init__ (self, typ, offset):

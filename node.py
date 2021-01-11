@@ -829,7 +829,7 @@ class Add (AST):
             if typ.length > 1:
                 typ.setLength(1).addRefcount(1)
 
-            size = env.calcTypeSize(typ)
+            size = env.calcPointeredSize(typ)
 
             if size > 1:
                 code.append(m.Inst(opc.PUSH, size))

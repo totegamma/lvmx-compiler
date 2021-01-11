@@ -742,13 +742,17 @@ class Pre_dec (AST):
 
         right = self.right.gencode(env, newopt(opt, 1, 'r'))
         codes = right.bytecodes
-        codes.append(m.Inst(opc.DEC, self.nullarg))
+        typ = copy(right.typ)
 
-        typ = m.Type()
+        if typ.isPointer():
+            codes.append(m.Inst(opc.DEC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.DEC, 1))
 
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
-            typ = right.typ
+        else:
+            typ = m.Type()
 
         codes.extend(self.right.gencode(env, newopt(opt, 0, 'l')).bytecodes)
 
@@ -756,50 +760,60 @@ class Pre_dec (AST):
 
 class Post_inc (AST):
 
-    def __init__(self, tok, right):
+    def __init__(self, tok, left):
         self.tok = tok
-        self.right = right
+        self.left = left
 
     def gencode(self, env, opt):
 
         if (result := self.assertOnlyRValue(env, opt)) is not None:
             return result
 
-        right = self.right.gencode(env, newopt(opt, 1, 'r'))
-        codes = right.bytecodes
+        left = self.left.gencode(env, newopt(opt, 1, 'r'))
+        codes = left.bytecodes
+        typ = copy(left.typ)
 
-        typ = m.Type()
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
-            typ = right.typ
+        else:
+            typ = m.Type()
 
-        codes.append(m.Inst(opc.INC, self.nullarg))
-        codes.extend(self.right.gencode(env, newopt(opt, 0, 'l')).bytecodes)
+        if typ.isPointer():
+            codes.append(m.Inst(opc.INC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.INC, 1))
+
+        codes.extend(self.left.gencode(env, newopt(opt, 0, 'l')).bytecodes)
 
         return m.Insts(typ, codes)
 
 
 class Post_dec (AST):
 
-    def __init__(self, tok, right):
+    def __init__(self, tok, left):
         self.tok = tok
-        self.right = right
+        self.left = left
 
     def gencode(self, env, opt):
 
         if (result := self.assertOnlyRValue(env, opt)) is not None:
             return result
 
-        right = self.right.gencode(env, newopt(opt, 1, 'r'))
-        codes = right.bytecodes
+        left = self.left.gencode(env, newopt(opt, 1, 'r'))
+        codes = left.bytecodes
+        typ = copy(left.typ)
 
-        typ = m.Type()
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
-            typ = right.typ
+        else:
+            typ = m.Type()
 
-        codes.append(m.Inst(opc.DEC, self.nullarg))
-        codes.extend(self.right.gencode(env, newopt(opt, 0, 'l')).bytecodes)
+        if typ.isPointer():
+            codes.append(m.Inst(opc.DEC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.DEC, 1))
+
+        codes.extend(self.left.gencode(env, newopt(opt, 0, 'l')).bytecodes)
 
         return m.Insts(typ, codes)
 

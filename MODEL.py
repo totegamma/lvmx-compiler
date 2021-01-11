@@ -2,6 +2,7 @@ import node
 import struct
 import glob as g
 import linecache
+from copy import copy
 from functools import reduce
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
@@ -71,7 +72,10 @@ class Type:
         return self.basetype in ('int', 'float', 'enum') and self.refcount == 0 and self.length == 1
 
     def isPointer(self):
-        return self.refcount > 1 and self.length == 1
+        return self.refcount > 0 and self.length == 1
+
+    def isArray(self):
+        return self.length > 1
 
 
 class StructField:
@@ -352,6 +356,22 @@ class Env:
             return self.calcTypeSize(self.getType(typ.basetype, typ.hint)) * length
         else:
             return reduce(lambda sigma, e: sigma + self.calcTypeSize(e[1]), typ.members, 0) * length
+
+    def calcPointeredSize(self, typ):
+
+        tmp = copy(typ)
+
+        if tmp.length > 1:
+            tmp.setLength(1).addRefcount(1)
+
+        if not tmp.isPointer():
+            print('non-pointer exception')
+            return None
+
+        tmp.addRefcount(-1)
+
+        return self.calcTypeSize(tmp)
+
 
 class TokenInfo:
     def __init__(self, lineno, colno, filename = "input.c"):

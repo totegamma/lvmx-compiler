@@ -289,10 +289,10 @@ class Indirect (AST):
             if (result := self.assertOnlyPop1(env, opt)) is not None:
                 return result
             codes.append(m.Inst(opc.LOADP, self.nullarg))
-            return m.Insts(body.typ.addRefcount(-1), codes)
+            return m.Insts(copy(body.typ).addRefcount(-1), codes)
         else:
             codes.append(m.Inst(opc.STOREP, self.nullarg))
-            return m.Insts(body.typ.addRefcount(-1), codes)
+            return m.Insts(copy(body.typ).addRefcount(-1), codes)
 
 class Address (AST):
     def __init__(self, tok, body):
@@ -309,7 +309,7 @@ class Address (AST):
         if isinstance(self.body, Symbol):
             var = env.variableLookup(self.body.symbolname)
             codes = [var.genAddrCode()]
-            return m.Insts(var.typ.addRefcount(1), codes)
+            return m.Insts(copy(var.typ).addRefcount(1), codes)
 
         elif isinstance(self.body, Indirect):
             return self.body.body.gencode(env, newopt(opt, 1))
@@ -713,13 +713,17 @@ class Pre_inc (AST):
 
         right = self.right.gencode(env, newopt(opt, 1, 'r'))
         codes = right.bytecodes
-        codes.append(m.Inst(opc.INC, self.nullarg))
+        typ = copy(right.typ)
 
-        typ = m.Type()
+        if typ.isPointer():
+            codes.append(m.Inst(opc.INC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.INC, 1))
 
         if (opt.popc == 1):
             codes.append(m.Inst(opc.DUP, self.nullarg))
-            typ = right.typ
+        else:
+            typ = m.Type()
 
         codes.extend(self.right.gencode(env, newopt(opt, 0, 'l')).bytecodes)
 
@@ -944,12 +948,12 @@ class Symbol (AST):
         if opt.lr == 'r':
             if (result := self.assertOnlyPop1(env, opt)) is not None:
                 return result
-            if ('void', 'int', 'float', 'enum') and var.typ.length == 1:
-                codes = [var.genLoadCode()]
-                return m.Insts(var.typ.setLength(1).addRefcount(1), codes) # 配列からポインタにキャスト
-            else:
+            if var.typ.isArray():
                 codes = [var.genAddrCode()]
-                return m.Insts(var.typ, codes)
+                return m.Insts(copy(var.typ).setLength(1).addRefcount(1), codes) # 配列からポインタにキャスト
+            else:
+                codes = [var.genLoadCode()]
+                return m.Insts(copy(var.typ), codes)
         else:
             codes = [var.genStoreCode()]
             return m.Insts(m.Type(), codes)

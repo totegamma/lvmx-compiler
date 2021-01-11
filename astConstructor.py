@@ -297,6 +297,8 @@ def projectAST(ast, s = 0):
             return node.Indirect(a2t(ast), projectAST(ast.expr, s))
         elif ast.op == '&':
             return node.Address(a2t(ast), projectAST(ast.expr, s))
+        elif ast.op == 'sizeof':
+            return node.Sizeof(a2t(ast), projectAST(ast.expr, s))
         else:
             g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported unary op '{ast.op}'"))
             return

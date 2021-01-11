@@ -641,6 +641,26 @@ class Cast (AST):
             g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
             return m.Insts()
 
+class Sizeof (AST):
+    def __init__(self, tok, body):
+        self.tok = tok
+        self.body = body
+
+    def gencode(self, env, opt):
+        if isinstance(self.body, m.Type):
+            return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, env.calcTypeSize(self.body))])
+        elif isinstance(self.body, Symbol):
+            try:
+                var = env.variableLookup(self.body.symbolname)
+            except m.SymbolNotFoundException as e:
+                g.r.addReport(m.Report('fatal', self.tok, f"cannot eval size of type '{type(self.body)}'"))
+                return m.Insts()
+
+            return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, env.calcTypeSize(var.typ))])
+        else:
+            g.r.addReport(m.Report('fatal', self.tok, f"cannot eval size of type '{type(self.body)}'"))
+        return m.Insts()
+
 class Raw (AST):
     def __init__(self, tok, typ, opc, arg, bodys):
         self.tok = tok

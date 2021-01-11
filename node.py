@@ -135,44 +135,24 @@ class Struct (AST):
         self.tok = tok
         self.symbolname = symbolname
         self.typ = typ
-        self.mark = False
-        self.name = None
 
     def gencode(self, env, opt):
 
         env.addStruct(self.symbolname, self.typ)
 
-        if self.mark:
-            env.addType(self.name, self.typ)
-
         return m.Insts(m.Type(), [])
-
-    def markTypedef(self, name):
-        self.name = name
-        self.mark = True
-        return self
 
 class Enum (AST):
     def __init__(self, tok, symbolname, typ):
         self.tok = tok
         self.symbolname = symbolname
         self.typ = typ 
-        self.mark = False
-        self.name = None
 
     def gencode(self, env, opt):
 
         env.addEnum(self.symbolname, self.typ)
 
-        if self.mark:
-            env.addType(self.name, m.Type('int'))
-
         return m.Insts(m.Type(), [])
-
-    def markTypedef(self, name):
-        self.name = name
-        self.mark = True
-        return self
 
 class Func (AST):
     def __init__(self, tok, symbolname, typ, args, body):

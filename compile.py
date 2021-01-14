@@ -12,7 +12,23 @@ from argparse import ArgumentParser
 from mnemonic import mnemonic as opc
 from astConstructor import makeAST
 
-def dumpjson(code):
+def value2hex(val):
+    if isinstance(val, int):
+        if val > 2147483647: # uint
+            arg = format(val, "08x")
+        else:
+            arg = format(struct.unpack('>I', struct.pack('>i', val))[0], "08x")
+
+    elif isinstance(val, float):
+        arg = format(struct.unpack('>I', struct.pack('>f', val))[0], "08x")
+
+    else:
+        print(f"serialize arg unkown type error: {val.arg=}")
+        return "0000000000000000"
+
+    return f'00000000{arg}'
+
+def compile(code):
 
     body = {}
 
@@ -62,10 +78,6 @@ def dumpjson(code):
         elif (elem.opc == opc.JUMP or elem.opc == opc.JIF0):
             elem.arg = labelLocator[elem.arg]
 
-# overwrite mnemonic
-    for elem in bytecode:
-        elem.opc = elem.opc.name
-
     data = []
     for elem in env.statics:
         if isinstance(elem, m.Symbol):
@@ -84,7 +96,7 @@ def dumpjson(code):
     body['code'] = bytecode
     body['data'] = data
 
-    return json.dumps(body, default=lambda x: x.__dict__)
+    return body
 
 
 if __name__ == '__main__':
@@ -111,13 +123,23 @@ if __name__ == '__main__':
     g.init(args.filename, tmpf.getvalue())
 
     try:
-        if args.json:
-            bytecode = dumpjson(g.source)
-        else:
-            bytecode = dumpbytecode(g.source)
+        dumps = compile(g.source)
     except Exception as e:
         g.r.report()
         raise
+
+
+    if args.json:
+        for elem in dumps['code']:
+            elem.opc = elem.opc.name
+        bytecode = json.dumps(dumps, default=lambda x: x.__dict__)
+    else:
+        bytecode = ".data\n"
+        for elem in dumps['data']:
+            bytecode += value2hex(elem) + '\n'
+        bytecode += '.code\n'
+        for elem in dumps['code']:
+            bytecode += elem.serialize() + '\n'
 
     if g.r.hasError():
         g.r.report()

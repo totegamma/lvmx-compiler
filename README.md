@@ -96,7 +96,7 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>11</td>
-			<td></td>
+			<td>DUP</td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -711,7 +711,7 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>98</td>
-			<td></td>
+			<td>STOF</td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -760,7 +760,7 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>105</td>
-			<td></td>
+			<td>FTOS</td>
 			<td></td>
 			<td></td>
 			<td></td>

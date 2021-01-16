@@ -108,16 +108,19 @@ class Inst:
 
     def serialize(self):
         if isinstance(self.arg, int):
-            arg = format(struct.unpack('>I', struct.pack('>i', self.arg))[0], "08x")
+            arg = format(struct.unpack('>I', struct.pack('>i', self.arg))[0], "d")
 
         elif isinstance(self.arg, float):
-            arg = format(struct.unpack('>I', struct.pack('>f', self.arg))[0], "08x")
+            arg = format(struct.unpack('>I', struct.pack('>f', self.arg))[0], "d")
 
         else:
             print(f"serialize arg unkown type error: {self.arg=}")
-            return "0000000000000000"
+            return "0"
 
-        return f'{self.opc.value:08x}{arg}'
+        if arg == '0':
+            return f'{self.opc.value}'
+        else:
+            return f'{self.opc.value}.{arg}'
 
     def debugserial(self):
         return f'{self.opc.name} {self.arg}'

@@ -15,18 +15,18 @@ from astConstructor import makeAST
 def value2hex(val):
     if isinstance(val, int):
         if val > 2147483647: # uint
-            arg = format(val, "08x")
+            arg = format(val, "d")
         else:
-            arg = format(struct.unpack('>I', struct.pack('>i', val))[0], "08x")
+            arg = format(struct.unpack('>I', struct.pack('>i', val))[0], "d")
 
     elif isinstance(val, float):
-        arg = format(struct.unpack('>I', struct.pack('>f', val))[0], "08x")
+        arg = format(struct.unpack('>I', struct.pack('>f', val))[0], "d")
 
     else:
         print(f"serialize arg unkown type error: {val.arg=}")
-        return "0000000000000000"
+        return "0"
 
-    return f'00000000{arg}'
+    return f'{arg}'
 
 def compile(code):
 
@@ -134,10 +134,10 @@ if __name__ == '__main__':
             elem.opc = elem.opc.name
         bytecode = json.dumps(dumps, default=lambda x: x.__dict__)
     else:
-        bytecode = ".data\n"
+        bytecode = f".data {len(dumps['data'])}" + '\n'
         for elem in dumps['data']:
             bytecode += value2hex(elem) + '\n'
-        bytecode += '.code\n'
+        bytecode += f".code {len(dumps['code'])}" + '\n'
         for elem in dumps['code']:
             bytecode += elem.serialize() + '\n'
 

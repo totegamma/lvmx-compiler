@@ -315,10 +315,10 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>42</td>
+			<td>RAND</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop2(float min, float max) push1(float rand)</td>
+			<td>generate random value</td>
 		</tr>
 		<tr>
 			<td>43</td>
@@ -718,17 +718,17 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>99</td>
+			<td>SSN</td>
 			<td></td>
 			<td></td>
-			<td></td>
-			<td></td>
+			<td>Set Slot Name</td>
 		</tr>
 		<tr>
 			<td>100</td>
+			<td>SST</td>
 			<td></td>
 			<td></td>
-			<td></td>
-			<td></td>
+			<td>Set Slot Tag</td>
 		</tr>
 		<tr>
 			<td>101</td>
@@ -767,17 +767,17 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>106</td>
+			<td>GSN</td>
 			<td></td>
 			<td></td>
-			<td></td>
-			<td></td>
+			<td>Get Slot Name</td>
 		</tr>
 		<tr>
 			<td>107</td>
+			<td>GST</td>
 			<td></td>
 			<td></td>
-			<td></td>
-			<td></td>
+			<td>Get Slot Tag</td>
 		</tr>
 		<tr>
 			<td>108</td>
@@ -788,22 +788,22 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>109</td>
-			<td></td>
-			<td></td>
+			<td>SCPY</td>
+			<td>pop2(int* to, int* from)</td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>110</td>
-			<td></td>
-			<td></td>
+			<td>MCMP</td>
+			<td>pop3(int* memA, int* memB, int length)</td>
 			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>111</td>
-			<td></td>
-			<td></td>
+			<td>MCPY</td>
+			<td>pop3(int* to, int* from, int length)</td>
 			<td></td>
 			<td></td>
 		</tr>
@@ -874,52 +874,52 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>121</td>
+			<td>FCFS</td>
+			<td></td>
+			<td>pop1(int* name) push1(int slot)</td>
+			<td>Find Child From Name</td>
+		</tr>
+		<tr>
+			<td>122</td>
+			<td>FCFT</td>
+			<td></td>
+			<td>pop1(int* name) push1(int slot)</td>
+			<td>Find Child From Tag</td>
+		</tr>
+		<tr>
+			<td>123</td>
 			<td>SSPA</td>
 			<td></td>
 			<td>pop2(uint slot, uint new_slot)</td>
 			<td>SetSlotParent</td>
 		</tr>
 		<tr>
-			<td>122</td>
-			<td>DS</td>
-			<td></td>
-			<td>pop1(uint slot)</td>
-			<td>DestroySlot</td>
-		</tr>
-		<tr>
-			<td>123</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
 			<td>124</td>
+			<td>GSPA</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop1(int slot) push1(int slot)</td>
+			<td>Get Slot Parent</td>
 		</tr>
 		<tr>
 			<td>125</td>
+			<td>DUPS</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop1(int slot) push1(int slot)</td>
+			<td>Duplicate Slot</td>
 		</tr>
 		<tr>
 			<td>126</td>
+			<td>CHIC</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop1(int slot) push1(int count)</td>
+			<td>Children Count</td>
 		</tr>
 		<tr>
 			<td>127</td>
+			<td>DESS</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop1(uint slot)</td>
+			<td>DestroySlot</td>
 		</tr>
 	</tbody>
 </table>

@@ -8,6 +8,7 @@
 #define debuglog(message) __raw(void, "PRINT", 0, message)
 #define createSlotFromTemplate(templateName) __raw(int, "CSFT", 0, templateName)
 #define setSlotParent(targetSlotID, newParentSlotID) __raw(void, "SSPA", 0, targetSlotID, newParentSlotID)
+#define dupSlot(targetSlotID) __raw(int, "DUPS", 0, targetSlotID)
 
 #define getDVInt(destSlotID, key) __raw(int, "LOADD", 0, destSlotID, key)
 #define getDVFloat(destSlotID, key) __raw(float, "LOADD", 1, destSlotID, key)

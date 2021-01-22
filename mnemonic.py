@@ -44,6 +44,7 @@ class mnemonic (IntEnum):
     ROOT = 39
     POW = 40
     LOG = 41
+    RAND = 42
 
     INV = 48
     INC = 49
@@ -85,8 +86,16 @@ class mnemonic (IntEnum):
 
     SLEN = 96
     STOI = 97
+    STOF = 98
+    SSN = 99
+    SST = 100
     SCMP = 103
     ITOS = 104
+    GSN = 106
+    GST = 107
+    SCPY = 109
+    MCMP = 110
+    MCPY = 111
 
     GSPO = 112
     GSRO = 113
@@ -95,6 +104,11 @@ class mnemonic (IntEnum):
     SSRO = 117
     SSSC = 118
     CSFT = 120
-    SSPA = 121
-    DS   = 122
+    FCFS = 121
+    FCFT = 122
+    SSPA = 123
+    GSPA = 124
+    DUPS = 125
+    CHIC = 126
+    DESS = 127
 

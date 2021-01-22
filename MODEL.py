@@ -201,7 +201,7 @@ class Env:
         for elem in self.functions:
             if (elem.symbolname == name):
                 return elem
-        raise SymbolNotFoundException(f"function '{name=}'")
+        raise SymbolNotFoundException(f"function '{name}'")
 
     def variableLookup(self, name):
         for scope in reversed(self.scopeStack):
@@ -214,15 +214,16 @@ class Env:
                 return elem
 
         for elem in self.statics:
-            if (elem.name == name):
+            if (type(elem) is Symbol and elem.name == name):
                 return elem
-        raise SymbolNotFoundException(f"variable '{name=}'")
+
+        raise SymbolNotFoundException(f"variable '{name}'")
 
     def enumLookup(self, name):
         for scope in reversed(self.scopeStack):
             if name in scope.enumMembers:
                 return scope.enumMembers[name]
-        raise SymbolNotFoundException(f"variable '{name=}'")
+        raise SymbolNotFoundException(f"variable '{name}'")
 
 
     def issueString(self, string):

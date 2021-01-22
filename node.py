@@ -992,7 +992,7 @@ class Symbol (AST):
                 value = env.enumLookup(self.symbolname)
             except m.SymbolNotFoundException as e:
                 g.r.addReport(m.Report('error', self.tok, f'{e} not found'))
-                return m.Inst()
+                return m.Insts()
 
             if (result := self.assertOnlyRValue(env, opt)) is not None:
                 return result

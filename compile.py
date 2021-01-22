@@ -128,6 +128,10 @@ if __name__ == '__main__':
         g.r.report()
         raise
 
+    if dumps is None:
+        g.r.report()
+        exit(-1)
+
 
     if args.json:
         for elem in dumps['code']:

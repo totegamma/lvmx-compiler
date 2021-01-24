@@ -451,6 +451,8 @@ class ErrorModule:
         msg += " generated."
         print(msg)
 
+        return msg
+
 
 class Report:
     def __init__(self, level, tok, message):

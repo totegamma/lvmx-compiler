@@ -1,31 +1,104 @@
+import node
 import struct
+import glob as g
+import linecache
+from copy import copy
+from functools import reduce
 from enum import IntEnum, auto
 from mnemonic import mnemonic as opc
 
-class Types (IntEnum):
-    Void = auto()
-    Any = auto()
-    Uint  = auto()
-    Int = auto()
-    Float = auto()
+
+BASETYPE = ['void', 'int', 'float', 'struct', 'enum']
+
+class SymbolNotFoundException (Exception):
+    pass
+
+class SymbolRedefineException (Exception):
+    pass
+
+class TypeRedefineException (Exception):
+    pass
+
+class SymbolLengthNotSpecifiedException (Exception):
+    pass
+
+
+class Type:
+    def __init__(self, basetype = 'void'):
+        self.basetype = basetype
+        self.refcount = 0
+        self.length = 1
+        self.quals = []
+        self.members = []
+        self.name = None
+        self.hint = None
+
+    def __str__(self):
+        buff = self.basetype
+        if self.refcount > 0 or self.length > 1:
+            buff += ' '
+        buff += '*' * self.refcount
+        if (self.length > 1):
+            buff += f'[{self.length}]'
+        return buff
+
+    def addRefcount(self, plus):
+        self.refcount += plus
+        return self
+
+    def addQuals(self, quals):
+        for elem in quals:
+            if elem not in self.quals:
+                self.quals.append(elem)
+        return self
+
+    def setHint(self, hint):
+        self.hint = hint
+        return self
+
+    def setLength(self, length):
+        self.length = length
+        return self
+
+    def setName(self, name):
+        self.name = name
+        return self
+
+    def addMember(self, member):
+        self.members.append(member)
+        return self
+
+    def isScalar(self):
+        return self.basetype in ('int', 'float', 'enum') and self.refcount == 0 and self.length == 1
+
+    def isPointer(self):
+        return self.refcount > 0 and self.length == 1
+
+    def isArray(self):
+        return self.length > 1
+
+
+class StructField:
+    def __init__ (self, typ, offset):
+        self.typ = typ
+        self.offset = offset
 
 class VarRegion (IntEnum):
     GLOBAL = auto()
     ARGUMENT = auto()
     LOCAL = auto()
 
-
 class Function:
-    def __init__(self, symbolname, typename, args, insts):
+    def __init__(self, symbolname, typ, args, insts):
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
         self.args = args
         self.insts = insts
 
 class GlobalVar:
-    def __init__(self, symbolname, typename, insts):
+    def __init__(self, symbolname, typ, insts):
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
         self.insts = insts
 
 class Inst:
@@ -35,32 +108,32 @@ class Inst:
 
     def serialize(self):
         if isinstance(self.arg, int):
-            if self.arg > 2147483647: # uint
-                arg = format(self.arg, "08x")
-            else:
-                arg = format(struct.unpack('>I', struct.pack('>i', self.arg))[0], "08x")
+            arg = format(struct.unpack('>I', struct.pack('>i', self.arg))[0], "d")
 
         elif isinstance(self.arg, float):
-            arg = format(struct.unpack('>I', struct.pack('>f', self.arg))[0], "08x")
+            arg = format(struct.unpack('>I', struct.pack('>f', self.arg))[0], "d")
 
         else:
             print(f"serialize arg unkown type error: {self.arg=}")
-            return "0000000000000000"
+            return "0"
 
-        return f'{self.opc.value:08x}{arg}'
+        if arg == '0':
+            return f'{self.opc.value}'
+        else:
+            return f'{self.opc.value}.{arg}'
 
     def debugserial(self):
         return f'{self.opc.name} {self.arg}'
 
 class Insts:
-    def __init__(self, typename, bytecodes):
-        self.typename = typename
+    def __init__(self, typ = Type(), bytecodes = []):
+        self.typ = typ
         self.bytecodes = bytecodes
 
 class Symbol:
-    def __init__(self, name, typename, initvalue = 0):
+    def __init__(self, name, typ, initvalue = 0):
         self.name = name
-        self.typename = typename
+        self.typ = typ
         self.initvalue = initvalue
 
     def setID(self, newid):
@@ -89,25 +162,50 @@ class Symbol:
         else:
             print("PROGRAM ERROR GENLOADCODE")
 
+    def genAddrCode(self):
+        if (self.region == VarRegion.GLOBAL):
+            return Inst(opc.PUSH, self.id)
+        elif (self.region == VarRegion.ARGUMENT):
+            return Inst(opc.PUAP, self.id)
+        elif (self.region == VarRegion.LOCAL):
+            return Inst(opc.PULP, self.id)
+        else:
+            print("PROGRAM ERROR GENLOADCODE")
+
+class scopedEnv:
+    def __init__(self):
+        self.variables = []
+        self.structs = {}
+        self.enums = []
+        self.enumMembers = {}
+        self.types = {}
+
 class Env:
     def __init__(self):
         self.functions = []
-        self.strings = {}
-        self.globals = []
-        self.args = []
-        self.locals = []
-        self.localcount = 0
         self.labelitr = 0
+
+        self.statics = []
+        self.strings = {} # string重複時にIDを読み出すためだけに使う
+        self.staticItr = 0
+        self.scopeStack = [scopedEnv()]
+
+        self.args = []
+        self.argItr = 0
+        self.localItr = 0
+
+        self.currentFuncName = '__DEFAULT'
+
 
     def functionLookup(self, name):
         for elem in self.functions:
             if (elem.symbolname == name):
                 return elem
-        print("ERROR: FUNCTION NOT FOUND")
+        raise SymbolNotFoundException(f"function '{name}'")
 
     def variableLookup(self, name):
-        for scope in reversed(self.locals):
-            for elem in scope:
+        for scope in reversed(self.scopeStack):
+            for elem in scope.variables:
                 if (elem.name == name):
                     return elem
 
@@ -115,63 +213,249 @@ class Env:
             if (elem.name == name):
                 return elem
 
-        for elem in self.globals:
-            if (elem.name == name):
+        for elem in self.statics:
+            if (type(elem) is Symbol and elem.name == name):
                 return elem
-        print(f"{name=}")
-        print("ERROR: VAR NOT FOUND")
 
-    def stringLookup(self, string):
-        return self.strings[string]
+        raise SymbolNotFoundException(f"variable '{name}'")
+
+    def enumLookup(self, name):
+        for scope in reversed(self.scopeStack):
+            if name in scope.enumMembers:
+                return scope.enumMembers[name]
+        raise SymbolNotFoundException(f"variable '{name}'")
+
 
     def issueString(self, string):
         if (string not in self.strings):
-            self.strings[string] = len(self.strings)
+            self.strings[string] = self.staticItr
+            self.statics.append(string)
+            self.staticItr += len(string) + 1
+
         return self.strings[string]
 
     def addFunction(self, function):
+        for elem in self.functions:
+            if elem.symbolname == function.symbolname:
+                if elem.insts is None and function.insts is not None:
+                    elem.insts = function.insts
+                else:
+                    raise SymbolRedefineException()
+                return
         self.functions.append(function)
 
-    def addGlobal(self, symbol):
+    def addStatic(self, symbol):
         symbol.setRegion(VarRegion.GLOBAL)
-        symbol.setID(len(self.globals))
-        self.globals.append(symbol)
+        symbol.setID(self.staticItr)
+        self.staticItr += self.calcTypeSize(symbol.typ)
+        self.statics.append(symbol)
 
     def addArg(self, symbol):
         symbol.setRegion(VarRegion.ARGUMENT)
-        symbol.setID(len(self.args))
+        symbol.setID(self.argItr)
+        self.argItr += self.calcTypeSize(symbol.typ)
         self.args.append(symbol)
 
     def addLocal(self, symbol):
         symbol.setRegion(VarRegion.LOCAL)
-        newid = self.localcount
-        symbol.setID(newid)
-        self.localcount += 1
-        self.locals[-1].append(symbol)
-        return newid
+        symbol.setID(self.localItr)
+        self.localItr += self.calcTypeSize(symbol.typ)
+        self.scopeStack[-1].variables.append(symbol)
+        return symbol
 
-    def pushLocal(self):
-        self.locals.append([])
+    def pushScope(self):
+        self.scopeStack.append(scopedEnv())
 
-    def popLocal(self):
-        self.locals.pop()
+    def popScope(self):
+        self.scopeStack.pop()
 
-    def resetFrame(self):
-        self.localcount = 0
+    def resetFrame(self, funcname):
+        self.localItr = 0
+        self.argItr = 0
         self.args.clear()
-        self.locals.clear()
-
-    def getGlobalCount(self):
-        return len(self.globals)
-
-    def getArgCount(self):
-        return len(self.args)
-
-    def getLocalCount(self):
-        return self.localcount
+        currentFuncName = funcname
 
     def issueLabel(self):
         newlabel = self.labelitr
         self.labelitr += 1
         return newlabel
 
+    def addType(self, name, typ):
+        target = self.scopeStack[-1].types
+        if name in target:
+            raise TypeRedefineException(f"Redefined Type '{name}'")
+        target[name] = typ
+
+    def addStruct(self, name, typ):
+        target = self.scopeStack[-1].structs
+        if name in target:
+            raise TypeRedefineException(f"Redefined Struct '{name}'")
+        target[name] = typ
+
+    def addEnum(self, name, typ):
+        target = self.scopeStack[-1].enums
+        if name in target:
+            raise TypeRedefineException(f"Redefined Struct '{name}'")
+
+        for elem in typ.members:
+            self.scopedStack[-1].enumMembers[elem[0]] = elem[1]
+
+        target[name] = typ
+
+    def getType(self, name, hint):
+
+        if hint == 'struct':
+            return self.getStruct(name)
+
+        for scope in reversed(self.scopeStack):
+            if name in scope.types:
+                return scope.types[name]
+        print(f"type '{name}' not found")
+
+    def getStruct(self, name):
+        for scope in reversed(self.scopeStack):
+            if name in scope.structs:
+                return scope.structs[name]
+
+    def getFrameSize(self):
+        return self.localItr
+
+    def getField(self, typ, field):
+        if len(typ.members) == 0:
+            typ = self.getType(typ.basetype, typ.hint)
+
+        offset = 0
+        for elem in typ.members:
+            if elem[0] == field:
+                return (offset, elem[1])
+            offset += self.calcTypeSize(elem[1])
+
+        print('field not found exception')
+
+
+    def calcTypeSize(self, typ, hint=None):
+
+        # 前準備
+        if typ.length is None:
+            if isinstance(hint, list):
+                length = len(hint)
+                typ.length = length
+            else:
+                print(hint)
+                raise SymbolLengthNotSpecifiedException
+        else:
+            length = typ.length
+
+        if isinstance(typ.length, node.AST):
+            length = typ.length.eval()
+            typ.length = length
+
+        if typ.refcount > 0:
+            return length
+
+        if typ.basetype in ('void', 'int', 'float', 'enum'):
+            return length
+
+        if len(typ.members) == 0:
+            return self.calcTypeSize(self.getType(typ.basetype, typ.hint)) * length
+        else:
+            return reduce(lambda sigma, e: sigma + self.calcTypeSize(e[1]), typ.members, 0) * length
+
+    def calcPointeredSize(self, typ):
+
+        tmp = copy(typ)
+
+        if tmp.length > 1:
+            tmp.setLength(1).addRefcount(1)
+
+        if not tmp.isPointer():
+            print('non-pointer exception')
+            return None
+
+        tmp.addRefcount(-1)
+
+        return self.calcTypeSize(tmp)
+
+
+class TokenInfo:
+    def __init__(self, lineno, colno, filename = "input.c"):
+        self.lineno = lineno
+        self.colno = colno
+        self.filename = filename
+
+    def __str__(self):
+        return f"{self.filename}:{self.lineno}:{self.colno}"
+
+class ErrorModule:
+    def __init__(self):
+        self.reports = []
+        self.fail = 0
+        self.notice = 0
+
+    def addReport(self, report):
+        if (report.level == 'fatal' or report.level == 'error'):
+            self.fail += 1
+        self.notice += 1
+        self.reports.append(report)
+
+    def hasError(self):
+        return self.fail != 0
+
+    def hasNotice(self):
+        return self.notice != 0
+
+    def report(self):
+        fatal = 0
+        error = 0
+        warning = 0
+
+        for elem in self.reports:
+            level = elem.level
+
+            if (level == 'fatal'):
+                level = '\033[35mfatal\033[0m'
+                fatal += 1
+
+            if (level == 'error'):
+                level = '\033[31merror\033[0m'
+                error += 1
+
+            if (level == 'warning'):
+                level = '\033[33mwarning\033[0m'
+                warning += 1
+
+
+            if elem.tok is None:
+                print(f"\033[1m<position info not available>: {level}\033[1m: {elem.message}\033[0m")
+            else:
+
+                print(f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m")
+                rawline = linecache.getline(elem.tok.filename, elem.tok.lineno)
+                line = rawline.lstrip()
+                deleted = len(rawline) - len(line)
+                line = line.rstrip()
+
+                print('\t' + line)
+                print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
+
+        if (fatal == 0 and error == 0 and warning == 0):
+            return
+
+        msg = ""
+        if (warning != 0):
+            msg += f"{warning} warning" + ("s" if warning != 1 else "")
+        if (error != 0):
+            msg += (" and" if len(msg) != 0 else "") + f" {error} error" + ("s" if error != 1 else "")
+        if (fatal != 0):
+            msg += (" and" if len(msg) != 0 else "") + f" {fatal} fatal error" + ("s" if fatal != 1 else "")
+        msg += " generated."
+        print(msg)
+
+        return msg
+
+
+class Report:
+    def __init__(self, level, tok, message):
+        self.level = level
+        self.tok = tok
+        self.message = message

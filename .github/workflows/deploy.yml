@@ -15,7 +15,6 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: 3.8
-      - run: pip3 install ply -t ./
       - run: zip -r package.zip ./*
       - run: pip3 install awscli
       - run: aws lambda update-function-code --function-name lvmCompiler --zip-file fileb://package.zip --publish

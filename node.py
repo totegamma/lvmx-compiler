@@ -1,242 +1,385 @@
-import glob
+from copy import copy
+import glob as g
 import MODEL as m
 from mnemonic import mnemonic as opc
 
 # -= :: TOP MODELS :: =-
-class AST:
+
+class OPT:
+    def __init__(self, popc = 0, lr = 'r', bp = None, cp = None):
+        self.popc = popc
+        self.lr = lr
+        self.bp = bp
+        self.cp = cp
+
+def newopt(opt, popc = 0, lr = 'r', bp = None, cp = None):
+    newpopc = popc
+    newlr = lr
+    newbp = bp or opt.bp
+    newcp = cp or opt.cp
+    return OPT(newpopc, newlr, newbp, newcp)
+
+class AST (object):
 
     nullarg = 0
 
-    def __init__(self):
+    def __init__(self, tok):
+        self.tok = tok
+
+    def gencode(self, env, opt):
         pass
 
-    def gencode(self, env):
-        pass
+    def assertOnlyRValue(self, env, opt):
+        if (opt.lr != 'r'):
+            g.r.addReport(m.Report('error', self.tok, f'expression \'{self.__class__.__name__}\' is not assignable'))
+            return m.Insts()
+
+    def assertOnlyPop1(self, env, opt):
+        if (opt.popc != 1):
+            g.r.addReport(m.Report('warning', self.tok, 'expression result unused'))
+            return m.Insts()
 
     def eval(self):
         return None
-
-
-    def decideType(self, a, b):
-        if (m.Types.Void in [a, b]):
-            glob.compileerrors += "eval void error\n"
-            return MODEL.Types.Void
-        #elif (a == 'any' and b == 'any'):
-        #    return 'any'
-        #elif (a == 'any'):
-        #    return b
-        #elif (b == 'any'):
-        #    return a
-        elif (a ==  m.Types.Uint and b == m.Types.Uint):
-            return m.Types.Uint
-        elif (a == m.Types.Int and b == m.Types.Int):
-            return m.Types.Int
-        elif (a == m.Types.Float and b == m.Types.Float):
-            return m.Types.Float
-        #elif ('uint' in [a, b] and 'float' in [a, b]):
-        #    return 'float'
-        #elif ('int' in [a, b] and 'float' in [a, b]):
-        #    return 'float'
-        glob.compileerrors += "{a=}\n"
-        glob.compileerrors += "{b=}\n"
-
 
 # -= :: Inherited MODEL :: =-
 
 class BIOP (AST):
 
-    opU = None
     opI = None
     opF = None
+    isCompOP = False
 
-    def __init__(self, left, right):
+    def __init__(self, tok, left, right):
+        self.tok = tok
         self.left = left
         self.right = right
 
-    def gencode(self, env):
+    def gencode(self, env, opt):
 
-        left = self.left.gencode(env)
-        right = self.right.gencode(env)
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
 
-        typename = self.decideType(left.typename, right.typename)
+        left = self.left.gencode(env, newopt(opt, 1))
+        right = self.right.gencode(env, newopt(opt, 1))
 
         code = right.bytecodes
         code.extend(left.bytecodes)
 
-        if (typename == m.Types.Uint):
-            code.append(m.Inst(self.opU, self.nullarg))
-        elif (typename == m.Types.Int):
+        if self.isCompOP: # 比較演算子ならポインタ同士の演算が可能
+            if left.typ.isPointer() and right.typ.isPointer():
+                code.append(m.Inst(self.opI, self.nullarg))
+                return m.Insts(m.Type('int'), code)
+        else: # そうでないならスカラーしか演算できない
+            if not (left.typ.isScalar() and right.typ.isScalar()):
+                g.r.addReport(m.Report('error', self.tok, f"invalid operands to binary expression('{left.typ}' and '{right.typ}')"))
+                return m.Insts()
+
+        if left.typ.basetype == 'int' and right.typ.basetype == 'int':
             code.append(m.Inst(self.opI, self.nullarg))
-        elif (typename == m.Types.Float):
+            typ = m.Type('int')
+
+        elif left.typ.basetype == 'float' and right.typ.basetype == 'float':
             code.append(m.Inst(self.opF, self.nullarg))
+            typ = m.Type('float')
+
         else:
-            glob.compileerrors += f"{typename=}"
-            glob.compileerrors += f"ERROR BIOP ONLY SUPPORTS UINT OR INT OR FLOAT"
+            g.r.addReport(m.Report('error', self.tok, f"invalid operands to binary expression('{left.typ}' and '{right.typ}')"))
+            return m.Insts()
 
-        return m.Insts(typename, code)
-
-class UNIOP (AST):
-
-    opU = None
-    opI = None
-    opF = None
-
-    def __init__(self, right):
-        self.right = right
-
-    def gencode(self, env):
-
-        var = env.variableLookup(self.right)
-
-        symbolname = var.name
-        typename = var.typename
-
-        if (typename == m.Types.Uint):
-            code = [m.Inst(opc.PUSH, 1)]
-            code.append(env.variableLookup(symbolname).genLoadCode())
-            code.append(m.Inst(self.opU, self.nullarg))
-        elif (typename == m.Types.Int):
-            code = [m.Inst(opc.PUSH, 1)]
-            code.append(env.variableLookup(symbolname).genLoadCode())
-            code.append(m.Inst(self.opI, self.nullarg))
-        elif (typename == m.Types.Float):
-            code = [m.Inst(opc.PUSH, 1.0)]
-            code.append(env.variableLookup(symbolname).genLoadCode())
-            code.append(m.Inst(self.opF, self.nullarg))
-        else:
-            glob.compileerrors += f"ERROR UNIOP ONLY SUPPORTS UINT OR INT"
-
-        code.append(env.variableLookup(symbolname).genStoreCode())
-
-        return m.Insts(typename, code)
-
+        return m.Insts(typ, code)
 
 
 # -- Lv0 modules --
 
 class Program (AST):
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
         pass
 
-    def gencode(self, env):
+    def gencode(self, env, opt):
         for elem in self.body:
-            dumps = elem.gencode(env)
+            dumps = elem.gencode(env, newopt(opt, 0))
+        env.addStatic(m.Symbol("__MAGIC_RETADDR__", m.Type(), 0))
+        env.addStatic(m.Symbol("__MAGIC_RETFP__", m.Type(), 0))
         return env
 
 class GlobalVar (AST):
-    def __init__(self, symbolname, typename, body):
-        self.typename = typename
+    def __init__(self, tok, symbolname, typ, init = None):
+        self.tok = tok
+        self.typ = typ
         self.symbolname = symbolname
-        self.body = body
+        self.init = init
 
-    def gencode(self, env):
-        env.addGlobal(m.Symbol(self.symbolname, self.typename, self.body.eval()))
+    def gencode(self, env, opt):
+
+        size = env.calcTypeSize(self.typ, self.init)
+
+        init = [0] * size
+
+        if isinstance(self.init, AST):
+            init[0] = self.init.eval()
+
+        elif isinstance(self.init, list):
+            for i, elem in enumerate(self.init):
+                init[i] = self.init[i].eval()
+
+        env.addStatic(m.Symbol(self.symbolname, self.typ, init))
         return env
 
-class Func (AST):
-    def __init__(self, symbolname, typename, args, body):
+class Struct (AST):
+    def __init__(self, tok, symbolname, typ):
+        self.tok = tok
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
+
+    def gencode(self, env, opt):
+
+        env.addStruct(self.symbolname, self.typ)
+
+        return m.Insts(m.Type(), [])
+
+class Enum (AST):
+    def __init__(self, tok, symbolname, typ):
+        self.tok = tok
+        self.symbolname = symbolname
+        self.typ = typ 
+
+    def gencode(self, env, opt):
+
+        env.addEnum(self.symbolname, self.typ)
+
+        return m.Insts(m.Type(), [])
+
+class Func (AST):
+    def __init__(self, tok, symbolname, typ, args, body):
+        self.tok = tok
+        self.symbolname = symbolname
+        self.typ = typ
         self.args = args
         self.body = body
 
-    def gencode(self, env):
+    def gencode(self, env, opt):
 
-        env.resetFrame()
+        if self.body is None:
+            try:
+                env.addFunction(m.Function(self.symbolname, self.typ, self.args, None))
+            except m.SymbolRedefineException:
+                g.r.addReport(m.Report('error', self.tok, f"Redefined function '{self.symbolname}'"))
+            return env
+        else:
+            env.resetFrame(self.symbolname)
 
-        for elem in self.args:
-            env.addArg(elem)
+            for elem in self.args:
+                env.addArg(elem)
 
-        codes = self.body.gencode(env).bytecodes
+            codes = self.body.gencode(env, newopt(opt, 0)).bytecodes
 
-        insts = []
-        insts.append(m.Inst(opc.ENTRY, self.symbolname))
-        insts.append(m.Inst(opc.FRAME, env.getLocalCount()))
-        insts.extend(codes)
-        insts.append(m.Inst(opc.RET, self.nullarg)) # TODO codesの末尾にRETがないときだけ挿入するように
+            insts = []
+            insts.append(m.Inst(opc.ENTRY, self.symbolname))
+            insts.append(m.Inst(opc.FRAME, env.getFrameSize()))
+            insts.extend(codes)
+            if (insts[-1].opc is not opc.RET):
+                insts.append(m.Inst(opc.PUSH, 0))
+                insts.append(m.Inst(opc.RET, self.nullarg))
 
-        env.addFunction(m.Function(self.symbolname, self.typename, self.args, insts))
+            try:
+                env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
+            except m.SymbolRedefineException:
+                g.r.addReport(m.Report('error', self.tok, f"Redefined function '{self.symbolname}'"))
+
+            return env
+
+    def setBody(self, body):
+        self.body = body
+        return self
+
+
+class Typedef (AST):
+    def __init__(self, tok, name, typ):
+        self.tok = tok
+        self.name = name
+        self.typ = typ
+
+    def gencode(self, env, opt):
+        env.addType(self.name, self.typ)
 
         return env
+
 
 # -- Lv1 modules --
 
 class Block (AST):
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
-    def gencode(self, env):
-        env.pushLocal()
+    def gencode(self, env, opt):
+        env.pushScope()
 
         insts = []
         for elem in self.body:
-            insts.extend(elem.gencode(env).bytecodes)
+            insts.extend(elem.gencode(env, newopt(opt, 0)).bytecodes)
 
-        env.popLocal()
-        return m.Insts(m.Types.Void, insts)
+        env.popScope()
+        return m.Insts(m.Type(), insts)
 
 class LocalVar (AST):
-    def __init__(self, symbolname, typename, body):
+    def __init__(self, tok, symbolname, typ, init = None):
+        self.tok = tok
         self.symbolname = symbolname
-        self.typename = typename
+        self.typ = typ
+        self.init = init 
+
+    def gencode(self, env, opt):
+
+        env.calcTypeSize(self.typ, self.init)
+        var = env.addLocal(m.Symbol(self.symbolname, self.typ))
+
+        if self.init is None:
+            return m.Insts()
+        elif isinstance(self.init, list):
+            codes = []
+            for i, elem in enumerate(self.init):
+                codes.extend(elem.gencode(env, newopt(opt, 1)).bytecodes)
+                codes.append(var.genAddrCode())
+                codes.append(m.Inst(opc.PUSH, i))
+                codes.append(m.Inst(opc.ADDI, self.nullarg))
+                codes.append(m.Inst(opc.STOREP, self.nullarg))
+            return m.Insts(m.Type(), codes)
+        else:
+            codes = self.init.gencode(env, newopt(opt, 1)).bytecodes
+            codes.append(m.Inst(opc.STOREL, var.id))
+
+        return m.Insts(m.Type(), codes)
+
+class Indirect (AST):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
-    def gencode(self, env):
-        newid = env.addLocal(m.Symbol(self.symbolname, self.typename))
-        codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.STOREL, newid))
-        return m.Insts(m.Types.Void, codes)
+    def gencode(self, env, opt):
+
+        body = self.body.gencode(env, newopt(opt, 1))
+        codes = body.bytecodes
+        if opt.lr == 'r':
+            if (result := self.assertOnlyPop1(env, opt)) is not None:
+                return result
+            codes.append(m.Inst(opc.LOADP, self.nullarg))
+            return m.Insts(copy(body.typ).addRefcount(-1), codes)
+        else:
+            codes.append(m.Inst(opc.STOREP, self.nullarg))
+            return m.Insts(copy(body.typ).addRefcount(-1), codes)
+
+class Address (AST):
+    def __init__(self, tok, body):
+        self.tok = tok
+        self.body = body
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        if isinstance(self.body, Symbol):
+            var = env.variableLookup(self.body.symbolname)
+            codes = [var.genAddrCode()]
+            return m.Insts(copy(var.typ).addRefcount(1), codes)
+
+        elif isinstance(self.body, Indirect):
+            return self.body.body.gencode(env, newopt(opt, 1))
+
+        else:
+            g.r.addReport(m.Report('error', self.tok, f"cannot get address"))
+
+
+
+
+class FieldAccess (AST):
+    def __init__(self, tok, left, fieldname):
+        self.tok = tok
+        self.left = left
+        self.fieldname = fieldname
+
+    def gencode(self, env, opt):
+        left = self.left.gencode(env, newopt(opt, 1))
+        codes = left.bytecodes
+
+        field = env.getField(left.typ, self.fieldname) # TODO handle exception
+#            g.r.addReport(m.Report('error', self.tok, f"cannot get field '{self.fieldname}' of type '{left.typ}'"))
+#            return m.Insts()
+        codes.append(m.Inst(opc.PUSH, field[0]))
+        codes.append(m.Inst(opc.ADDI, self.nullarg))
+
+        return m.Insts(field[1], codes)
+
 
 class Return (AST): #TODO 自分の型とのチェック
-    def __init__(self, body):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
-    def gencode(self, env):
-        codes = self.body.gencode(env).bytecodes
+    def gencode(self, env, opt):
+        codes = self.body.gencode(env, newopt(opt, 1)).bytecodes
         codes.append(m.Inst(opc.RET, self.nullarg))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Type(), codes)
 
 class Funccall (AST):
-    def __init__(self, name, args):
+    def __init__(self, tok, name, args):
+        self.tok = tok
         self.name = name
         self.args = args
 
-    def gencode(self, env):
-        mytype = env.functionLookup(self.name).typename
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        mytype = env.functionLookup(self.name).typ
         codes = []
+        if self.args is None:
+            self.args = []
         for elem in reversed(self.args):
-            codes.extend(elem.gencode(env).bytecodes) # TODO 型チェック
+            codes.extend(elem.gencode(env, newopt(opt, 1)).bytecodes) # TODO 型チェック
         codes.append(m.Inst(opc.CALL, self.name))
         codes.append(m.Inst(opc.POPR, len(self.args)))
+        if (opt.popc == 0):
+            codes.append(m.Inst(opc.POP, self.nullarg))
         return m.Insts(mytype, codes)
 
 class If (AST):
-    def __init__(self, cond, then):
+    def __init__(self, tok, cond, then):
+        self.tok = tok
         self.cond = cond
         self.then = then
 
-    def gencode(self, env):
-        cond = self.cond.gencode(env).bytecodes
-        then = self.then.gencode(env).bytecodes
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
+        then = self.then.gencode(env, newopt(opt, 0)).bytecodes
 
         l0 = env.issueLabel()
         codes = cond
         codes.append(m.Inst(opc.JIF0, l0))
         codes.extend(then)
         codes.append(m.Inst(opc.LABEL, l0))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Type(), codes)
 
 class Ifelse (AST):
-    def __init__(self, cond, then, elst):
+    def __init__(self, tok, cond, then, elst):
+        self.tok = tok
         self.cond = cond
         self.then = then
         self.elst = elst
 
-    def gencode(self, env):
-        cond = self.cond.gencode(env).bytecodes
-        then = self.then.gencode(env).bytecodes
-        elst = self.elst.gencode(env).bytecodes
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
+        then = self.then.gencode(env, newopt(opt, 0)).bytecodes
+        elst = self.elst.gencode(env, newopt(opt, 0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -248,42 +391,68 @@ class Ifelse (AST):
         codes.append(m.Inst(opc.LABEL, l0))
         codes.extend(elst)
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Type(), codes)
+
+class DoWhile (AST):
+    def __init__(self, tok, body, cond):
+        self.tok = tok
+        self.body = body
+        self.cond = cond
+
+    def gencode(self, env, opt):
+        body = self.body.gencode(env, newopt(opt, 0)).bytecodes
+        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
+
+        l0 = env.issueLabel()
+
+        codes = [m.Inst(opc.LABEL, l0)]
+        codes.extend(body)
+        codes.extend(cond)
+        codes.append(m.Inst(opc.INV, self.nullarg))
+        codes.append(m.Inst(opc.JIF0, l0))
+
+        return m.Insts(m.Type(), codes)
+
 
 class While (AST):
-    def __init__(self, cond, body):
+    def __init__(self, tok, cond, body):
+        self.tok = tok
         self.cond = cond
         self.body = body
 
-    def gencode(self, env):
-        cond = self.cond.gencode(env).bytecodes
-        body = self.body.gencode(env).bytecodes
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
+        body = self.body.gencode(env, newopt(opt, 0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
 
-        codes = m.Inst(opc.LABEL, l0)
+        codes = [m.Inst(opc.LABEL, l0)]
         codes.extend(cond)
         codes.append(m.Inst(opc.JIF0, l1))
         codes.extend(body)
         codes.append(m.Inst(opc.JUMP, l0))
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Type(), codes)
 
 
 
 class For (AST):
-    def __init__(self, init, cond, loop, body):
+    def __init__(self, tok, init, cond, loop, body):
+        self.tok = tok
         self.init = init
         self.cond = cond
         self.loop = loop
         self.body = body
 
-    def gencode(self, env):
-        init = self.init.gencode(env).bytecodes
-        cond = self.cond.gencode(env).bytecodes
-        loop = self.loop.gencode(env).bytecodes
-        body = self.body.gencode(env).bytecodes
+    def gencode(self, env, opt):
+        if self.init is None: # TODO 1ライン化するか関数化して全部に適用
+            init = []
+        else:
+            init = self.init.gencode(env, newopt(opt, 0)).bytecodes
+        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
+        loop = self.loop.gencode(env, newopt(opt, 0)).bytecodes
+        body = self.body.gencode(env, newopt(opt, 0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
@@ -296,200 +465,609 @@ class For (AST):
         codes.extend(loop)
         codes.append(m.Inst(opc.JUMP, l0))
         codes.append(m.Inst(opc.LABEL, l1))
-        return m.Insts(m.Types.Void, codes)
+        return m.Insts(m.Type(), codes)
+
+
+class Switch (AST):
+    def __init__(self, tok, cond, cases):
+        self.tok = tok
+        self.cond = cond
+        self.cases = cases
+
+    def gencode(self, env, opt):
+
+        tableCodes = self.cond.gencode(env, newopt(opt, 1)).bytecodes
+        bodyCodes = []
+        end = env.issueLabel()
+        default = None
+
+        for elem in self.cases:
+            label = env.issueLabel()
+            if elem[0] == 'default':
+                default = label
+                bodyCodes.append(m.Inst(opc.LABEL, label))
+                for e in elem[1]:
+                    bodyCodes.extend(e.gencode(env, newopt(opt, 1, bp = end)).bytecodes)
+            else:
+                tableCodes.append(m.Inst(opc.DUP, 1))
+                tableCodes.extend(elem[0].gencode(env, newopt(opt, 1)).bytecodes)
+                tableCodes.append(m.Inst(opc.NEQI, self.nullarg)) #TODO Int以外にも対応させる
+                tableCodes.append(m.Inst(opc.JIF0, label))
+
+                bodyCodes.append(m.Inst(opc.LABEL, label))
+                for e in elem[1]:
+                    bodyCodes.extend(e.gencode(env, newopt(opt, 1, bp = end)).bytecodes)
+
+        if default is not None:
+            tableCodes.append(m.Inst(opc.JUMP, default))
+        else:
+            tableCodes.append(m.Inst(opc.JUMP, end))
+
+        bodyCodes.append(m.Inst(opc.LABEL, end))
+        bodyCodes.append(m.Inst(opc.POP, self.nullarg))
+
+        codes = tableCodes
+        codes.extend(bodyCodes)
+
+        return m.Insts(m.Type(), codes)
+
+class Break (AST):
+    def __init__(self, tok):
+        self.tok = tok
+
+    def gencode(self, env, opt):
+        if opt.bp is None:
+            g.r.addReport(m.Report('error', self.tok, 'break in unbreakable point'))
+            return m.Insts()
+        else:
+            return m.Insts(m.Type(), [m.Inst(opc.JUMP, opt.bp)])
+
+class Continue (AST):
+    def __init__(self, tok):
+        self.tok = tok
+
+    def gencode(self, env, opt):
+        if opt.cp is None:
+            g.r.addReport(m.Report('error', self.tok, 'to continue, you need extra gem! (you can\'t continue here.)'))
+            return m.Insts()
+        else:
+            return m.Insts(m.Type(), [m.Inst(opc.JUMP, opt.cp)])
+
+class Label (AST):
+    def __init__(self, tok, name, expr):
+        self.tok = tok
+        self.name = name
+        self.expr = expr
+
+    def gencode(self, env, opt):
+        label = env.currentFuncName + self.name
+        expr = self.expr.gencode(env, newopt(opt, 0))
+
+        codes = [m.Inst(opc.LABEL, label)]
+        codes.extend(expr.bytecodes)
+
+        return m.Insts(expr.typ, codes)
+
+class Goto (AST):
+    def __init__(self, tok, name):
+        self.tok = tok
+        self.name = name
+
+    def gencode(self, env, opt):
+        label = env.currentFuncName + self.name
+        return m.Insts(m.Type(), [m.Inst(opc.JUMP, label)])
 
 
 # -- Lv.2 modules --
 
-class Input (AST):
-    def __init__(self, key):
-        self.key = key
+class Ternary (AST):
+    def __init__(self, tok, cond, then, elst):
+        self.tok = tok
+        self.cond = cond
+        self.then = then
+        self.elst = elst
 
-    def gencode(self, env):
-        self.key.gencode(env)
-        stringslot = env.stringLookup(self.key.eval())
-        return m.Insts(m.Types.Any, [m.Inst(opc.INPUT, stringslot)])
+    def gencode(self, env, opt):
+        cond = self.cond.gencode(env, newopt(opt, 1))
+        then = self.then.gencode(env, newopt(opt, 1))
+        elst = self.elst.gencode(env, newopt(opt, 1))
 
-class Output (AST):
-    def __init__(self, key, body):
-        self.key = key
+        # TODO check if then.typ != elst.typ
+
+        l0 = env.issueLabel()
+        l1 = env.issueLabel()
+
+        codes = cond.bytecodes
+        codes.append(m.Inst(opc.JIF0, l0))
+        codes.extend(then.bytecodes)
+        codes.append(m.Inst(opc.JUMP, l1))
+        codes.append(m.Inst(opc.LABEL, l0))
+        codes.extend(elst.bytecodes)
+        codes.append(m.Inst(opc.LABEL, l1))
+
+        return m.Insts(then.typ, codes)
+
+
+
+class Cast (AST):
+    def __init__(self, tok, targetType, body):
+        self.tok = tok
+        self.targetType = targetType
         self.body = body
 
-    def gencode(self, env):
-        self.key.gencode(env)
-        stringslot = env.stringLookup(self.key.eval(env))
-        codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.OUTPUT, stringslot))
-        return m.Insts(m.Types.Void, codes)
+    def gencode(self, env, opt):
 
-class Readreg (AST):
-    def __init__(self, key):
-        self.key = key
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
 
-    def gencode(self, env):
-        addr = self.key.eval()
-        return m.Insts(m.Types.Any, [m.Inst(opc.LOADR, addr)])
+        body = self.body.gencode(env, newopt(opt, 1))
+        codes = body.bytecodes
 
-class Writereg (AST):
-    def __init__(self, key, body):
-        self.key = key
+        if body.typ.isInt():
+            if self.targetType == 'float':
+                codes.append(m.Inst(opc.ITOF, self.nullarg))
+                return m.Insts(m.Type('float'), codes)
+            else:
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                return m.Insts()
+
+        elif body.typ.isFloat():
+            if self.targetType == 'int':
+                codes.append(m.Inst(opc.FTOI, self.nullarg))
+                return m.Insts(m.Type('int'), codes)
+            else:
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                return m.Insts()
+
+        else:
+            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+            return m.Insts()
+
+class Sizeof (AST):
+    def __init__(self, tok, body):
+        self.tok = tok
         self.body = body
 
-    def gencode(self, env):
-        addr = self.key.eval()
-        codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.STORER, addr))
-        return m.Insts(m.Types.Void, codes)
+    def gencode(self, env, opt):
+        if isinstance(self.body, m.Type):
+            return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, env.calcTypeSize(self.body))])
+        elif isinstance(self.body, Symbol):
+            try:
+                var = env.variableLookup(self.body.symbolname)
+            except m.SymbolNotFoundException as e:
+                g.r.addReport(m.Report('fatal', self.tok, f"cannot eval size of type '{type(self.body)}'"))
+                return m.Insts()
+
+            return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, env.calcTypeSize(var.typ))])
+        else:
+            g.r.addReport(m.Report('fatal', self.tok, f"cannot eval size of type '{type(self.body)}'"))
+        return m.Insts()
+
+class Raw (AST):
+    def __init__(self, tok, typ, opc, arg, bodys):
+        self.tok = tok
+        self.typ = typ
+        self.opc = opc
+        self.arg = arg
+        self.bodys = bodys
+
+    def gencode(self, env, opt):
+#        self.typ.resolve(env)
+        insts = []
+        for elem in reversed(self.bodys):
+            insts.extend(elem.gencode(env, newopt(opt, 1)).bytecodes)
+        #insts.append(m.Inst(opc[self.opc], self.arg.eval()))
+        insts.append(m.Inst(opc[self.opc], self.arg))
+
+        return m.Insts(self.typ, insts)
 
 class Assign (AST):
-    def __init__(self, left, right):
+    def __init__(self, tok, left, right):
+        self.tok = tok
         self.left = left
         self.right = right
 
-    def gencode(self, env):
-        var = env.variableLookup(self.left)
+    def gencode(self, env, opt):
 
-        right = self.right.gencode(env)
+        right = self.right.gencode(env, newopt(opt, 1))
+        left = self.left.gencode(env, newopt(opt, 1, 'l'))
+
+        typ = m.Type()
+
         codes = right.bytecodes
-        codes.append(var.genStoreCode())
+        if opt.popc == 1:
+            codes.append(m.Inst(opc.DUP, 1))
+            typ = right.typ
+        codes.extend(left.bytecodes)
 
-        return m.Insts(right.typename, codes)
+        return m.Insts(typ, codes)
+
+class Inv (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, newopt(opt, 1, 'r'))
+
+        codes = right.bytecodes
+        codes.append(m.Inst(opc.INV, self.nullarg))
+
+        return m.Insts(right.typ, codes)
+
+class Pre_inc (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, newopt(opt, 1, 'r'))
+        codes = right.bytecodes
+        typ = copy(right.typ)
+
+        if typ.isPointer():
+            codes.append(m.Inst(opc.INC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.INC, 1))
+
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+        else:
+            typ = m.Type()
+
+        codes.extend(self.right.gencode(env, newopt(opt, 0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
+
+class Pre_dec (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, newopt(opt, 1, 'r'))
+        codes = right.bytecodes
+        typ = copy(right.typ)
+
+        if typ.isPointer():
+            codes.append(m.Inst(opc.DEC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.DEC, 1))
+
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+        else:
+            typ = m.Type()
+
+        codes.extend(self.right.gencode(env, newopt(opt, 0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
+
+class Post_inc (AST):
+
+    def __init__(self, tok, left):
+        self.tok = tok
+        self.left = left
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+
+        left = self.left.gencode(env, newopt(opt, 1, 'r'))
+        codes = left.bytecodes
+        typ = copy(left.typ)
+
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+        else:
+            typ = m.Type()
+
+        if typ.isPointer():
+            codes.append(m.Inst(opc.INC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.INC, 1))
+
+        codes.extend(self.left.gencode(env, newopt(opt, 0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
 
 
-class Inc (UNIOP):
-    opU = opc.ADDU
-    opI = opc.ADDI
-    opF = opc.ADDF
+class Post_dec (AST):
 
-class Dec (UNIOP):
-    opU = opc.SUBU
-    opI = opc.SUBI
-    opF = opc.SUBF
+    def __init__(self, tok, left):
+        self.tok = tok
+        self.left = left
 
-class Inv: # TODO
-    pass
+    def gencode(self, env, opt):
 
-class Add (BIOP):
-    opU = opc.ADDU
-    opI = opc.ADDI
-    opF = opc.ADDF
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
 
-class Sub (BIOP):
-    opU = opc.SUBU
-    opI = opc.SUBI
-    opF = opc.SUBF
+        left = self.left.gencode(env, newopt(opt, 1, 'r'))
+        codes = left.bytecodes
+        typ = copy(left.typ)
+
+        if (opt.popc == 1):
+            codes.append(m.Inst(opc.DUP, self.nullarg))
+        else:
+            typ = m.Type()
+
+        if typ.isPointer():
+            codes.append(m.Inst(opc.DEC, env.calcPointeredSize(typ)))
+        else:
+            codes.append(m.Inst(opc.DEC, 1))
+
+        codes.extend(self.left.gencode(env, newopt(opt, 0, 'l')).bytecodes)
+
+        return m.Insts(typ, codes)
+
+class Add (AST):
+
+    def __init__(self, tok, left, right):
+        self.tok = tok
+        self.left = left
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        left = self.left.gencode(env, newopt(opt, 1))
+        right = self.right.gencode(env, newopt(opt, 1))
+
+        code = right.bytecodes
+
+        if (left.typ.length > 1 or left.typ.refcount > 0) and (right.typ.length == 1 and right.typ.refcount == 0):
+            typ = copy(left.typ)
+            if typ.length > 1:
+                typ.setLength(1).addRefcount(1)
+
+            size = env.calcPointeredSize(typ)
+
+            if size > 1:
+                code.append(m.Inst(opc.PUSH, size))
+                code.append(m.Inst(opc.MULI, self.nullarg))
+
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.ADDI, self.nullarg))
+
+        elif (left.typ.basetype  == 'int') and (right.typ.basetype == 'int'):
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.ADDI, self.nullarg))
+            typ = m.Type('int')
+
+        elif (left.typ.basetype == 'float') and (right.typ.basetype == 'float'):
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.ADDF, self.nullarg))
+            typ = m.Type('float')
+
+        else:
+            g.r.addReport(m.Report('fatal', self.tok, f'fatal error in node.Add'))
+
+        return m.Insts(typ, code)
+
+
+class Sub (AST):
+
+    def __init__(self, tok, left, right):
+        self.tok = tok
+        self.left = left
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        left = self.left.gencode(env, newopt(opt, 1))
+        right = self.right.gencode(env, newopt(opt, 1))
+
+        code = right.bytecodes
+
+        if (left.typ.length > 1 or left.typ.refcount > 0) and (right.typ.length == 1 and right.typ.refcount == 0):
+            typ = copy(left.typ)
+            if typ.length > 1:
+                typ.setLength(1).addRefcount(1)
+
+            size = env.calcPointeredSize(typ)
+
+            if size > 1:
+                code.append(m.Inst(opc.PUSH, size))
+                code.append(m.Inst(opc.MULI, self.nullarg))
+
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.SUBI, self.nullarg))
+
+        elif (left.typ.basetype  == 'int') and (right.typ.basetype == 'int'):
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.SUBI, self.nullarg))
+            typ = m.Type('int')
+
+        elif (left.typ.basetype == 'float') and (right.typ.basetype == 'float'):
+            code.extend(left.bytecodes)
+            code.append(m.Inst(opc.SUBF, self.nullarg))
+            typ = m.Type('float')
+
+        else:
+            g.r.addReport(m.Report('fatal', self.tok, f'fatal error in node.Sub'))
+
+        return m.Insts(typ, code)
 
 class Mul (BIOP):
-    opU = opc.MULU
     opI = opc.MULI
     opF = opc.MULF
 
 class Div (BIOP):
-    opU = opc.DIVU
     opI = opc.DIVI
     opF = opc.DIVF
 
+class Mod (BIOP):
+    opI = opc.MODI
+    opF = opc.MODF
+
+class And (BIOP):
+    opI = opc.AND
+    opF = opc.AND
+
+class Or (BIOP):
+    opI = opc.OR
+    opF = opc.OR
+
+class Xor (BIOP):
+    opI = opc.XOR
+    opF = opc.XOR
+
+class LShift (BIOP):
+    opI = opc.LSHI
+    opF = opc.LSHI
+
+class RShift (BIOP):
+    opI = opc.RSHI
+    opF = opc.RSHI
+
 class Lt (BIOP):
-    opU = opc.LTU
     opI = opc.LTI
     opF = opc.LTF
+    isCompOP = True
 
 class Lte (BIOP):
-    opU = opc.LTEU
     opI = opc.LTEI
     opF = opc.LTEF
+    isCompOP = True
 
 class Gt (BIOP):
-    opU = opc.GTU
     opI = opc.GTI
     opF = opc.GTF
+    isCompOP = True
 
 class Gte (BIOP):
-    opU = opc.GTEU
     opI = opc.GTEI
     opF = opc.GTEF
+    isCompOP = True
 
 class Eq (BIOP):
-    opU = opc.EQU
     opI = opc.EQI
     opF = opc.EQF
+    isCompOP = True
 
 class Neq (BIOP):
-    opU = opc.NEQU
     opI = opc.NEQI
     opF = opc.NEQF
-
-class Sin (AST):
-    def __init__(self, body):
-        self.body = body
-
-    def gencode(self, env):
-        codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.SIN, self.nullarg))
-        return m.Insts(m.Types.Float, codes)
-
-
-class Cos (AST):
-    def __init__(self, body):
-        self.body = body
-
-    def gencode(self, env):
-        codes = self.body.gencode(env).bytecodes
-        codes.append(m.Inst(opc.COS, self.nullarg))
-        return m.Insts(m.Types.Float, codes)
+    isCompOP = True
 
 class Symbol (AST):
-    def __init__(self, symbolname):
+    def __init__(self, tok, symbolname):
+        self.tok = tok
         self.symbolname = symbolname
 
-    def gencode(self, env):
-        var = env.variableLookup(self.symbolname)
-        codes = [var.genLoadCode()]
-        return m.Insts(var.typename, codes)
+    def gencode(self, env, opt):
 
-class NumberU (AST):
-    def __init__(self, value):
-        if isinstance(value, str):
-            value = int(value.replace('u', ''))
-        self.value = value
+        try:
+            var = env.variableLookup(self.symbolname)
+        except m.SymbolNotFoundException as e:
 
-    def gencode(self, env):
-        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, self.value)])
+            # 変数が見つからなかったら、Enumとして解決を試みる
+            try:
+                value = env.enumLookup(self.symbolname)
+            except m.SymbolNotFoundException as e:
+                g.r.addReport(m.Report('error', self.tok, f'{e} not found'))
+                return m.Insts()
 
-    def eval(self):
-        return self.value
+            if (result := self.assertOnlyRValue(env, opt)) is not None:
+                return result
+            if (result := self.assertOnlyPop1(env, opt)) is not None:
+                return result
+
+            return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, value)])
+
+        if opt.lr == 'r':
+            if (result := self.assertOnlyPop1(env, opt)) is not None:
+                return result
+            if var.typ.isArray():
+                codes = [var.genAddrCode()]
+                return m.Insts(copy(var.typ).setLength(1).addRefcount(1), codes) # 配列からポインタにキャスト
+            else:
+                codes = [var.genLoadCode()]
+                return m.Insts(copy(var.typ), codes)
+        else:
+            codes = [var.genStoreCode()]
+            return m.Insts(m.Type(), codes)
 
 class NumberI (AST):
-    def __init__(self, value):
+    def __init__(self, tok, value):
+        self.tok = tok
         if isinstance(value, str):
             value = int(value)
         self.value = value
 
-    def gencode(self, env):
-        return m.Insts(m.Types.Int, [m.Inst(opc.PUSH, self.value)])
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
 
 class NumberF (AST):
-    def __init__(self, value):
+    def __init__(self, tok, value):
+        self.tok = tok
         if isinstance(value, str):
             value = float(value.replace('f', ''))
         self.value = value
 
-    def gencode(self, env):
-        return m.Insts(m.Types.Float, [m.Inst(opc.PUSH, self.value)])
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        return m.Insts(m.Type('float'), [m.Inst(opc.PUSH, self.value)])
 
     def eval(self):
         return self.value
 
 class String (AST):
-    def __init__(self, value):
+    def __init__(self, tok, value):
+        self.tok = tok
         self.value = value
 
-    def gencode(self, env):
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
         strid = env.issueString(self.value)
-        return m.Insts(m.Types.Uint, [m.Inst(opc.PUSH, strid)])
+        return m.Insts(m.Type('int'), [m.Inst(opc.PUSH, strid)])
 
     def eval(self):
         return self.value

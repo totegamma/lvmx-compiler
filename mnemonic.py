@@ -91,6 +91,7 @@ class mnemonic (IntEnum):
     SST = 100
     SCMP = 103
     ITOS = 104
+    FTOS = 105
     GSN = 106
     GST = 107
     SCPY = 109

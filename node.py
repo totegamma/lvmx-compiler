@@ -342,6 +342,8 @@ class Funccall (AST):
 
         mytype = env.functionLookup(self.name).typ
         codes = []
+        if self.args is None:
+            self.args = []
         for elem in reversed(self.args):
             codes.extend(elem.gencode(env, newopt(opt, 1)).bytecodes) # TODO 型チェック
         codes.append(m.Inst(opc.CALL, self.name))

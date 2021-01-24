@@ -1,6 +1,17 @@
+import io
+import os
+import sys
+import json
+import time
+import struct
 import glob as g
+import MODEL as m
+from node import OPT
+from pcpp import Preprocessor
+from argparse import ArgumentParser
+from mnemonic import mnemonic as opc
+from astConstructor import makeAST
 from compile import value2hex, compile 
-
 
 def lambda_handler(event, context):
 

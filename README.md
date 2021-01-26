@@ -1,7 +1,8 @@
 # LogixVirtualMachineCompiler
- 
-## これは自分用ブックマーク
-https://www.dabeaz.com/ply/ply.html
+
+## 使い方
+まだ書いてない
+NeosVRで@thotgammaに聞いてください
 
 ## 命令一覧
 <table>
@@ -117,10 +118,10 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>14</td>
+			<td>EXIT</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>pop1(int status)</td>
+			<td>EXIT</td>
 		</tr>
 		<tr>
 			<td>15</td>
@@ -732,10 +733,10 @@ https://www.dabeaz.com/ply/ply.html
 		</tr>
 		<tr>
 			<td>101</td>
+			<td>FRMT</td>
 			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>popn(uint* template, uint* dest, ARGS...)</td>
+			<td>Format</td>
 		</tr>
 		<tr>
 			<td>102</td>
@@ -813,63 +814,63 @@ https://www.dabeaz.com/ply/ply.html
 			<td>112</td>
 			<td>GSPO</td>
 			<td>0: Local, 1: Global</td>
-			<td>pop1(uint slot), push3(float x, float y, float z)</td>
+			<td>pop1(int slot), push3(float x, float y, float z)</td>
 			<td>Set Position</td>
 		</tr>
 		<tr>
 			<td>113</td>
 			<td>GSRO</td>
 			<td>0: Local, 1: Global</td>
-			<td>pop1(uint slot), push3(float x, float y, float z)</td>
+			<td>pop1(int slot), push3(float x, float y, float z)</td>
 			<td>Set Rotation</td>
 		</tr>
 		<tr>
 			<td>114</td>
 			<td>GSSC</td>
 			<td>0: Local, 1: Global</td>
-			<td>pop1(uint slot), push3(float x, float y, float z)</td>
+			<td>pop1(int slot), push3(float x, float y, float z)</td>
 			<td>Set Scale</td>
 		</tr>
 		<tr>
 			<td>115</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>GSSS</td>
+			<td>0: Active, 1: Persistent, 2: Offset</td>
+			<td>pop1(int slot), push1(int return)</td>
+			<td>Get Single Slot Status</td>
 		</tr>
 		<tr>
 			<td>116</td>
 			<td>SSPO</td>
 			<td>0: Local, 1: Global</td>
-			<td>pop4(uint slot, float x, float y, float z)</td>
+			<td>pop4(int slot, float x, float y, float z)</td>
 			<td>Set Global Position</td>
 		</tr>
 		<tr>
 			<td>117</td>
 			<td>SSRO</td>
 			<td>0: Local, 1: Global</td>
-			<td>pop4(uint slot, float x, float y, float z)</td>
+			<td>pop4(int slot, float x, float y, float z)</td>
 			<td>Set Global Rotation</td>
 		</tr>
 		<tr>
 			<td>118</td>
 			<td>SSSC</td>
 			<td>0: Local, 1: Global</td>
-			<td>pop4(uint slot, float x, float y, float z)</td>
+			<td>pop4(int slot, float x, float y, float z)</td>
 			<td>Set Global Scale</td>
 		</tr>
 		<tr>
 			<td>119</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td>SSSS</td>
+			<td>0: Active, 1: Persistent, 2: Offset</td>
+			<td>pop2(int slot, int value)</td>
+			<td>Set Single Slot Status</td>
 		</tr>
 		<tr>
 			<td>120</td>
 			<td>CSFT</td>
 			<td></td>
-			<td>pop1(uint* template_name), push(uint slot)</td>
+			<td>pop1(int* template_name), push(int slot)</td>
 			<td>CreateSlotFromTemplate</td>
 		</tr>
 		<tr>
@@ -890,7 +891,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td>123</td>
 			<td>SSPA</td>
 			<td></td>
-			<td>pop2(uint slot, uint new_slot)</td>
+			<td>pop2(int slot, int new_slot)</td>
 			<td>SetSlotParent</td>
 		</tr>
 		<tr>
@@ -918,7 +919,7 @@ https://www.dabeaz.com/ply/ply.html
 			<td>127</td>
 			<td>DESS</td>
 			<td></td>
-			<td>pop1(uint slot)</td>
+			<td>pop1(int slot)</td>
 			<td>DestroySlot</td>
 		</tr>
 	</tbody>

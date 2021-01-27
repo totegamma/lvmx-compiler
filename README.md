@@ -876,16 +876,16 @@ NeosVRで@thotgammaに聞いてください
 		<tr>
 			<td>121</td>
 			<td>FCFS</td>
-			<td></td>
+			<td>0: fromName, 1: fromTag</td>
 			<td>pop1(int* name) push1(int slot)</td>
 			<td>Find Child From Name</td>
 		</tr>
 		<tr>
 			<td>122</td>
-			<td>FCFT</td>
+			<td>ADIT</td>
 			<td></td>
-			<td>pop1(int* name) push1(int slot)</td>
-			<td>Find Child From Tag</td>
+			<td>pop2(int slot, int* name)</td>
+			<td>Async Dynamic Impulse Trigger</td>
 		</tr>
 		<tr>
 			<td>123</td>

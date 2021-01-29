@@ -22,6 +22,9 @@ class TypeRedefineException (Exception):
 class SymbolLengthNotSpecifiedException (Exception):
     pass
 
+class NonPointerException (Exception):
+    pass
+
 
 class Type:
     def __init__(self, basetype = 'void'):
@@ -68,6 +71,9 @@ class Type:
         self.members.append(member)
         return self
 
+    def isBasetype(self):
+        return self.basetype in BASETYPE
+
     def isScalar(self):
         return self.basetype in ('int', 'float', 'enum') and self.refcount == 0 and self.length == 1
 
@@ -76,6 +82,12 @@ class Type:
 
     def isArray(self):
         return self.length > 1
+
+    def isStruct(self):
+        return self.basetype == 'struct'
+
+    def isEnum(self):
+        return self.basetype == 'enum'
 
 
 class StructField:
@@ -176,7 +188,7 @@ class scopedEnv:
     def __init__(self):
         self.variables = []
         self.structs = {}
-        self.enums = []
+        self.enums = {}
         self.enumMembers = {}
         self.types = {}
 
@@ -298,11 +310,11 @@ class Env:
             raise TypeRedefineException(f"Redefined Struct '{name}'")
 
         for elem in typ.members:
-            self.scopedStack[-1].enumMembers[elem[0]] = elem[1]
+            self.scopeStack[-1].enumMembers[elem[0]] = elem[1]
 
         target[name] = typ
 
-    def getType(self, name, hint):
+    def getType(self, name, hint = ""):
 
         if hint == 'struct':
             return self.getStruct(name)
@@ -369,7 +381,7 @@ class Env:
             tmp.setLength(1).addRefcount(1)
 
         if not tmp.isPointer():
-            print('non-pointer exception')
+            raise NonPointerException()
             return None
 
         tmp.addRefcount(-1)

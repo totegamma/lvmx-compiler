@@ -1,6 +1,9 @@
 #ifndef LVMX_H
 #define LVMX_H
 
+typedef int size_t;
+#define NULL 0
+
 #define WORLDROOT_SLOT 0
 #define DEVICEROOT_SLOT 1
 #define UIXROOT_SLOT 2
@@ -25,9 +28,14 @@
 #define stoi(str) __raw(int, "STOI", 0, str)
 #define stof(str) __raw(float, "STOF", 0, str)
 
+#define memcmp(strA, strB, n) __raw(int, "MCMP", 0, strA, strB, n)
+#define memcpy(strA, strB, n) __raw(void, "MCPY", 0, strA, strB, n)
 #define strcmp(strA, strB) __raw(int, "SCMP", 0, strA, strB)
+#define strcpy(strA, strB) __raw(void, "SCPY", 0, strA, strB)
 #define itos(number, dest) __raw(void, "ITOS", 0, number, dest)
 #define ftos(number, dest) __raw(void, "FTOS", 0, number, dest)
+
+#define format(dest, form, ARGS) __raw(void, "FRMT", 0, dest, form, ARGS)
 
 #define sin(number) __raw(float, "SIN", 0, number)
 #define cos(number) __raw(float, "COS", 0, number)

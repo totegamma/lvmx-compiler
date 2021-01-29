@@ -69,7 +69,7 @@ class BIOP (AST):
         code.extend(left.bytecodes)
 
         if self.isCompOP: # 比較演算子ならポインタ同士の演算が可能
-            if left.typ.isPointer() and right.typ.isPointer():
+            if left.typ.isPointer() or right.typ.isPointer():
                 code.append(m.Inst(self.opI, self.nullarg))
                 return m.Insts(m.Type('int'), code)
         else: # そうでないならスカラーしか演算できない
@@ -77,7 +77,13 @@ class BIOP (AST):
                 g.r.addReport(m.Report('error', self.tok, f"invalid operands to binary expression('{left.typ}' and '{right.typ}')"))
                 return m.Insts()
 
-        if left.typ.basetype == 'int' and right.typ.basetype == 'int':
+        if (not left.typ.isBasetype()):
+            left.typ = env.getType(left.typ.basetype)
+
+        if (not right.typ.isBasetype()):
+            right.typ = env.getType(right.typ.basetype)
+
+        if (left.typ.basetype == 'int' or left.typ.basetype == 'enum') and (right.typ.basetype == 'int' or right.typ.basetype == 'enum'):
             code.append(m.Inst(self.opI, self.nullarg))
             typ = m.Type('int')
 
@@ -205,6 +211,13 @@ class Typedef (AST):
         self.typ = typ
 
     def gencode(self, env, opt):
+
+        if self.typ.isStruct():
+            env.addStruct(self.name, self.typ)
+
+        if self.typ.isEnum():
+            env.addEnum(self.name, self.typ)
+
         env.addType(self.name, self.typ)
 
         return env
@@ -838,12 +851,24 @@ class Add (AST):
 
         code = right.bytecodes
 
-        if (left.typ.length > 1 or left.typ.refcount > 0) and (right.typ.length == 1 and right.typ.refcount == 0):
+#        if (not left.typ.isBasetype()):
+#            left.typ = env.getType(left.typ.basetype)
+#            print(left.typ)
+#
+#        if (not right.typ.isBasetype()):
+#            right.typ = env.getType(right.typ.basetype)
+#            print(right.typ)
+
+        if (left.typ.length > 1 or left.typ.refcount > 0) or (right.typ.length > 1 and right.typ.refcount > 0):
             typ = copy(left.typ)
             if typ.length > 1:
                 typ.setLength(1).addRefcount(1)
 
-            size = env.calcPointeredSize(typ)
+            try:
+                size = env.calcPointeredSize(typ)
+            except m.NonPointerException:
+                g.r.addReport(m.Report('fatal', self.tok, f"non pointer exception"))
+                return m.Insts()
 
             if size > 1:
                 code.append(m.Inst(opc.PUSH, size))
@@ -864,6 +889,7 @@ class Add (AST):
 
         else:
             g.r.addReport(m.Report('fatal', self.tok, f'fatal error in node.Add'))
+            return m.Insts()
 
         return m.Insts(typ, code)
 
@@ -887,12 +913,16 @@ class Sub (AST):
 
         code = right.bytecodes
 
-        if (left.typ.length > 1 or left.typ.refcount > 0) and (right.typ.length == 1 and right.typ.refcount == 0):
+        if (left.typ.length > 1 or left.typ.refcount > 0) or (right.typ.length > 1 and right.typ.refcount > 0):
             typ = copy(left.typ)
             if typ.length > 1:
                 typ.setLength(1).addRefcount(1)
 
-            size = env.calcPointeredSize(typ)
+            try:
+                size = env.calcPointeredSize(typ)
+            except m.NonPointerException:
+                g.r.addReport(m.Report('fatal', self.tok, f"non pointer exception"))
+                return m.Insts()
 
             if size > 1:
                 code.append(m.Inst(opc.PUSH, size))

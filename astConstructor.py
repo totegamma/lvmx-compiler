@@ -4,6 +4,13 @@ import glob as g
 import MODEL as m
 from pycparser import CParser, c_parser, c_ast, parse_file
 
+def escapeString(string):
+    string = string.replace(r'\n', '\n')
+    string = string.replace(r'\0', '\0')
+    string = string.replace(r'\"', '\"')
+    string = string.replace(r'\'', '\'')
+    return string
+
 
 def projectAST(ast, s = 0):
 
@@ -94,7 +101,10 @@ def projectAST(ast, s = 0):
         return node.Cast(a2t(ast), projectAST(ast.to_type, s), projectAST(ast.expr, s))
 
     elif isinstance(ast, c_ast.Compound): # [block_items**]
-        return node.Block(a2t(ast), [projectAST(e, s+1) for e in ast.block_items])
+        if ast.block_items is None:
+            return node.Block(a2t(ast), [])
+        else:
+            return node.Block(a2t(ast), [projectAST(e, s+1) for e in ast.block_items])
 
     elif isinstance(ast, c_ast.CompoundLiteral): #TODO [type*, init*]
         pass
@@ -104,10 +114,10 @@ def projectAST(ast, s = 0):
         elif (ast.type == 'float'):
             return node.NumberF(a2t(ast), ast.value)
         elif (ast.type == 'char'):
-            ast.value = ast.value.replace(r'\n', '\n') #TODO エスケープ文字処理関数を作る
+            ast.value = escapeString(ast.value)
             return node.NumberI(a2t(ast), int.from_bytes(ast.value[1].encode('utf-32be'), byteorder='big'))
         elif (ast.type == 'string'):
-            ast.value = ast.value.replace(r'\n', '\n') #TODO エスケープ文字処理関数を作る
+            ast.value = escapeString(ast.value)
             return node.String(a2t(ast), ast.value[1:-1])
         g.r.addReport(m.Report('fatal', a2t(ast), f"unsupported constant type '{ast.type}' for value '{ast.value}'"))
 
@@ -158,9 +168,12 @@ def projectAST(ast, s = 0):
         if ast.value is None:
             return (ast.name, None)
         else:
-            if ast.value.type != 'int':
+            if isinstance(ast.value, c_ast.Constant):
+                return (ast.name, int(ast.value.value))
+            elif isinstance(ast.value, c_ast.UnaryOp):
+                return (ast.name, -int(ast.value.expr.value))
+            else:
                 g.r.addReport(m.Report('fatal', a2t(ast), f"enum must be \'int\'"))
-            return (ast.name, int(ast.value.value))
 
     elif isinstance(ast, c_ast.EnumeratorList): # [enumerators**]
         itr = 0

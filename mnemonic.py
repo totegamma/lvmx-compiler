@@ -89,6 +89,7 @@ class mnemonic (IntEnum):
     STOF = 98
     SSN = 99
     SST = 100
+    FRMT = 101
     SCMP = 103
     ITOS = 104
     FTOS = 105

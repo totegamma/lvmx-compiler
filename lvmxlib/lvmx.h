@@ -9,9 +9,11 @@ typedef int size_t;
 #define UIXROOT_SLOT 2
 
 #define debuglog(message) __raw(void, "PRINT", 0, message)
+#define exit(status) __raw(void, "EXIT", 0, status)
 #define createSlotFromTemplate(templateName) __raw(int, "CSFT", 0, templateName)
 #define setSlotParent(targetSlotID, newParentSlotID) __raw(void, "SSPA", 0, targetSlotID, newParentSlotID)
 #define dupSlot(targetSlotID) __raw(int, "DUPS", 0, targetSlotID)
+#define destroySlot(targetSlotID) __raw(void, "DESS", 0, targetSlotID)
 
 #define readreg(addr) __raw(int, "LOADR", addr)
 #define writereg(addr, value) __raw(void, "STORER", addr, value)
@@ -35,7 +37,9 @@ typedef int size_t;
 #define itos(number, dest) __raw(void, "ITOS", 0, number, dest)
 #define ftos(number, dest) __raw(void, "FTOS", 0, number, dest)
 
-#define format(dest, form, ARGS) __raw(void, "FRMT", 0, dest, form, ARGS)
+#define format(dest, form, ...) __raw(void, "FRMT", 0, dest, form, __VA_ARGS__)
+
+#define sendDI(dest, name) __raw(void, "ADIT", 0, dest, name)
 
 #define sin(number) __raw(float, "SIN", 0, number)
 #define cos(number) __raw(float, "COS", 0, number)

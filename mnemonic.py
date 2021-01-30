@@ -19,6 +19,7 @@ class mnemonic (IntEnum):
     PULP = 9
     PUAP = 10
     DUP  = 11
+    EXIT = 14
     PRINT = 15
 
     LOADG = 16
@@ -107,7 +108,7 @@ class mnemonic (IntEnum):
     SSSC = 118
     CSFT = 120
     FCFS = 121
-    FCFT = 122
+    ADIT = 122
     SSPA = 123
     GSPA = 124
     DUPS = 125

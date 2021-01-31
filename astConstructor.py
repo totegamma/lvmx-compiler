@@ -6,6 +6,8 @@ from pycparser import CParser, c_parser, c_ast, parse_file
 
 def escapeString(string):
     string = string.replace(r'\n', '\n')
+    string = string.replace(r'\t', '\n')
+    string = string.replace(r'\r', '\n')
     string = string.replace(r'\0', '\0')
     string = string.replace(r'\"', '\"')
     string = string.replace(r'\'', '\'')

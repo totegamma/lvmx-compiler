@@ -413,10 +413,11 @@ class DoWhile (AST):
         self.cond = cond
 
     def gencode(self, env, opt):
-        body = self.body.gencode(env, newopt(opt, 0)).bytecodes
-        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
 
         l0 = env.issueLabel()
+
+        body = self.body.gencode(env, newopt(opt, cp=l0, bp=None)).bytecodes
+        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
 
         codes = [m.Inst(opc.LABEL, l0)]
         codes.extend(body)
@@ -434,11 +435,12 @@ class While (AST):
         self.body = body
 
     def gencode(self, env, opt):
-        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
-        body = self.body.gencode(env, newopt(opt, 0)).bytecodes
 
         l0 = env.issueLabel()
         l1 = env.issueLabel()
+
+        cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
+        body = self.body.gencode(env, newopt(opt, 0, cp=l0, bp=l1)).bytecodes
 
         codes = [m.Inst(opc.LABEL, l0)]
         codes.extend(cond)
@@ -459,16 +461,17 @@ class For (AST):
         self.body = body
 
     def gencode(self, env, opt):
+
+        l0 = env.issueLabel()
+        l1 = env.issueLabel()
+
         if self.init is None: # TODO 1ライン化するか関数化して全部に適用
             init = []
         else:
             init = self.init.gencode(env, newopt(opt, 0)).bytecodes
         cond = self.cond.gencode(env, newopt(opt, 1)).bytecodes
         loop = self.loop.gencode(env, newopt(opt, 0)).bytecodes
-        body = self.body.gencode(env, newopt(opt, 0)).bytecodes
-
-        l0 = env.issueLabel()
-        l1 = env.issueLabel()
+        body = self.body.gencode(env, newopt(opt, 0, cp=l0, bp=l1)).bytecodes
 
         codes = init
         codes.append(m.Inst(opc.LABEL, l0))

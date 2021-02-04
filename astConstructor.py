@@ -299,7 +299,7 @@ def projectAST(ast, s = 0):
         elif ast.op == '+':
             return projectAST(ast.expr, s)
         elif ast.op == '-':
-            return node.Mul(a2t(ast), node.NumberI(a2t(ast), -1), projectAST(ast.expr, s))
+            return node.Minus(a2t(ast), projectAST(ast.expr, s))
         elif ast.op == '++':
             return node.Pre_inc(a2t(ast), projectAST(ast.expr, s))
         elif ast.op == '--':

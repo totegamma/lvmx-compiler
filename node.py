@@ -698,6 +698,40 @@ class Assign (AST):
 
         return m.Insts(typ, codes)
 
+class Minus (AST):
+
+    def __init__(self, tok, right):
+        self.tok = tok
+        self.right = right
+
+    def gencode(self, env, opt):
+
+        if (result := self.assertOnlyRValue(env, opt)) is not None:
+            return result
+        if (result := self.assertOnlyPop1(env, opt)) is not None:
+            return result
+
+        right = self.right.gencode(env, newopt(opt, 1, 'r'))
+        codes = right.bytecodes
+        typ = copy(right.typ)
+
+        if right.typ.basetype == 'int':
+            codes.append(m.Inst(opc.PUSH, -1))
+            codes.append(m.Inst(opc.MULI, self.nullarg))
+            typ = m.Type('int')
+            return m.Insts(typ, codes)
+
+        elif right.typ.basetype == 'float':
+            codes.append(m.Inst(opc.PUSH, -1.0))
+            codes.append(m.Inst(opc.MULF, self.nullarg))
+            typ = m.Type('float')
+            return m.Insts(typ, codes)
+
+        else:
+            g.r.addReport(m.Report('fatal', self.tok, f'fatal error in node.Minus'))
+            return m.Insts()
+
+
 class Inv (AST):
 
     def __init__(self, tok, right):

@@ -170,13 +170,13 @@ class Func (AST):
 
     def gencode(self, env, opt):
 
-        if self.body is None:
+        if self.body is None: # 定義
             try:
                 env.addFunction(m.Function(self.symbolname, self.typ, self.args, None))
             except m.SymbolRedefineException:
-                g.r.addReport(m.Report('error', self.tok, f"Redefined function '{self.symbolname}'"))
+                g.r.addReport(m.Report('error', self.tok, f"Redefinition of '{self.symbolname}'"))
             return env
-        else:
+        else: # 実装
             env.resetFrame(self.symbolname)
 
             for elem in self.args:
@@ -195,7 +195,9 @@ class Func (AST):
             try:
                 env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
             except m.SymbolRedefineException:
-                g.r.addReport(m.Report('error', self.tok, f"Redefined function '{self.symbolname}'"))
+                g.r.addReport(m.Report('error', self.tok, f"Redefinition of '{self.symbolname}'"))
+            except m.ConflictingTypesException:
+                g.r.addReport(m.Report('error', self.tok, f"Conflicting types for '{self.symbolname}'"))
 
             return env
 

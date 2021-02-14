@@ -25,6 +25,9 @@ class SymbolLengthNotSpecifiedException (Exception):
 class NonPointerException (Exception):
     pass
 
+class ConflictingTypesException(Exception):
+    pass
+
 
 class Type:
     def __init__(self, basetype = 'void'):
@@ -44,6 +47,16 @@ class Type:
         if (self.length > 1):
             buff += f'[{self.length}]'
         return buff
+
+    def __eq__(self, other):
+        if not isinstance(other, Type):
+            return NotImplemented
+        return self.basetype == other.basetype \
+           and self.refcount == other.refcount \
+           and self.length == other.length \
+           and self.quals == other.quals \
+           and self.members == other.members \
+           and self.hint == other.hint
 
     def addRefcount(self, plus):
         self.refcount += plus
@@ -147,6 +160,11 @@ class Symbol:
         self.name = name
         self.typ = typ
         self.initvalue = initvalue
+
+    def __eq__(self, other):
+        if not isinstance(other, Symbol):
+            return NotImplemented
+        return self.name == other.name and self.typ == other.typ
 
     def setID(self, newid):
         self.id = newid
@@ -255,7 +273,10 @@ class Env:
         for elem in self.functions:
             if elem.symbolname == function.symbolname:
                 if elem.insts is None and function.insts is not None:
-                    elem.insts = function.insts
+                    if elem.typ == function.typ and elem.args == function.args:
+                        elem.insts = function.insts
+                    else:
+                        raise ConflictingTypesException()
                 else:
                     raise SymbolRedefineException()
                 return

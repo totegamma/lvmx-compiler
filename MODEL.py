@@ -208,6 +208,11 @@ class Env:
 
         self.currentFuncName = '__DEFAULT'
 
+        self.calledFunc = []
+
+    def markCalledFunc(self, funcname):
+        if not funcname in self.calledFunc:
+            self.calledFunc.append(funcname)
 
     def functionLookup(self, name):
         for elem in self.functions:

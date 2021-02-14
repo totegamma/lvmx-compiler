@@ -363,6 +363,9 @@ class Funccall (AST):
         codes.append(m.Inst(opc.POPR, len(self.args)))
         if (opt.popc == 0):
             codes.append(m.Inst(opc.POP, self.nullarg))
+
+        env.markCalledFunc(self.name)
+
         return m.Insts(mytype, codes)
 
 class If (AST):

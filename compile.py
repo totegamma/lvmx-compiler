@@ -56,7 +56,7 @@ def compile(code):
 
 # add others
     for elem in env.functions:
-        if (elem.symbolname != 'main'):
+        if (elem.symbolname != 'main') and (elem.symbolname in env.calledFunc):
             if elem.insts is None:
                 g.r.addReport(m.Report('error', None, f"function '{elem.symbolname}' is not implemented"))
                 return

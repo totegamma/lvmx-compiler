@@ -132,18 +132,19 @@ if __name__ == '__main__':
         g.r.report()
         exit(-1)
 
+    delim = "\n"
 
     if args.json:
         for elem in dumps['code']:
             elem.opc = elem.opc.name
         bytecode = json.dumps(dumps, default=lambda x: x.__dict__)
     else:
-        bytecode = f".data {len(dumps['data'])}" + '\n'
+        bytecode = f".data {len(dumps['data'])}" + delim
         for elem in dumps['data']:
-            bytecode += value2hex(elem) + '\n'
-        bytecode += f".code {len(dumps['code'])}" + '\n'
+            bytecode += value2hex(elem) + delim
+        bytecode += f".code {len(dumps['code'])}" + delim
         for elem in dumps['code']:
-            bytecode += elem.serialize() + '\n'
+            bytecode += elem.serialize() + delim
 
     if g.r.hasError():
         g.r.report()

@@ -4,3 +4,4 @@ parsetab.py
 *.lve
 .DS_Store
 *.pyc
+main.c

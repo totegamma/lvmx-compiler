@@ -7,13 +7,20 @@ typedef int size_t;
 #define WORLDROOT_SLOT 0
 #define DEVICEROOT_SLOT 1
 #define UIXROOT_SLOT 2
+#define APPFOLDER_SLOT 3
+#define CURRENTAPP_SLOT 4
 
 #define debuglog(message) __raw(void, "PRINT", 0, message)
 #define exit(status) __raw(void, "EXIT", 0, status)
 #define createSlotFromTemplate(templateName) __raw(int, "CSFT", 0, templateName)
 #define setSlotParent(targetSlotID, newParentSlotID) __raw(void, "SSPA", 0, targetSlotID, newParentSlotID)
-#define dupSlot(targetSlotID) __raw(int, "DUPS", 0, targetSlotID)
+#define getSlotParent(targetSlotID) __raw(int, "SLUS", 0, targetSlotID)
+#define dupSlot(targetSlotID) __raw(int, "SLUS", 1, targetSlotID)
+#define childrenCount(targetSlotID) __raw(int, "SLUS", 2, targetSlotID)
+#define getSlotChild(targetSlotID, pos) __raw(int, "GSLC", 0, targetSlotID, pos)
 #define destroySlot(targetSlotID) __raw(void, "DESS", 0, targetSlotID)
+
+#define getSlotName(targetSlotID, dest) __raw(void, "GSN", 0, targetSlotID, dest)
 
 #define readreg(addr) __raw(int, "LOADR", addr)
 #define writereg(addr, value) __raw(void, "STORER", addr, value)

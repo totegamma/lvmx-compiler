@@ -110,8 +110,7 @@ class mnemonic (IntEnum):
     FCFS = 121
     ADIT = 122
     SSPA = 123
-    GSPA = 124
-    DUPS = 125
-    CHIC = 126
+    SLUS = 124
+    GSLC = 125
     DESS = 127
 

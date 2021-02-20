@@ -355,12 +355,37 @@ class Funccall (AST):
         if (result := self.assertOnlyRValue(env, opt)) is not None:
             return result
 
-        mytype = env.functionLookup(self.name).typ
-        codes = []
+        try:
+            define = env.functionLookup(self.name)
+        except m.SymbolNotFoundException:
+            g.r.addReport(m.Report('error', self.tok, f"function '{self.name}' not defined"))
+
         if self.args is None:
             self.args = []
+
+        selfArgLength = len(self.args)
+        definedArgLength = len(define.args)
+
+        if selfArgLength != definedArgLength:
+            g.r.addReport(m.Report('error', self.tok, f'too {"many" if selfArgLength > definedArgLength else "few"} arguments to function call, expected {definedArgLength}, have {selfArgLength}'))
+            return m.Insts()
+
+        mytype = define.typ
+        codes = []
+        argtypes = []
         for elem in reversed(self.args):
-            codes.extend(elem.gencode(env, newopt(opt, 1)).bytecodes) # TODO 型チェック
+            arg = elem.gencode(env, newopt(opt, 1))
+            codes.extend(arg.bytecodes)
+            argtypes.append(arg.typ)
+
+        argtypes = list(reversed(argtypes))
+
+        for i in range(selfArgLength):
+            if argtypes[i] != define.args[i].typ:
+                g.r.addReport(m.Report('error', self.tok, f'{"%d%s" % (i+1,"tsnrhtdd"[(i+1//10%10!=1)*((i+1)%10<4)*(i+1)%10::4])} parameter type mismatches'))
+                return m.Insts()
+
+
         codes.append(m.Inst(opc.CALL, self.name))
         codes.append(m.Inst(opc.POPR, len(self.args)))
         if (opt.popc == 0):

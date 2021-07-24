@@ -896,24 +896,24 @@ NeosVRで@thotgammaに聞いてください
 		</tr>
 		<tr>
 			<td>124</td>
-			<td>GSPA</td>
-			<td></td>
-			<td>pop1(int slot) push1(int slot)</td>
-			<td>Get Slot Parent</td>
+			<td>SLUS</td>
+			<td>0: get slot parent, 1: duplicate slot, 2: get slot children</td>
+			<td>pop1(int slot) push1(int slot/count)</td>
+			<td>Slot Utility</td>
 		</tr>
 		<tr>
 			<td>125</td>
-			<td>DUPS</td>
+			<td>GSLC</td>
 			<td></td>
-			<td>pop1(int slot) push1(int slot)</td>
-			<td>Duplicate Slot</td>
+			<td>pop1(int slot, int index) push1(int slot)</td>
+			<td>Get Slot Children</td>
 		</tr>
 		<tr>
 			<td>126</td>
-			<td>CHIC</td>
 			<td></td>
-			<td>pop1(int slot) push1(int count)</td>
-			<td>Children Count</td>
+			<td></td>
+			<td></td>
+			<td></td>
 		</tr>
 		<tr>
 			<td>127</td>

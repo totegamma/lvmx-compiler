@@ -359,6 +359,7 @@ class Funccall (AST):
             define = env.functionLookup(self.name)
         except m.SymbolNotFoundException:
             g.r.addReport(m.Report('error', self.tok, f"function '{self.name}' not defined"))
+            return m.Insts()
 
         if self.args is None:
             self.args = []
@@ -646,27 +647,27 @@ class Cast (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        body = self.body.gencode(env, newopt(opt, 1))
-        codes = body.bytecodes
+        bodyc = self.body.gencode(env, newopt(opt, 1))
+        codes = bodyc.bytecodes
 
-        if body.typ.isInt():
-            if self.targetType == 'float':
+        if bodyc.typ.basetype == 'int':
+            if self.targetType.basetype == 'float':
                 codes.append(m.Inst(opc.ITOF, self.nullarg))
                 return m.Insts(m.Type('float'), codes)
             else:
-                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\' #0'))
                 return m.Insts()
 
-        elif body.typ.isFloat():
-            if self.targetType == 'int':
+        elif bodyc.typ.basetype == 'float':
+            if self.targetType.basetype == 'int':
                 codes.append(m.Inst(opc.FTOI, self.nullarg))
                 return m.Insts(m.Type('int'), codes)
             else:
-                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\' #1'))
                 return m.Insts()
 
         else:
-            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\' #2'))
             return m.Insts()
 
 class Sizeof (AST):

@@ -170,36 +170,37 @@ class Func (AST):
 
     def gencode(self, env, opt):
 
+        try:
+            env.addFunction(m.Function(self.symbolname, self.typ, self.args, None))
+        except m.SymbolRedefineException:
+            g.r.addReport(m.Report('error', self.tok, f"Redefinition of '{self.symbolname}'"))
+
         if self.body is None: # 定義
-            try:
-                env.addFunction(m.Function(self.symbolname, self.typ, self.args, None))
-            except m.SymbolRedefineException:
-                g.r.addReport(m.Report('error', self.tok, f"Redefinition of '{self.symbolname}'"))
             return env
-        else: # 実装
-            env.resetFrame(self.symbolname)
 
-            for elem in self.args:
-                env.addArg(elem)
+        env.resetFrame(self.symbolname)
 
-            codes = self.body.gencode(env, newopt(opt, 0)).bytecodes
+        for elem in self.args:
+            env.addArg(elem)
 
-            insts = []
-            insts.append(m.Inst(opc.ENTRY, self.symbolname))
-            insts.append(m.Inst(opc.FRAME, env.getFrameSize()))
-            insts.extend(codes)
-            if (insts[-1].opc is not opc.RET):
-                insts.append(m.Inst(opc.PUSH, 0))
-                insts.append(m.Inst(opc.RET, self.nullarg))
+        codes = self.body.gencode(env, newopt(opt, 0)).bytecodes
 
-            try:
-                env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
-            except m.SymbolRedefineException:
-                g.r.addReport(m.Report('error', self.tok, f"Redefinition of '{self.symbolname}'"))
-            except m.ConflictingTypesException:
-                g.r.addReport(m.Report('error', self.tok, f"Conflicting types for '{self.symbolname}'"))
+        insts = []
+        insts.append(m.Inst(opc.ENTRY, self.symbolname))
+        insts.append(m.Inst(opc.FRAME, env.getFrameSize()))
+        insts.extend(codes)
+        if (insts[-1].opc is not opc.RET):
+            insts.append(m.Inst(opc.PUSH, 0))
+            insts.append(m.Inst(opc.RET, self.nullarg))
 
-            return env
+        try:
+            env.addFunction(m.Function(self.symbolname, self.typ, self.args, insts))
+        except m.SymbolRedefineException:
+            g.r.addReport(m.Report('error', self.tok, f"Redefinition of '{self.symbolname}'"))
+        except m.ConflictingTypesException:
+            g.r.addReport(m.Report('error', self.tok, f"Conflicting types for '{self.symbolname}'"))
+
+        return env
 
     def setBody(self, body):
         self.body = body
@@ -340,7 +341,10 @@ class Return (AST): #TODO 自分の型とのチェック
         self.body = body
 
     def gencode(self, env, opt):
-        codes = self.body.gencode(env, newopt(opt, 1)).bytecodes
+        if self.body:
+            codes = self.body.gencode(env, newopt(opt, 1)).bytecodes
+        else:
+            codes = [m.Inst(opc.PUSH, 0)]
         codes.append(m.Inst(opc.RET, self.nullarg))
         return m.Insts(m.Type(), codes)
 
@@ -647,27 +651,27 @@ class Cast (AST):
         if (result := self.assertOnlyPop1(env, opt)) is not None:
             return result
 
-        body = self.body.gencode(env, newopt(opt, 1))
-        codes = body.bytecodes
+        bodyc = self.body.gencode(env, newopt(opt, 1))
+        codes = bodyc.bytecodes
 
-        if body.typ.isInt():
-            if self.targetType == 'float':
+        if bodyc.typ.basetype == 'int':
+            if self.targetType.basetype == 'float':
                 codes.append(m.Inst(opc.ITOF, self.nullarg))
                 return m.Insts(m.Type('float'), codes)
             else:
-                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\' #0'))
                 return m.Insts()
 
-        elif body.typ.isFloat():
-            if self.targetType == 'int':
+        elif bodyc.typ.basetype == 'float':
+            if self.targetType.basetype == 'int':
                 codes.append(m.Inst(opc.FTOI, self.nullarg))
                 return m.Insts(m.Type('int'), codes)
             else:
-                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+                g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\' #1'))
                 return m.Insts()
 
         else:
-            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\''))
+            g.r.addReport(m.Report('fatal', self.tok, 'Program error occurred while evaluating \'Cast\' #2'))
             return m.Insts()
 
 class Sizeof (AST):

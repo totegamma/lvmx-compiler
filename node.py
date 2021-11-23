@@ -359,6 +359,7 @@ class Funccall (AST):
             define = env.functionLookup(self.name)
         except m.SymbolNotFoundException:
             g.r.addReport(m.Report('error', self.tok, f"function '{self.name}' not defined"))
+            return m.Insts()
 
         if self.args is None:
             self.args = []

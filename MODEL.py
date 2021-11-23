@@ -447,6 +447,8 @@ class ErrorModule:
         error = 0
         warning = 0
 
+        log = ""
+
         for elem in self.reports:
             level = elem.level
 
@@ -464,17 +466,16 @@ class ErrorModule:
 
 
             if elem.tok is None:
-                print(f"\033[1m<position info not available>: {level}\033[1m: {elem.message}\033[0m")
+                log += f"\033[1m<position info not available>: {level}\033[1m: {elem.message}\033[0m" + '\n'
             else:
-
-                print(f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m")
+                log += f"\033[1m{elem.tok}: {level}\033[1m: {elem.message}\033[0m" + '\n'
                 rawline = linecache.getline(elem.tok.filename, elem.tok.lineno)
                 line = rawline.lstrip()
                 deleted = len(rawline) - len(line)
                 line = line.rstrip()
 
-                print('\t' + line)
-                print('\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m')
+                log += '\t' + line + '\n'
+                log += '\t' + ' ' * (elem.tok.colno - deleted - 1) + '\033[32m^\033[0m' + '\n'
 
         if (fatal == 0 and error == 0 and warning == 0):
             return
@@ -487,9 +488,8 @@ class ErrorModule:
         if (fatal != 0):
             msg += (" and" if len(msg) != 0 else "") + f" {fatal} fatal error" + ("s" if fatal != 1 else "")
         msg += " generated."
-        print(msg)
-
-        return msg
+        print(log + msg)
+        return log + msg
 
 
 class Report:

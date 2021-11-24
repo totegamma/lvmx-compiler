@@ -50,5 +50,6 @@ typedef int size_t;
 
 #define sin(number) __raw(float, "SIN", 0, number)
 #define cos(number) __raw(float, "COS", 0, number)
+#define random(min, max) __raw(float, "RAND", 0, min, max)
 
 #endif

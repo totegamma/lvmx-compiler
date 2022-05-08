@@ -2,3 +2,4 @@
 * text=auto
 pycparser/* linguist-generated
 pycparser-2.20.dist-info/* linguist-generated
+yacctab.py linguist-generated

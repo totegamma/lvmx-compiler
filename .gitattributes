@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+pycparser/* linguist-generated
+pycparser-2.20.dist-info/* linguist-generated
